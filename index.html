@@ -4,436 +4,339 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>值日生違規統計</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Cormorant+Garamond:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --red:#E63946; --orange:#F4A261; --yellow:#E9C46A;
-    --green:#2A9D8F; --blue:#81C7D4; --purple:#9B72CF;
-    --darker:#0F0F1A; --card:#16213E; --border:#2D3561;
-    --text:#E8E8F0; --muted:#8888AA;
+    --gold:#C9A84C; --gold-light:#E8C97A;
+    --gold-dim:rgba(201,168,76,0.12); --gold-border:rgba(201,168,76,0.28);
+    --bg:#1A1510; --card:rgba(255,255,255,0.04); --card-hover:rgba(255,255,255,0.07);
+    --border:rgba(201,168,76,0.2); --text:#F0EAD6; --muted:#8A7E6A;
+    --red:#C0392B; --orange:#D4874A; --green:#4A8C6F; --blue:#4A7A8C; --purple:#7A5C8C;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--darker);color:var(--text);font-family:'Noto Sans TC',sans-serif;min-height:100vh;padding:24px 16px 60px;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;min-height:100vh;padding:0 0 80px;position:relative;overflow-x:hidden;}
+
+  /* 背景浮水印 */
+  body::before{content:'VIOLATION';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-18deg);font-family:'Cormorant Garamond',serif;font-size:clamp(70px,18vw,180px);font-weight:700;color:rgba(201,168,76,0.035);white-space:nowrap;pointer-events:none;z-index:0;letter-spacing:0.1em;}
+
+  /* 頂部金線 */
+  body::after{content:'';position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);z-index:100;}
+
+  .wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 16px;}
 
   /* HEADER */
-  .header{text-align:center;margin-bottom:28px;}
-  .header .label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--red);margin-bottom:8px;}
-  h1{font-size:clamp(22px,5vw,40px);font-weight:900;color:#fff;margin-bottom:4px;}
-  .subtitle{color:var(--muted);font-size:12px;}
+  .header{text-align:center;padding:52px 16px 36px;position:relative;z-index:1;}
+  .h-main{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,9vw,80px);font-weight:700;color:var(--gold);letter-spacing:0.15em;line-height:1;margin-bottom:4px;}
+  .h-sub{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:6px;color:var(--muted);margin-bottom:22px;}
+  .h-divider{display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:12px;}
+  .h-divider::before,.h-divider::after{content:'';flex:1;max-width:80px;height:1px;background:var(--gold-border);}
+  .h-divider span{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--gold);letter-spacing:3px;}
+  .h-title{font-size:clamp(12px,2.5vw,15px);color:var(--muted);letter-spacing:4px;}
 
   /* LOADING */
-  .loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:'Space Mono',monospace;font-size:13px;}
-  .spinner{display:inline-block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;}
+  .loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;}
+  .spinner{display:inline-block;width:18px;height:18px;border:1px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:12px;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
   /* ADD FORM */
-  .add-section{max-width:860px;margin:0 auto 28px;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
-  .add-toggle{width:100%;padding:14px 18px;background:none;border:none;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.2s;}
-  .add-toggle:hover{background:rgba(255,255,255,0.04);}
-  .add-toggle .arrow{transition:transform 0.3s;font-size:11px;color:var(--muted);margin-left:auto;}
+  .add-section{margin:0 auto 32px;background:var(--card);border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+  .add-toggle{width:100%;padding:15px 20px;background:none;border:none;color:var(--gold);font-family:'Noto Sans TC',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:3px;transition:background 0.2s;}
+  .add-toggle:hover{background:var(--card-hover);}
+  .add-toggle .arrow{transition:transform 0.3s;font-size:10px;color:var(--muted);margin-left:auto;}
   .add-toggle.open .arrow{transform:rotate(180deg);}
-  .add-body{display:none;padding:0 18px 18px;border-top:1px solid var(--border);}
+  .add-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border);}
   .add-body.open{display:block;}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
   @media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
-  .form-group{display:flex;flex-direction:column;gap:5px;}
-  .form-group label{font-size:10px;letter-spacing:2px;color:var(--muted);font-family:'Space Mono',monospace;}
-  .form-group input,.form-group select{background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
-  .form-group input:focus,.form-group select:focus{border-color:var(--red);}
-  .form-group select option{background:#1A1A2E;}
-  .form-row-full{grid-column:1/-1;}
-  .btn-add{margin-top:14px;padding:12px 24px;background:var(--red);border:none;border-radius:8px;color:#fff;font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:background 0.2s,transform 0.1s;width:100%;}
-  .btn-add:hover{background:#c1121f;}
-  .btn-add:active{transform:scale(0.97);}
-  .btn-add:disabled{background:#555;cursor:not-allowed;}
-  .msg{display:none;margin-top:10px;font-size:12px;font-family:'Space Mono',monospace;text-align:center;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group label{font-size:9px;letter-spacing:3px;color:var(--muted);font-family:'Space Mono',monospace;text-transform:uppercase;}
+  .form-group input,.form-group select{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:2px;padding:10px 12px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--gold);}
+  .form-group select option{background:#1A1510;}
+  .btn-add{margin-top:16px;padding:13px 24px;background:linear-gradient(135deg,var(--gold),#A8843A);border:none;border-radius:2px;color:#1A1510;font-family:'Noto Sans TC',sans-serif;font-weight:900;font-size:12px;letter-spacing:4px;cursor:pointer;transition:opacity 0.2s,transform 0.1s;width:100%;}
+  .btn-add:hover{opacity:0.88;}
+  .btn-add:active{transform:scale(0.98);}
+  .btn-add:disabled{background:#444;color:#777;cursor:not-allowed;}
+  .msg{display:none;margin-top:10px;font-size:11px;font-family:'Space Mono',monospace;text-align:center;letter-spacing:1px;}
   .msg.ok{color:var(--green);}
   .msg.err{color:var(--red);}
 
+  /* REFRESH */
+  .refresh-wrap{margin-bottom:10px;}
+  .refresh-btn{background:none;border:1px solid var(--border);border-radius:2px;color:var(--muted);font-size:10px;padding:6px 14px;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.2s;letter-spacing:1px;}
+  .refresh-btn:hover{border-color:var(--gold);color:var(--gold);}
+
   /* TABS */
-  .tabs-wrap{max-width:860px;margin:0 auto 20px;display:flex;gap:6px;flex-wrap:wrap;}
-  .tab-btn{padding:7px 18px;background:var(--card);border:1px solid var(--border);border-radius:30px;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-  .tab-btn:hover{border-color:var(--red);color:var(--text);}
-  .tab-btn.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;}
+  .tabs-wrap{margin:0 auto 24px;display:flex;gap:6px;flex-wrap:wrap;}
+  .tab-btn{padding:7px 20px;background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s;white-space:nowrap;letter-spacing:2px;}
+  .tab-btn:hover{border-color:var(--gold);color:var(--gold-light);}
+  .tab-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold-light);font-weight:700;}
 
   /* CONTENT */
-  .content{max-width:860px;margin:0 auto;display:grid;gap:24px;}
+  .content{margin:0 auto;display:grid;gap:24px;}
+
+  /* SECTION TITLE */
+  .stitle{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .stitle::after{content:'';flex:1;height:1px;background:var(--border);}
 
   /* SUMMARY */
-  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   @media(min-width:600px){.summary-grid{grid-template-columns:repeat(6,1fr);}}
-  .sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;position:relative;overflow:hidden;}
-  .sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
-  .sc.s-total::before{background:var(--muted);}
-  .sc.s-late::before{background:var(--orange);}
-  .sc.s-clean::before{background:var(--yellow);}
-  .sc.s-video::before{background:var(--green);}
-  .sc.s-duty::before{background:var(--red);}
-  .sc.s-other::before{background:var(--purple);}
-  .sc .num{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;line-height:1;margin-bottom:4px;}
-  .sc.s-total .num{color:var(--text);}
+  .sc{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:14px 8px;text-align:center;position:relative;overflow:hidden;transition:background 0.2s;}
+  .sc:hover{background:var(--card-hover);}
+  .sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+  .sc.s-total::after{background:var(--gold);}
+  .sc.s-late::after{background:var(--orange);}
+  .sc.s-clean::after{background:var(--gold);}
+  .sc.s-video::after{background:var(--green);}
+  .sc.s-duty::after{background:var(--red);}
+  .sc.s-other::after{background:var(--purple);}
+  .sc .num{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;line-height:1;margin-bottom:4px;}
+  .sc.s-total .num{color:var(--gold);}
   .sc.s-late .num{color:var(--orange);}
-  .sc.s-clean .num{color:var(--yellow);}
+  .sc.s-clean .num{color:var(--gold);}
   .sc.s-video .num{color:var(--green);}
   .sc.s-duty .num{color:var(--red);}
   .sc.s-other .num{color:var(--purple);}
-  .sc .desc{font-size:10px;color:var(--muted);}
-
-  /* SECTION TITLE */
-  .stitle{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:12px;}
+  .sc .desc{font-size:9px;color:var(--muted);letter-spacing:1px;}
 
   /* LEADERBOARD */
-  .leaderboard{display:flex;flex-direction:column;gap:8px;}
-  .pr{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:12px;}
-  .pr.r1{border-color:var(--red);background:rgba(230,57,70,0.07);}
-  .pr.r2{border-color:rgba(244,162,97,0.45);}
-  .pr.r3{border-color:rgba(233,196,106,0.35);}
-  .rn{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);text-align:center;}
-  .r1 .rn{color:var(--red);font-weight:700;}
+  .leaderboard{display:flex;flex-direction:column;gap:6px;}
+  .pr{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:12px 16px;display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:12px;transition:background 0.2s;}
+  .pr:hover{background:var(--card-hover);}
+  .pr.r1{border-color:var(--gold);background:var(--gold-dim);}
+  .pr.r2{border-color:rgba(212,135,74,0.38);}
+  .pr.r3{border-color:rgba(201,168,76,0.22);}
+  .rn{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--muted);text-align:center;font-weight:600;}
+  .r1 .rn{color:var(--gold);}
   .r2 .rn{color:var(--orange);}
-  .r3 .rn{color:var(--yellow);}
+  .r3 .rn{color:var(--gold);}
   .pi{display:flex;flex-direction:column;gap:5px;}
-  .pname{font-weight:700;font-size:14px;}
+  .pname{font-weight:700;font-size:14px;color:var(--text);letter-spacing:1px;}
   .vtags{display:flex;flex-wrap:wrap;gap:4px;}
-  .tag{font-size:9px;font-weight:500;padding:2px 6px;border-radius:20px;font-family:'Space Mono',monospace;}
-  .tag-late{background:rgba(244,162,97,0.13);color:var(--orange);border:1px solid rgba(244,162,97,0.3);}
-  .tag-clean{background:rgba(233,196,106,0.13);color:var(--yellow);border:1px solid rgba(233,196,106,0.3);}
-  .tag-video{background:rgba(42,157,143,0.13);color:var(--green);border:1px solid rgba(42,157,143,0.3);}
-  .tag-duty{background:rgba(230,57,70,0.13);color:var(--red);border:1px solid rgba(230,57,70,0.3);}
-  .tag-photo{background:rgba(129,199,212,0.13);color:var(--blue);border:1px solid rgba(129,199,212,0.3);}
-  .tag-other{background:rgba(155,114,207,0.13);color:var(--purple);border:1px solid rgba(155,114,207,0.3);}
+  .tag{font-size:9px;font-weight:500;padding:2px 7px;border-radius:2px;font-family:'Space Mono',monospace;}
+  .tag-late{background:rgba(212,135,74,0.1);color:var(--orange);border:1px solid rgba(212,135,74,0.28);}
+  .tag-clean{background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid rgba(201,168,76,0.28);}
+  .tag-video{background:rgba(74,140,111,0.1);color:var(--green);border:1px solid rgba(74,140,111,0.28);}
+  .tag-duty{background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.28);}
+  .tag-photo{background:rgba(74,122,140,0.1);color:var(--blue);border:1px solid rgba(74,122,140,0.28);}
+  .tag-other{background:rgba(122,92,140,0.1);color:var(--purple);border:1px solid rgba(122,92,140,0.28);}
   .pc{text-align:right;}
-  .cbig{font-family:'Space Mono',monospace;font-size:24px;font-weight:700;line-height:1;}
-  .r1 .cbig{color:var(--red);}
+  .cbig{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;line-height:1;}
+  .r1 .cbig{color:var(--gold);}
   .r2 .cbig{color:var(--orange);}
-  .r3 .cbig{color:var(--yellow);}
+  .r3 .cbig{color:var(--gold);}
   .r4 .cbig,.r5 .cbig,.r6 .cbig,.r7 .cbig,.r8 .cbig,.r9 .cbig{color:var(--muted);}
-  .clbl{font-size:9px;color:var(--muted);}
-  .badge-warn{display:inline-block;background:rgba(230,57,70,0.15);color:var(--red);border:1px solid rgba(230,57,70,0.3);border-radius:4px;padding:1px 5px;font-size:9px;font-family:'Space Mono',monospace;margin-left:5px;vertical-align:middle;}
+  .clbl{font-size:8px;color:var(--muted);letter-spacing:2px;}
+  .badge-warn{display:inline-block;background:rgba(192,57,43,0.13);color:var(--red);border:1px solid rgba(192,57,43,0.3);border-radius:2px;padding:1px 6px;font-size:8px;font-family:'Space Mono',monospace;margin-left:5px;vertical-align:middle;letter-spacing:1px;}
 
-  /* BAR CHART */
-  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-  .bar-name{width:60px;font-size:11px;font-weight:700;text-align:right;flex-shrink:0;}
-  .bar-wrap{flex:1;height:22px;background:var(--card);border-radius:5px;overflow:hidden;border:1px solid var(--border);}
-  .bar-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:7px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:#fff;min-width:28px;}
-  .bar-num{width:22px;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;}
+  /* BAR */
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bar-name{width:64px;font-size:11px;font-weight:700;text-align:right;flex-shrink:0;color:var(--muted);}
+  .bar-wrap{flex:1;height:20px;background:rgba(0,0,0,0.3);border-radius:2px;overflow:hidden;border:1px solid var(--border);}
+  .bar-fill{height:100%;border-radius:2px;display:flex;align-items:center;padding-left:8px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:rgba(0,0,0,0.65);min-width:28px;}
+  .bar-num{width:22px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--muted);text-align:right;flex-shrink:0;}
 
-  /* LOG TABLE - mobile friendly card style */
-  .log-cards{display:flex;flex-direction:column;gap:6px;}
-  .log-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;}
-  .log-date{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;}
-  .log-info{display:flex;flex-direction:column;gap:3px;}
+  /* LOG CARDS */
+  .log-cards{display:flex;flex-direction:column;gap:5px;}
+  .log-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:10px 16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;transition:background 0.2s;}
+  .log-card:hover{background:var(--card-hover);}
+  .log-date{font-family:'Space Mono',monospace;font-size:10px;color:var(--gold);white-space:nowrap;letter-spacing:1px;}
+  .log-info{display:flex;flex-direction:column;gap:2px;}
   .log-name{font-weight:700;font-size:13px;}
-  .log-note{font-size:11px;color:var(--muted);}
-  .del-btn{background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:10px;padding:4px 8px;cursor:pointer;transition:all 0.2s;font-family:'Space Mono',monospace;white-space:nowrap;}
+  .log-note{font-size:10px;color:var(--muted);}
+  .del-btn{background:none;border:1px solid rgba(192,57,43,0.2);border-radius:2px;color:rgba(192,57,43,0.45);font-size:10px;padding:4px 8px;cursor:pointer;transition:all 0.2s;font-family:'Space Mono',monospace;white-space:nowrap;}
   .del-btn:hover{border-color:var(--red);color:var(--red);}
 
-  .empty-state{text-align:center;padding:40px;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;}
-  .footer{text-align:center;margin-top:40px;color:var(--muted);font-size:10px;font-family:'Space Mono',monospace;letter-spacing:1px;}
-  .refresh-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;padding:6px 14px;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.2s;margin-bottom:16px;}
-  .refresh-btn:hover{border-color:var(--green);color:var(--green);}
+  .empty-state{text-align:center;padding:40px;color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:3px;}
+  .footer{text-align:center;margin-top:48px;color:var(--muted);font-size:9px;font-family:'Space Mono',monospace;letter-spacing:2px;line-height:2.2;}
+  .gold-line{width:48px;height:1px;background:var(--gold-border);margin:14px auto;}
 </style>
 </head>
 <body>
 
 <script>
-// ══════════════════════════════════════════════════
-//  ★ 把你的 Apps Script 網址貼在這裡 ★
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxySOMYP6umuBhhFEoQ3Uh3yItTyFAvc6CzYcE7ple8vk0ScDe2qd6OJ5gk6sWMoAC9/exec';
-// ══════════════════════════════════════════════════
-
 const TYPE_LABEL = {late:'⏰ 50分未到',clean:'🧹 打掃未完成',video:'🎬 影片未完成',duty:'🔴 值日生未完成',photo:'📷 照片未完成',other:'⚠️ 其他'};
 const TYPE_CLASS  = {late:'tag-late',clean:'tag-clean',video:'tag-video',duty:'tag-duty',photo:'tag-photo',other:'tag-other'};
-const BAR_COLORS  = ['#E63946,#c1121f','#F4A261,#e76f51','#E9C46A,#f4a261','#2A9D8F,#21867a','#9B72CF,#7B52AF','#81C7D4,#5BA4B4','#666699,#555588','#666699,#555588','#666699,#555588'];
+const BAR_COLORS  = ['#C9A84C','#D4874A','#B8963E','#4A8C6F','#7A5C8C','#4A7A8C','#6A6260','#6A6260','#6A6260'];
 const RANK_CLASS  = ['r1','r2','r3','r4','r5','r6','r7','r8','r9'];
+let records=[],currentTab=null;
 
-let records = [];
-let currentTab = null;
+async function apiGet(p){const r=await fetch(SCRIPT_URL+'?'+new URLSearchParams(p));return r.json();}
+async function apiPost(b){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(b)});return r.json();}
 
-// ── API ────────────────────────────────────────────
-async function apiGet(params) {
-  const url = SCRIPT_URL + '?' + new URLSearchParams(params);
-  const res = await fetch(url);
-  return res.json();
-}
-async function apiPost(body) {
-  const res = await fetch(SCRIPT_URL, {
-    method:'POST',
-    body: JSON.stringify(body)
-  });
-  return res.json();
-}
-
-// ── LOAD ───────────────────────────────────────────
-async function loadRecords() {
+async function loadRecords(){
   showLoading();
-  try {
-    const data = await apiGet({action:'getAll'});
-    records = data.records || [];
-    renderAll();
-  } catch(e) {
-    document.getElementById('mainContent').innerHTML =
-      `<div class="empty-state">⚠ 無法連線，請確認 SCRIPT_URL 是否正確<br><br>${e.message}</div>`;
-  }
+  try{const d=await apiGet({action:'getAll'});records=d.records||[];renderAll();}
+  catch(e){document.getElementById('mainContent').innerHTML=`<div class="empty-state">⚠  無法連線，請重新整理</div>`;}
+}
+function showLoading(){document.getElementById('mainContent').innerHTML=`<div class="loading"><div class="spinner"></div><br>載入中...</div>`;}
+
+function parseDate(date){
+  if(!date)return null;const s=String(date).trim();
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s))return new Date(s.slice(0,10)+'T00:00:00');
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s.slice(0,10)+'T00:00:00');
+  if(/^\d{4}\/\d{2}\/\d{2}/.test(s))return new Date(s.slice(0,10).replace(/\//g,'-')+'T00:00:00');
+  const d=new Date(s);return isNaN(d.getTime())?null:d;
+}
+function getMonthKey(date){const d=parseDate(date);if(!d)return'0000-00';return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function monthLabel(key){const[y,m]=key.split('-');return`${parseInt(m)}月 ${y}`;}
+function fmtDate(date){const d=parseDate(date);if(!d)return'??/??';return`${d.getMonth()+1}/${d.getDate()}`;}
+function getMonths(){return[...new Set(records.map(r=>getMonthKey(r.date)))].sort();}
+function computeStats(recs){
+  const bt={late:0,clean:0,video:0,duty:0,photo:0,other:0};
+  recs.forEach(r=>{bt[r.type]!=null?bt[r.type]++:bt.other++;});
+  const pm={};
+  recs.forEach(r=>{const n=String(r.name).trim();if(!pm[n])pm[n]={name:n,total:0,byType:{}};pm[n].total++;pm[n].byType[r.type]=(pm[n].byType[r.type]||0)+1;});
+  return{total:recs.length,byType:bt,people:Object.values(pm).sort((a,b)=>b.total-a.total)};
 }
 
-function showLoading() {
-  document.getElementById('mainContent').innerHTML =
-    `<div class="loading"><div class="spinner"></div><br>載入中...</div>`;
+function renderTabs(){
+  const months=getMonths();
+  if(!months.length){document.getElementById('tabsWrap').innerHTML='';return;}
+  if(!currentTab||!months.includes(currentTab))currentTab=months[months.length-1];
+  document.getElementById('tabsWrap').innerHTML=months.map(m=>`<button class="tab-btn ${m===currentTab?'active':''}" onclick="switchTab('${m}')">${monthLabel(m)}</button>`).join('');
 }
+function switchTab(m){currentTab=m;renderAll();}
 
-// ── HELPERS ────────────────────────────────────────
-function parseDate(date) {
-  if (!date) return null;
-  const s = String(date).trim();
-  // ISO 格式 2025-03-01T16:00:00.000Z — 取前10碼避免時區偏移
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    const part = s.slice(0,10); // 直接取 YYYY-MM-DD 不做時區轉換
-    return new Date(part + 'T00:00:00');
-  }
-  // YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s.slice(0,10) + 'T00:00:00');
-  // YYYY/MM/DD
-  if (/^\d{4}\/\d{2}\/\d{2}/.test(s)) return new Date(s.slice(0,10).replace(/\//g,'-') + 'T00:00:00');
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-function getMonthKey(date) {
-  const d = parseDate(date);
-  if (!d) return '0000-00';
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-function monthLabel(key) {
-  const [y,m] = key.split('-');
-  return `${parseInt(m)}月 ${y}`;
-}
-function fmtDate(date) {
-  const d = parseDate(date);
-  if (!d) return '??/??';
-  return `${d.getMonth()+1}/${d.getDate()}`;
-}
-function getMonths() {
-  return [...new Set(records.map(r => getMonthKey(r.date)))].sort();
-}
-function computeStats(recs) {
-  const byType = {late:0,clean:0,video:0,duty:0,photo:0,other:0};
-  recs.forEach(r => { byType[r.type]!=null ? byType[r.type]++ : byType.other++; });
-  const pm = {};
-  recs.forEach(r => {
-    const n = String(r.name).trim();
-    if (!pm[n]) pm[n] = {name:n,total:0,byType:{}};
-    pm[n].total++;
-    pm[n].byType[r.type] = (pm[n].byType[r.type]||0)+1;
-  });
-  const people = Object.values(pm).sort((a,b)=>b.total-a.total);
-  return {total:recs.length, byType, people};
-}
-
-// ── TABS ───────────────────────────────────────────
-function renderTabs() {
-  const months = getMonths();
-  if (!months.length) { document.getElementById('tabsWrap').innerHTML=''; return; }
-  if (!currentTab || !months.includes(currentTab)) currentTab = months[months.length-1];
-  document.getElementById('tabsWrap').innerHTML =
-    months.map(m => `<button class="tab-btn ${m===currentTab?'active':''}" onclick="switchTab('${m}')">${monthLabel(m)}</button>`).join('');
-}
-function switchTab(m) { currentTab = m; renderAll(); }
-
-// ── RENDER ─────────────────────────────────────────
-function renderAll() {
+function renderAll(){
   renderTabs();
-  const months = getMonths();
-  if (!months.length) {
-    document.getElementById('mainContent').innerHTML = '<div class="empty-state">目前還沒有違規記錄 🎉</div>';
-    return;
-  }
-  const filtered = records
-    .filter(r => getMonthKey(r.date) === currentTab)
-    .sort((a,b) => String(a.date).localeCompare(String(b.date)));
-  const stats = computeStats(filtered);
-  let html = '';
+  const months=getMonths();
+  if(!months.length){document.getElementById('mainContent').innerHTML='<div class="empty-state">— 尚無違規記錄 —</div>';return;}
+  const filtered=records.filter(r=>getMonthKey(r.date)===currentTab).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const stats=computeStats(filtered);
+  let html='';
 
-  // Summary
-  html += `<div>
-    <div class="stitle">📈 本月概覽</div>
-    <div class="summary-grid">
-      <div class="sc s-total"><div class="num">${stats.total}</div><div class="desc">總違規</div></div>
-      <div class="sc s-late"><div class="num">${stats.byType.late}</div><div class="desc">⏰ 遲到</div></div>
-      <div class="sc s-clean"><div class="num">${stats.byType.clean}</div><div class="desc">🧹 打掃</div></div>
-      <div class="sc s-video"><div class="num">${stats.byType.video}</div><div class="desc">🎬 影片</div></div>
-      <div class="sc s-duty"><div class="num">${stats.byType.duty}</div><div class="desc">🔴 值日生</div></div>
-      <div class="sc s-other"><div class="num">${stats.byType.photo+stats.byType.other}</div><div class="desc">⚠️ 其他</div></div>
-    </div>
-  </div>`;
+  html+=`<div><div class="stitle">本月概覽</div><div class="summary-grid">
+    <div class="sc s-total"><div class="num">${stats.total}</div><div class="desc">總違規</div></div>
+    <div class="sc s-late"><div class="num">${stats.byType.late}</div><div class="desc">遲到</div></div>
+    <div class="sc s-clean"><div class="num">${stats.byType.clean}</div><div class="desc">打掃</div></div>
+    <div class="sc s-video"><div class="num">${stats.byType.video}</div><div class="desc">影片</div></div>
+    <div class="sc s-duty"><div class="num">${stats.byType.duty}</div><div class="desc">值日生</div></div>
+    <div class="sc s-other"><div class="num">${stats.byType.photo+stats.byType.other}</div><div class="desc">其他</div></div>
+  </div></div>`;
 
-  if (stats.people.length) {
-    const maxC = stats.people[0].total;
-
-    // Leaderboard
-    html += `<div><div class="stitle">🏆 個人違規排行</div><div class="leaderboard">`;
-    stats.people.forEach((p,i) => {
-      const rc = RANK_CLASS[i]||'r9';
-      const warn = p.total >= 3 ? `<span class="badge-warn">⚠</span>` : '';
-      const tags = Object.entries(p.byType).map(([t,c]) =>
-        `<span class="tag ${TYPE_CLASS[t]||'tag-other'}">${TYPE_LABEL[t]||t} ×${c}</span>`).join('');
-      html += `<div class="pr ${rc}">
-        <div class="rn">${i+1}</div>
-        <div class="pi">
-          <div class="pname">${p.name}${i===0?' 👑':''}${warn}</div>
-          <div class="vtags">${tags}</div>
-        </div>
-        <div class="pc"><div class="cbig">${p.total}</div><div class="clbl">次違規</div></div>
-      </div>`;
+  if(stats.people.length){
+    const maxC=stats.people[0].total;
+    html+=`<div><div class="stitle">個人違規排行</div><div class="leaderboard">`;
+    stats.people.forEach((p,i)=>{
+      const rc=RANK_CLASS[i]||'r9';
+      const warn=p.total>=3?`<span class="badge-warn">HIGH RISK</span>`:'';
+      const tags=Object.entries(p.byType).map(([t,c])=>`<span class="tag ${TYPE_CLASS[t]||'tag-other'}">${TYPE_LABEL[t]||t} ×${c}</span>`).join('');
+      html+=`<div class="pr ${rc}"><div class="rn">${i===0?'✦':i+1}</div><div class="pi"><div class="pname">${p.name}${warn}</div><div class="vtags">${tags}</div></div><div class="pc"><div class="cbig">${p.total}</div><div class="clbl">RECORDS</div></div></div>`;
     });
-    html += `</div></div>`;
+    html+=`</div></div>`;
 
-    // Bar chart
-    html += `<div><div class="stitle">📊 長條圖</div>`;
-    stats.people.forEach((p,i) => {
-      const pct = Math.round((p.total/maxC)*100);
-      const [c1,c2] = (BAR_COLORS[i]||'#666699,#555588').split(',');
-      html += `<div class="bar-row">
-        <div class="bar-name">${p.name}</div>
-        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${c1},${c2})">${p.total}次</div></div>
-        <div class="bar-num">${p.total}</div>
-      </div>`;
+    html+=`<div><div class="stitle">違規次數分布</div>`;
+    stats.people.forEach((p,i)=>{
+      const pct=Math.round((p.total/maxC)*100);
+      html+=`<div class="bar-row"><div class="bar-name">${p.name}</div><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${BAR_COLORS[i]||'#6A6260'}">${p.total}</div></div><div class="bar-num">${p.total}</div></div>`;
     });
-    html += `</div>`;
+    html+=`</div>`;
   } else {
-    html += `<div class="empty-state">本月尚無違規記錄 🎉</div>`;
+    html+=`<div class="empty-state">— 本月尚無違規記錄 —</div>`;
   }
 
-  // Log cards
-  if (filtered.length) {
-    html += `<div><div class="stitle">📋 本月明細</div><div class="log-cards">`;
-    filtered.forEach((r,i) => {
-      html += `<div class="log-card">
-        <div class="log-date">${fmtDate(r.date)}</div>
-        <div class="log-info">
-          <div class="log-name">${r.name} <span class="tag ${TYPE_CLASS[r.type]||'tag-other'}">${TYPE_LABEL[r.type]||r.type}</span></div>
-          ${r.note ? `<div class="log-note">${r.note}</div>` : ''}
-        </div>
-        <button class="del-btn" onclick="deleteRecord('${r.id}')">刪除</button>
-      </div>`;
+  if(filtered.length){
+    html+=`<div><div class="stitle">本月明細</div><div class="log-cards">`;
+    filtered.forEach(r=>{
+      html+=`<div class="log-card"><div class="log-date">${fmtDate(r.date)}</div><div class="log-info"><div class="log-name">${r.name} <span class="tag ${TYPE_CLASS[r.type]||'tag-other'}">${TYPE_LABEL[r.type]||r.type}</span></div>${r.note?`<div class="log-note">${r.note}</div>`:''}</div><button class="del-btn" onclick="deleteRecord('${r.id}')">✕</button></div>`;
     });
-    html += `</div></div>`;
+    html+=`</div></div>`;
   }
-
-  document.getElementById('mainContent').innerHTML = html;
+  document.getElementById('mainContent').innerHTML=html;
 }
 
-// ── ACTIONS ────────────────────────────────────────
-function toggleForm(btn) {
-  btn.classList.toggle('open');
-  document.getElementById('addBody').classList.toggle('open');
-}
+function toggleForm(btn){btn.classList.toggle('open');document.getElementById('addBody').classList.toggle('open');}
 
-async function addRecord() {
-  const date = document.getElementById('f-date').value;
-  const name = document.getElementById('f-name').value.trim();
-  const type = document.getElementById('f-type').value;
-  const note = document.getElementById('f-note').value.trim();
-  if (!date || !name) { showMsg('err','請填寫日期和姓名'); return; }
-
-  const btn = document.querySelector('.btn-add');
-  btn.disabled = true; btn.textContent = '新增中...';
-
-  try {
-    await apiPost({action:'add', record:{date,name,type,note}});
-    document.getElementById('f-name').value = '';
-    document.getElementById('f-note').value = '';
-    showMsg('ok','✓ 新增成功！重新載入中...');
-    currentTab = date.slice(0,7);
+async function addRecord(){
+  const date=document.getElementById('f-date').value;
+  const name=document.getElementById('f-name').value.trim();
+  const type=document.getElementById('f-type').value;
+  const note=document.getElementById('f-note').value.trim();
+  if(!date||!name){showMsg('err','請填寫日期和姓名');return;}
+  const btn=document.querySelector('.btn-add');
+  btn.disabled=true;btn.textContent='新增中...';
+  try{
+    await apiPost({action:'add',record:{date,name,type,note}});
+    document.getElementById('f-name').value='';
+    document.getElementById('f-note').value='';
+    showMsg('ok','✓  新增成功');
+    currentTab=date.slice(0,7);
     await loadRecords();
-  } catch(e) {
-    showMsg('err','⚠ 新增失敗，請重試');
-  }
-  btn.disabled = false; btn.textContent = '確認新增';
+  }catch(e){showMsg('err','⚠  新增失敗，請重試');}
+  btn.disabled=false;btn.textContent='確認新增';
 }
 
-async function deleteRecord(id) {
-  if (!confirm('確認刪除此筆記錄？')) return;
-  try {
-    await apiGet({action:'delete', id});
-    await loadRecords();
-  } catch(e) {
-    alert('刪除失敗，請重試');
-  }
+async function deleteRecord(id){
+  if(!confirm('確認刪除此筆記錄？'))return;
+  try{await apiGet({action:'delete',id});await loadRecords();}
+  catch(e){alert('刪除失敗，請重試');}
 }
 
-function showMsg(type, text) {
-  const el = document.getElementById('formMsg');
-  el.className = `msg ${type}`;
-  el.textContent = text;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3000);
+function showMsg(type,text){
+  const el=document.getElementById('formMsg');
+  el.className=`msg ${type}`;el.textContent=text;el.style.display='block';
+  setTimeout(()=>el.style.display='none',3000);
 }
 </script>
 
+<!-- HEADER -->
 <div class="header">
-  <div class="label">⚠ 違規記錄系統</div>
-  <h1>值日生違規統計</h1>
-  <p class="subtitle">打掃未完成 · 遲到 · 影片未上傳 · 值日生未完成</p>
+  <div class="h-main">RECORD</div>
+  <div class="h-sub">VIOLATION MANAGEMENT SYSTEM</div>
+  <div class="h-divider"><span>值日生違規統計</span></div>
+  <div class="h-title">打掃 &nbsp;·&nbsp; 遲到 &nbsp;·&nbsp; 影片 &nbsp;·&nbsp; 值日生</div>
 </div>
 
-<!-- ADD FORM -->
-<div class="add-section">
-  <button class="add-toggle" onclick="toggleForm(this)">
-    ＋ 新增違規記錄
-    <span class="arrow">▼</span>
-  </button>
-  <div class="add-body" id="addBody">
-    <div class="form-grid">
-      <div class="form-group">
-        <label>日期</label>
-        <input type="date" id="f-date">
+<div class="wrap">
+
+  <div class="add-section">
+    <button class="add-toggle" onclick="toggleForm(this)">
+      ＋ &nbsp;新增違規記錄
+      <span class="arrow">▼</span>
+    </button>
+    <div class="add-body" id="addBody">
+      <div class="form-grid">
+        <div class="form-group"><label>日期</label><input type="date" id="f-date"></div>
+        <div class="form-group"><label>姓名</label><input type="text" id="f-name" placeholder="輸入姓名"></div>
+        <div class="form-group"><label>違規類型</label>
+          <select id="f-type">
+            <option value="late">⏰ 50分未到</option>
+            <option value="clean">🧹 打掃未完成</option>
+            <option value="video">🎬 影片未完成</option>
+            <option value="duty">🔴 值日生未完成</option>
+            <option value="photo">📷 照片未完成</option>
+            <option value="other">⚠️ 其他</option>
+          </select>
+        </div>
+        <div class="form-group"><label>說明（選填）</label><input type="text" id="f-note" placeholder="補充說明"></div>
       </div>
-      <div class="form-group">
-        <label>姓名</label>
-        <input type="text" id="f-name" placeholder="輸入姓名">
-      </div>
-      <div class="form-group">
-        <label>違規類型</label>
-        <select id="f-type">
-          <option value="late">⏰ 50分未到</option>
-          <option value="clean">🧹 打掃未完成</option>
-          <option value="video">🎬 影片未完成</option>
-          <option value="duty">🔴 值日生未完成</option>
-          <option value="photo">📷 照片未完成</option>
-          <option value="other">⚠️ 其他</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>說明（選填）</label>
-        <input type="text" id="f-note" placeholder="補充說明">
-      </div>
+      <button class="btn-add" onclick="addRecord()">確認新增</button>
+      <div class="msg" id="formMsg"></div>
     </div>
-    <button class="btn-add" onclick="addRecord()">確認新增</button>
-    <div class="msg" id="formMsg"></div>
+  </div>
+
+  <div class="refresh-wrap">
+    <button class="refresh-btn" onclick="loadRecords()">↻ &nbsp;重新整理</button>
+  </div>
+
+  <div class="tabs-wrap" id="tabsWrap"></div>
+
+  <div class="content" id="mainContent">
+    <div class="loading"><div class="spinner"></div><br>載入中...</div>
+  </div>
+
+  <div class="footer">
+    <div class="gold-line"></div>
+    <p>累計違規達 3 次以上者請注意</p>
+    <p>資料同步於 Google Sheets</p>
   </div>
 </div>
 
-<!-- REFRESH -->
-<div style="max-width:860px;margin:0 auto 4px;">
-  <button class="refresh-btn" onclick="loadRecords()">↻ 重新整理</button>
-</div>
-
-<!-- TABS -->
-<div class="tabs-wrap" id="tabsWrap"></div>
-
-<!-- CONTENT -->
-<div class="content" id="mainContent">
-  <div class="loading"><div class="spinner"></div><br>載入中...</div>
-</div>
-
-<div class="footer">
-  <p>⚠ 累計違規達 3 次以上者請注意</p>
-  <p style="margin-top:6px;color:#444466;">資料儲存於 Google Sheets · 多裝置同步</p>
-</div>
-
 <script>
-  // 初始化
-  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
   loadRecords();
 </script>
 </body>
