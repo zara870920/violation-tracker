@@ -355,13 +355,63 @@ function showMsg(type,text){
 function exportReport() {
   if (!records.length) { alert('目前沒有資料可匯出'); return; }
 
-  // 統計所有月份資料
+  // 先顯示日期區間選擇彈窗
+  const months = getMonths();
+  const firstMonth = months[0] ? months[0] + '-01' : '';
+  const lastRecord = [...records].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
+  const lastDate = lastRecord ? String(lastRecord.date).slice(0,10) : '';
+
+  // 建立選擇 modal
+  const overlay = document.createElement('div');
+  overlay.id = 'exportOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  overlay.innerHTML = `
+    <div style="background:#2D2D2D;border:1px solid rgba(201,168,76,0.35);border-radius:6px;padding:28px 24px;width:90%;max-width:420px;">
+      <div style="font-family:'Noto Sans TC',sans-serif;font-size:10px;letter-spacing:4px;color:#C9A84C;margin-bottom:16px;">匯出統計報表</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:9px;letter-spacing:2px;color:#9A8E78;margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">開始日期</div>
+          <input type="date" id="exportFrom" value="${firstMonth}" style="width:100%;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px 10px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none;">
+        </div>
+        <div>
+          <div style="font-size:9px;letter-spacing:2px;color:#9A8E78;margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">結束日期</div>
+          <input type="date" id="exportTo" value="${lastDate}" style="width:100%;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px 10px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none;">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="doExport()" style="flex:1;padding:12px;background:linear-gradient(135deg,#C9A84C,#9A7A30);border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;cursor:pointer;">📊 產生報表</button>
+        <button onclick="document.getElementById('exportOverlay').remove()" style="padding:12px 18px;background:none;border:1px solid rgba(201,168,76,0.25);border-radius:50px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;">取消</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function doExport() {
+  const fromVal = document.getElementById('exportFrom').value;
+  const toVal = document.getElementById('exportTo').value;
+  document.getElementById('exportOverlay').remove();
+
+  if (!fromVal || !toVal) { alert('請選擇日期區間'); return; }
+
+  const fromDate = new Date(fromVal + 'T00:00:00');
+  const toDate = new Date(toVal + 'T23:59:59');
+
+  // 篩選區間內的資料
+  const filtered = records.filter(r => {
+    const d = parseDate(r.date);
+    return d && d >= fromDate && d <= toDate;
+  });
+
+  if (!filtered.length) { alert(`${fromVal} ~ ${toVal} 區間內沒有違規記錄`); return; }
+
   const TYPE_LABEL_PLAIN = {late:'50分未到',clean:'打掃未完成',video:'影片未完成',duty:'值日生未完成',photo:'照片未完成',other:'其他'};
   const allTypes = ['late','clean','video','duty','photo','other'];
 
   // 整理每人統計
   const pm = {};
-  records.forEach(r => {
+  filtered.forEach(r => {
     const n = String(r.name).trim();
     if (!pm[n]) pm[n] = {name:n, total:0, byType:{}, byMonth:{}};
     pm[n].total++;
@@ -370,21 +420,25 @@ function exportReport() {
     pm[n].byMonth[mk] = (pm[n].byMonth[mk]||0)+1;
   });
   const people = Object.values(pm).sort((a,b)=>b.total-a.total);
-  const months = getMonths();
 
-  // 整理類型總計
+  // 月份
+  const filteredMonths = [...new Set(filtered.map(r=>getMonthKey(r.date)))].sort();
+
+  // 類型總計
   const typeTotal = {};
-  allTypes.forEach(t => { typeTotal[t] = records.filter(r=>r.type===t).length; });
+  allTypes.forEach(t => { typeTotal[t] = filtered.filter(r=>r.type===t).length; });
 
   const now = new Date();
   const dateStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+  const rangeStr = `${fromVal} ~ ${toVal}`;
 
   let html = `<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
-<title>違規統計報表 ${dateStr}</title>
+<title>違規統計報表 ${rangeStr}</title>
 <style>
   body{font-family:'Noto Sans TC',sans-serif;background:#f8f6f0;color:#2a2a2a;padding:32px;max-width:1100px;margin:0 auto;}
   h1{font-size:26px;font-weight:900;color:#2a2a2a;margin-bottom:4px;letter-spacing:2px;}
-  .subtitle{font-size:12px;color:#888;letter-spacing:2px;margin-bottom:32px;}
+  .subtitle{font-size:12px;color:#888;letter-spacing:1px;margin-bottom:8px;}
+  .range-badge{display:inline-block;background:#2a2a2a;color:#C9A84C;padding:4px 14px;border-radius:3px;font-size:11px;letter-spacing:2px;margin-bottom:28px;}
   h2{font-size:14px;font-weight:700;color:#555;letter-spacing:3px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9A84C;}
   table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px;}
   th{background:#2a2a2a;color:#C9A84C;padding:10px 12px;text-align:center;font-weight:500;letter-spacing:1px;font-size:11px;}
@@ -416,16 +470,15 @@ function exportReport() {
   <span style="font-size:11px;color:#888;letter-spacing:1px;">列印時選「另存為PDF」即可存檔</span>
 </div>
 <h1>違規統計報表</h1>
-<div class="subtitle">匯出日期：${dateStr} &nbsp;·&nbsp; 統計期間：${months[0]?monthLabel(months[0]):'—'} ~ ${months[months.length-1]?monthLabel(months[months.length-1]):'—'} &nbsp;·&nbsp; 總違規次數：${records.length} 筆</div>
+<div class="subtitle">匯出日期：${dateStr} &nbsp;·&nbsp; 總違規次數：${filtered.length} 筆</div>
+<div class="range-badge">統計區間：${rangeStr}</div>
 
 <h2>個人違規統計總覽</h2>
 <table>
   <tr>
-    <th class="left">排名</th>
-    <th class="left">姓名</th>
-    <th>總計</th>
+    <th>排名</th><th class="left">姓名</th><th>總計</th>
     ${allTypes.map(t=>`<th>${TYPE_LABEL_PLAIN[t]}</th>`).join('')}
-    ${months.map(m=>`<th>${monthLabel(m)}</th>`).join('')}
+    ${filteredMonths.map(m=>`<th>${monthLabel(m)}</th>`).join('')}
   </tr>`;
 
   people.forEach((p,i) => {
@@ -434,19 +487,16 @@ function exportReport() {
       <td class="left">${p.name}</td>
       <td><span class="num ${p.total>=5?'red':p.total>=3?'orange':''}">${p.total}</span></td>
       ${allTypes.map(t=>`<td>${p.byType[t]?`<span class="badge b-${t}">${p.byType[t]}</span>`:'-'}</td>`).join('')}
-      ${months.map(m=>`<td>${p.byMonth[m]||'-'}</td>`).join('')}
+      ${filteredMonths.map(m=>`<td>${p.byMonth[m]||'-'}</td>`).join('')}
     </tr>`;
   });
 
-  // 總計列
   html += `<tr class="total-row">
     <td colspan="2" class="left">合計</td>
-    <td>${records.length}</td>
+    <td>${filtered.length}</td>
     ${allTypes.map(t=>`<td>${typeTotal[t]||0}</td>`).join('')}
-    ${months.map(m=>`<td>${records.filter(r=>getMonthKey(r.date)===m).length}</td>`).join('')}
-  </tr>`;
-
-  html += `</table>
+    ${filteredMonths.map(m=>`<td>${filtered.filter(r=>getMonthKey(r.date)===m).length}</td>`).join('')}
+  </tr></table>
 
 <h2>違規類型分析</h2>
 <table>
@@ -455,7 +505,7 @@ function exportReport() {
   allTypes.forEach(t => {
     const cnt = typeTotal[t]||0;
     if (!cnt) return;
-    const pct = Math.round(cnt/records.length*100);
+    const pct = Math.round(cnt/filtered.length*100);
     const topPerson = people.filter(p=>p.byType[t]).sort((a,b)=>(b.byType[t]||0)-(a.byType[t]||0))[0];
     html += `<tr>
       <td class="left"><span class="badge b-${t}">${TYPE_LABEL_PLAIN[t]}</span></td>
@@ -471,7 +521,7 @@ function exportReport() {
 <table>
   <tr><th>#</th><th>日期</th><th class="left">姓名</th><th>違規類型</th><th class="left">說明</th></tr>`;
 
-  const sorted = [...records].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const sorted = [...filtered].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   sorted.forEach((r,i) => {
     html += `<tr>
       <td style="color:#aaa;font-size:11px">${String(i+1).padStart(2,'0')}</td>
@@ -483,10 +533,9 @@ function exportReport() {
   });
 
   html += `</table>
-<div style="margin-top:40px;text-align:center;color:#aaa;font-size:10px;letter-spacing:2px;">VIOLATION MANAGEMENT SYSTEM &nbsp;·&nbsp; ${dateStr}</div>
+<div style="margin-top:40px;text-align:center;color:#aaa;font-size:10px;letter-spacing:2px;">VIOLATION MANAGEMENT SYSTEM &nbsp;·&nbsp; ${rangeStr}</div>
 </body></html>`;
 
-  // 開新分頁顯示
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
