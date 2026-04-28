@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>值日生違規統計</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --gold:#C9A84C; --gold-light:#E8C97A; --gold-dark:#9A7A30;
-    --gold-dim:rgba(201,168,76,0.18); --gold-border:rgba(201,168,76,0.35);
-    --bg:#141008; --bg2:#1E1810;
-    --card:#2A2318; --card-hover:#332B1E; --card-border:rgba(201,168,76,0.25);
+    --gold-dim:#3A3020; --gold-border:rgba(201,168,76,0.35);
+    --bg:#1A1A1A; --bg2:#222222;
+    --card:#2D2D2D; --card-hover:#383838; --card-border:rgba(201,168,76,0.25);
     --text:#F0EAD6; --muted:#9A8E78;
     --red:#C0392B; --orange:#CC7A3A; --green:#3D7A58; --blue:#3A6A7A; --purple:#6A4A7A;
   }
@@ -27,13 +27,13 @@
 
   /* HEADER */
   .header{text-align:center;padding:56px 16px 40px;position:relative;z-index:1;}
-  .h-main{font-family:'Noto Sans TC',sans-serif;font-size:clamp(44px,10vw,88px);font-weight:700;color:var(--gold);letter-spacing:0.18em;line-height:1;margin-bottom:6px;}
-  .h-sub{font-family:'Noto Sans TC',sans-serif;font-size:10px;letter-spacing:7px;color:var(--muted);margin-bottom:26px;font-weight:300;}
+  .h-main{font-family:'Noto Sans TC',sans-serif;font-size:clamp(44px,10vw,88px);font-weight:900;color:var(--gold);letter-spacing:0.18em;line-height:1;margin-bottom:6px;}
+  .h-sub{font-family:'Noto Sans TC',sans-serif;font-size:10px;letter-spacing:7px;color:var(--muted);margin-bottom:26px;font-weight:400;}
   .h-divider{display:flex;align-items:center;gap:16px;justify-content:center;margin-bottom:14px;}
   .h-divider::before,.h-divider::after{content:'';flex:1;max-width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-border));}
   .h-divider::after{background:linear-gradient(270deg,transparent,var(--gold-border));}
-  .h-divider span{font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--gold);letter-spacing:6px;font-weight:300;}
-  .h-title{font-family:'Noto Sans TC',sans-serif;font-size:clamp(11px,2.2vw,13px);color:var(--muted);letter-spacing:6px;font-weight:300;}
+  .h-divider span{font-family:'Noto Sans TC',sans-serif;font-size:15px;color:var(--gold);letter-spacing:5px;font-weight:700;}
+  .h-title{font-family:'Noto Sans TC',sans-serif;font-size:clamp(12px,2.2vw,14px);color:var(--muted);letter-spacing:5px;font-weight:500;}
 
   /* LOADING */
   .loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:11px;letter-spacing:2px;}
@@ -55,7 +55,7 @@
   .form-group input,.form-group select{background:var(--bg);border:1px solid var(--card-border);border-radius:3px;padding:10px 12px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:300;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
   .form-group input:focus,.form-group select:focus{border-color:var(--gold);}
   .form-group select option{background:var(--bg2);}
-  .btn-add{margin-top:16px;padding:13px 24px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:3px;color:#1A1208;font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:12px;letter-spacing:5px;cursor:pointer;transition:opacity 0.2s,transform 0.1s;width:100%;}
+  .btn-add{margin-top:16px;padding:13px 24px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;letter-spacing:3px;cursor:pointer;transition:opacity 0.2s,transform 0.1s;width:100%;}
   .btn-add:hover{opacity:0.88;}
   .btn-add:active{transform:scale(0.98);}
   .btn-add:disabled{background:#444;color:#777;cursor:not-allowed;}
@@ -136,7 +136,7 @@
   .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
   .bar-name{width:66px;font-size:11px;font-weight:300;text-align:right;flex-shrink:0;color:var(--muted);font-family:'Noto Sans TC',sans-serif;}
   .bar-wrap{flex:1;height:22px;background:var(--bg);border-radius:2px;overflow:hidden;border:1px solid var(--card-border);}
-  .bar-fill{height:100%;border-radius:2px;display:flex;align-items:center;padding-left:8px;font-family:'Noto Sans TC',sans-serif;font-size:9px;font-weight:700;color:rgba(20,16,8,0.75);min-width:28px;}
+  .bar-fill{height:100%;border-radius:2px;display:flex;align-items:center;padding-left:8px;font-family:'Noto Sans TC',sans-serif;font-size:9px;font-weight:700;color:#1A1A1A;min-width:28px;}
   .bar-num{width:22px;font-family:'Noto Sans TC',sans-serif;font-size:16px;color:var(--muted);text-align:right;flex-shrink:0;}
 
   /* LOG CARDS */
@@ -318,13 +318,14 @@ function showMsg(type,text){
         </div>
         <div class="form-group"><label>說明（選填）</label><input type="text" id="f-note" placeholder="補充說明"></div>
       </div>
-      <button class="btn-add" onclick="addRecord()">確 認 新 增</button>
+      <button class="btn-add" onclick="addRecord()">＋ 確認新增</button>
       <div class="msg" id="formMsg"></div>
     </div>
   </div>
 
-  <div class="refresh-wrap">
+  <div class="refresh-wrap" style="display:flex;gap:8px;flex-wrap:wrap;">
     <button class="refresh-btn" onclick="loadRecords()">↻ &nbsp;重新整理</button>
+    <button class="refresh-btn" onclick="exportReport()" style="border-color:rgba(201,168,76,0.5);color:var(--gold);">📊 &nbsp;匯出統計報表</button>
   </div>
 
   <div class="tabs-wrap" id="tabsWrap"></div>
@@ -343,6 +344,147 @@ function showMsg(type,text){
 <script>
   document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
   loadRecords();
+</script>
+<script>
+function exportReport() {
+  if (!records.length) { alert('目前沒有資料可匯出'); return; }
+
+  // 統計所有月份資料
+  const TYPE_LABEL_PLAIN = {late:'50分未到',clean:'打掃未完成',video:'影片未完成',duty:'值日生未完成',photo:'照片未完成',other:'其他'};
+  const allTypes = ['late','clean','video','duty','photo','other'];
+
+  // 整理每人統計
+  const pm = {};
+  records.forEach(r => {
+    const n = String(r.name).trim();
+    if (!pm[n]) pm[n] = {name:n, total:0, byType:{}, byMonth:{}};
+    pm[n].total++;
+    pm[n].byType[r.type] = (pm[n].byType[r.type]||0)+1;
+    const mk = getMonthKey(r.date);
+    pm[n].byMonth[mk] = (pm[n].byMonth[mk]||0)+1;
+  });
+  const people = Object.values(pm).sort((a,b)=>b.total-a.total);
+  const months = getMonths();
+
+  // 整理類型總計
+  const typeTotal = {};
+  allTypes.forEach(t => { typeTotal[t] = records.filter(r=>r.type===t).length; });
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+
+  let html = `<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+<title>違規統計報表 ${dateStr}</title>
+<style>
+  body{font-family:'Noto Sans TC',sans-serif;background:#f8f6f0;color:#2a2a2a;padding:32px;max-width:1100px;margin:0 auto;}
+  h1{font-size:26px;font-weight:900;color:#2a2a2a;margin-bottom:4px;letter-spacing:2px;}
+  .subtitle{font-size:12px;color:#888;letter-spacing:2px;margin-bottom:32px;}
+  h2{font-size:14px;font-weight:700;color:#555;letter-spacing:3px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9A84C;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px;}
+  th{background:#2a2a2a;color:#C9A84C;padding:10px 12px;text-align:center;font-weight:500;letter-spacing:1px;font-size:11px;}
+  th.left{text-align:left;}
+  td{padding:9px 12px;border-bottom:1px solid #e8e4dc;text-align:center;}
+  td.left{text-align:left;font-weight:600;}
+  tr:nth-child(even) td{background:#f2ede4;}
+  tr:hover td{background:#ede8dc;}
+  .rank1 td{background:#fff8e8!important;font-weight:700;}
+  .total-row td{background:#2a2a2a!important;color:#C9A84C!important;font-weight:700;}
+  .num{font-weight:700;font-size:15px;}
+  .num.red{color:#C0392B;}
+  .num.orange{color:#CC7A3A;}
+  .num.gold{color:#C9A84C;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;}
+  .b-late{background:#fff0e0;color:#CC7A3A;}
+  .b-clean{background:#fffbe0;color:#9A7A30;}
+  .b-video{background:#e8f5ee;color:#3D7A58;}
+  .b-duty{background:#fde8e6;color:#C0392B;}
+  .b-photo{background:#e8f0f5;color:#3A6A7A;}
+  .b-other{background:#f0e8f5;color:#6A4A7A;}
+  .print-btn{background:#2a2a2a;color:#C9A84C;border:none;padding:10px 24px;font-size:13px;letter-spacing:2px;cursor:pointer;border-radius:3px;margin-right:8px;}
+  .print-btn:hover{background:#444;}
+  @media print{.no-print{display:none!important;}body{padding:16px;}h2{margin-top:20px;}}
+</style>
+</head><body>
+<div class="no-print" style="margin-bottom:24px;">
+  <button class="print-btn" onclick="window.print()">🖨️ 列印 / 存成 PDF</button>
+  <span style="font-size:11px;color:#888;letter-spacing:1px;">列印時選「另存為PDF」即可存檔</span>
+</div>
+<h1>違規統計報表</h1>
+<div class="subtitle">匯出日期：${dateStr} &nbsp;·&nbsp; 統計期間：${months[0]?monthLabel(months[0]):'—'} ~ ${months[months.length-1]?monthLabel(months[months.length-1]):'—'} &nbsp;·&nbsp; 總違規次數：${records.length} 筆</div>
+
+<h2>個人違規統計總覽</h2>
+<table>
+  <tr>
+    <th class="left">排名</th>
+    <th class="left">姓名</th>
+    <th>總計</th>
+    ${allTypes.map(t=>`<th>${TYPE_LABEL_PLAIN[t]}</th>`).join('')}
+    ${months.map(m=>`<th>${monthLabel(m)}</th>`).join('')}
+  </tr>`;
+
+  people.forEach((p,i) => {
+    html += `<tr class="${i===0?'rank1':''}">
+      <td>${i===0?'👑':i+1}</td>
+      <td class="left">${p.name}</td>
+      <td><span class="num ${p.total>=5?'red':p.total>=3?'orange':''}">${p.total}</span></td>
+      ${allTypes.map(t=>`<td>${p.byType[t]?`<span class="badge b-${t}">${p.byType[t]}</span>`:'-'}</td>`).join('')}
+      ${months.map(m=>`<td>${p.byMonth[m]||'-'}</td>`).join('')}
+    </tr>`;
+  });
+
+  // 總計列
+  html += `<tr class="total-row">
+    <td colspan="2" class="left">合計</td>
+    <td>${records.length}</td>
+    ${allTypes.map(t=>`<td>${typeTotal[t]||0}</td>`).join('')}
+    ${months.map(m=>`<td>${records.filter(r=>getMonthKey(r.date)===m).length}</td>`).join('')}
+  </tr>`;
+
+  html += `</table>
+
+<h2>違規類型分析</h2>
+<table>
+  <tr><th class="left">違規類型</th><th>總次數</th><th>佔比</th><th>最多違規者</th></tr>`;
+
+  allTypes.forEach(t => {
+    const cnt = typeTotal[t]||0;
+    if (!cnt) return;
+    const pct = Math.round(cnt/records.length*100);
+    const topPerson = people.filter(p=>p.byType[t]).sort((a,b)=>(b.byType[t]||0)-(a.byType[t]||0))[0];
+    html += `<tr>
+      <td class="left"><span class="badge b-${t}">${TYPE_LABEL_PLAIN[t]}</span></td>
+      <td><span class="num">${cnt}</span></td>
+      <td>${pct}%</td>
+      <td>${topPerson?`${topPerson.name}（${topPerson.byType[t]}次）`:'-'}</td>
+    </tr>`;
+  });
+
+  html += `</table>
+
+<h2>完整違規明細</h2>
+<table>
+  <tr><th>#</th><th>日期</th><th class="left">姓名</th><th>違規類型</th><th class="left">說明</th></tr>`;
+
+  const sorted = [...records].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  sorted.forEach((r,i) => {
+    html += `<tr>
+      <td style="color:#aaa;font-size:11px">${String(i+1).padStart(2,'0')}</td>
+      <td>${fmtDate(r.date)}</td>
+      <td class="left">${r.name}</td>
+      <td><span class="badge b-${r.type}">${TYPE_LABEL_PLAIN[r.type]||r.type}</span></td>
+      <td class="left" style="color:#666;font-size:12px">${r.note||''}</td>
+    </tr>`;
+  });
+
+  html += `</table>
+<div style="margin-top:40px;text-align:center;color:#aaa;font-size:10px;letter-spacing:2px;">VIOLATION MANAGEMENT SYSTEM &nbsp;·&nbsp; ${dateStr}</div>
+</body></html>`;
+
+  // 開新分頁顯示
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
 </script>
 </body>
 </html>
