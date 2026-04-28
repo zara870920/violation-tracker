@@ -202,6 +202,7 @@
 <div class="top-line"></div>
 
 <script>
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxySOMYP6umuBhhFEoQ3Uh3yItTyFAvc6CzYcE7ple8vk0ScDe2qd6OJ5gk6sWMoAC9/exec';
 const TYPE_LABEL = {late:'⏰ 50分未到',clean:'🧹 打掃未完成',video:'🎬 影片未完成',duty:'🔴 值日生未完成',photo:'📷 照片未完成',other:'⚠️ 其他'};
 const TYPE_CLASS  = {late:'tag-late',clean:'tag-clean',video:'tag-video',duty:'tag-duty',photo:'tag-photo',other:'tag-other'};
@@ -326,7 +327,10 @@ function showMsg(type,text){
   el.className=`msg ${type}`;el.textContent=text;el.style.display='block';
   setTimeout(()=>el.style.display='none',3000);
 }
+
 </script>
+
+
 
 <!-- HEADER -->
 <div class="header">
@@ -403,8 +407,9 @@ function showMsg(type,text){
         <div class="sch-info" id="schSummary" style="margin-top:10px;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn-copy" onclick="copySchedule()">📋 複製排班表</button>
-          <button class="btn-copy" onclick="downloadPDF()" style="border-color:rgba(201,168,76,0.6);color:#C9A84C;background:rgba(201,168,76,0.08);">⬇ 下載 PDF</button>
+          <button class="btn-copy" onclick="downloadXlsx()" style="border-color:rgba(201,168,76,0.6);color:#C9A84C;background:rgba(201,168,76,0.08);">⬇ 下載 Excel（含值日生）</button>
         </div>
+        <div class="sch-info" style="margin-top:6px;">下載後用 Excel 開啟，另存為 PDF 即可 📄</div>
       </div>
 
     </div>
@@ -622,8 +627,6 @@ function doExport() {
   w.document.close();
 }
 </script>
-
-
 <script>
 let schViolators = [];
 let schLeaveData = {};
@@ -685,6 +688,7 @@ async function handleSchFile(input) {
     });
   }
 
+  window._schOriginalFile = file;
   const reader = new FileReader();
   reader.onload = e => {
     try {
@@ -838,100 +842,263 @@ function copySchedule() {
     setTimeout(() => btn.textContent = '📋 複製排班表', 2000);
   });
 }
+!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>值日生違規統計</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="違規統計">
+<meta name="theme-color" content="#1A1A1A">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:#C9A84C; --gold-light:#E8C97A; --gold-dark:#9A7A30;
+    --gold-dim:#3A3020; --gold-border:rgba(201,168,76,0.35);
+    --bg:#1A1A1A; --bg2:#222222;
+    --card:#2D2D2D; --card-hover:#383838; --card-border:rgba(201,168,76,0.25);
+    --text:#F0EAD6; --muted:#9A8E78;
+    --red:#C0392B; --orange:#CC7A3A; --green:#3D7A58; --blue:#3A6A7A; --purple:#6A4A7A;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-weight:300;min-height:100vh;padding:0 0 80px;position:relative;overflow-x:hidden;}
 
-function downloadPDF() {
+  /* 背景浮水印 */
+  .bg-text{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-18deg);font-family:'Noto Sans TC',sans-serif;font-size:clamp(80px,20vw,200px);font-weight:700;color:rgba(201,168,76,0.06);white-space:nowrap;pointer-events:none;z-index:0;letter-spacing:0.1em;user-select:none;}
+
+  /* 頂部金線 */
+  .top-line{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold-light) 50%,var(--gold) 70%,transparent);z-index:100;}
+
+  .wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 16px;}
+
+  /* HEADER */
+  .header{text-align:center;padding:56px 16px 40px;position:relative;z-index:1;}
+  .h-main{font-family:'Noto Sans TC',sans-serif;font-size:clamp(44px,10vw,88px);font-weight:900;color:var(--gold);letter-spacing:0.18em;line-height:1;margin-bottom:6px;}
+  .h-sub{font-family:'Noto Sans TC',sans-serif;font-size:10px;letter-spacing:7px;color:var(--muted);margin-bottom:26px;font-weight:400;}
+  .h-divider{display:flex;align-items:center;gap:16px;justify-content:center;margin-bottom:14px;}
+  .h-divider::before,.h-divider::after{content:'';flex:1;max-width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-border));}
+  .h-divider::after{background:linear-gradient(270deg,transparent,var(--gold-border));}
+  .h-divider span{font-family:'Noto Sans TC',sans-serif;font-size:15px;color:var(--gold);letter-spacing:5px;font-weight:700;}
+  .h-title{font-family:'Noto Sans TC',sans-serif;font-size:clamp(12px,2.2vw,14px);color:var(--muted);letter-spacing:5px;font-weight:500;}
+
+  /* LOADING */
+  .loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:11px;letter-spacing:2px;}
+  .spinner{display:inline-block;width:20px;height:20px;border:1px solid var(--gold-border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:12px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ADD FORM */
+  .add-section{margin:0 auto 28px;background:var(--card);border:1px solid var(--card-border);border-radius:4px;overflow:hidden;}
+  .add-toggle{width:100%;padding:16px 20px;background:none;border:none;color:var(--gold);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:4px;transition:background 0.2s;}
+  .add-toggle:hover{background:var(--card-hover);}
+  .add-toggle .arrow{transition:transform 0.3s;font-size:10px;color:var(--muted);margin-left:auto;}
+  .add-toggle.open .arrow{transform:rotate(180deg);}
+  .add-body{display:none;padding:0 20px 20px;border-top:1px solid var(--card-border);}
+  .add-body.open{display:block;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+  @media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group label{font-size:9px;letter-spacing:3px;color:var(--muted);font-family:'Noto Sans TC',sans-serif;text-transform:uppercase;font-weight:300;}
+  .form-group input,.form-group select{background:var(--bg);border:1px solid var(--card-border);border-radius:3px;padding:10px 12px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:300;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--gold);}
+  .form-group select option{background:var(--bg2);}
+  .btn-add{margin-top:16px;padding:13px 24px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;letter-spacing:3px;cursor:pointer;transition:opacity 0.2s,transform 0.1s;width:100%;}
+  .btn-add:hover{opacity:0.88;}
+  .btn-add:active{transform:scale(0.98);}
+  .btn-add:disabled{background:#444;color:#777;cursor:not-allowed;}
+  .msg{display:none;margin-top:10px;font-size:11px;font-family:'Noto Sans TC',sans-serif;text-align:center;letter-spacing:1px;}
+  .msg.ok{color:var(--green);}
+  .msg.err{color:var(--red);}
+
+  /* REFRESH */
+  .refresh-wrap{margin-bottom:10px;}
+  .refresh-btn{background:none;border:1px solid var(--card-border);border-radius:3px;color:var(--muted);font-size:10px;padding:6px 14px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all 0.2s;letter-spacing:1px;}
+  .refresh-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+  /* TABS */
+  .tabs-wrap{margin:0 auto 22px;display:flex;gap:6px;flex-wrap:wrap;}
+  .tab-btn{padding:7px 20px;background:var(--bg2);border:1px solid var(--card-border);border-radius:3px;color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;white-space:nowrap;letter-spacing:3px;font-weight:300;}
+  .tab-btn:hover{border-color:var(--gold);color:var(--gold-light);}
+  .tab-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold-light);font-weight:500;}
+
+  /* CONTENT */
+  .content{margin:0 auto;display:grid;gap:22px;}
+
+  /* SECTION TITLE */
+  .stitle{font-family:'Noto Sans TC',sans-serif;font-size:10px;letter-spacing:5px;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:12px;font-weight:300;}
+  .stitle::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-border),transparent);}
+
+  /* SUMMARY */
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  @media(min-width:600px){.summary-grid{grid-template-columns:repeat(6,1fr);}}
+  .sc{background:var(--card);border:1px solid var(--card-border);border-radius:3px;padding:16px 8px;text-align:center;position:relative;overflow:hidden;transition:background 0.2s;}
+  .sc:hover{background:var(--card-hover);}
+  .sc::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;}
+  .sc.s-total::after{background:var(--gold);}
+  .sc.s-late::after{background:var(--orange);}
+  .sc.s-clean::after{background:var(--gold);}
+  .sc.s-video::after{background:var(--green);}
+  .sc.s-duty::after{background:var(--red);}
+  .sc.s-other::after{background:var(--purple);}
+  .sc .num{font-family:'Noto Sans TC',sans-serif;font-size:34px;font-weight:600;line-height:1;margin-bottom:5px;}
+  .sc.s-total .num{color:var(--gold);}
+  .sc.s-late .num{color:var(--orange);}
+  .sc.s-clean .num{color:var(--gold-light);}
+  .sc.s-video .num{color:var(--green);}
+  .sc.s-duty .num{color:var(--red);}
+  .sc.s-other .num{color:var(--purple);}
+  .sc .desc{font-size:9px;color:var(--muted);letter-spacing:2px;font-family:'Noto Sans TC',sans-serif;}
+
+  /* LEADERBOARD */
+  .leaderboard{display:flex;flex-direction:column;gap:6px;}
+  .pr{background:var(--card);border:1px solid var(--card-border);border-radius:3px;padding:13px 16px;display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:12px;transition:background 0.2s;}
+  .pr:hover{background:var(--card-hover);}
+  .pr.r1{border-color:var(--gold);border-left:3px solid var(--gold);}
+  .pr.r2{border-left:3px solid var(--orange);}
+  .pr.r3{border-left:3px solid rgba(201,168,76,0.5);}
+  .rn{font-family:'Noto Sans TC',sans-serif;font-size:20px;color:var(--muted);text-align:center;font-weight:600;}
+  .r1 .rn{color:var(--gold);}
+  .r2 .rn{color:var(--orange);}
+  .r3 .rn{color:var(--gold-light);}
+  .pi{display:flex;flex-direction:column;gap:6px;}
+  .pname{font-weight:500;font-size:15px;color:var(--text);letter-spacing:2px;font-family:'Noto Sans TC',sans-serif;}
+  .vtags{display:flex;flex-wrap:wrap;gap:4px;}
+  .tag{font-size:9px;font-weight:400;padding:2px 8px;border-radius:2px;font-family:'Noto Sans TC',sans-serif;letter-spacing:0.5px;}
+  .tag-late{background:rgba(204,122,58,0.15);color:var(--orange);border:1px solid rgba(204,122,58,0.3);}
+  .tag-clean{background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.3);}
+  .tag-video{background:rgba(61,122,88,0.15);color:var(--green);border:1px solid rgba(61,122,88,0.3);}
+  .tag-duty{background:rgba(192,57,43,0.15);color:var(--red);border:1px solid rgba(192,57,43,0.3);}
+  .tag-photo{background:rgba(58,106,122,0.15);color:var(--blue);border:1px solid rgba(58,106,122,0.3);}
+  .tag-other{background:rgba(106,74,122,0.15);color:var(--purple);border:1px solid rgba(106,74,122,0.3);}
+  .pc{text-align:right;}
+  .cbig{font-family:'Noto Sans TC',sans-serif;font-size:30px;font-weight:600;line-height:1;}
+  .r1 .cbig{color:var(--gold);}
+  .r2 .cbig{color:var(--orange);}
+  .r3 .cbig{color:var(--gold-light);}
+  .r4 .cbig,.r5 .cbig,.r6 .cbig,.r7 .cbig,.r8 .cbig,.r9 .cbig{color:var(--muted);}
+  .clbl{font-size:8px;color:var(--muted);letter-spacing:2px;font-family:'Noto Sans TC',sans-serif;}
+  .badge-warn{display:inline-block;background:rgba(192,57,43,0.18);color:var(--red);border:1px solid rgba(192,57,43,0.35);border-radius:2px;padding:1px 6px;font-size:8px;font-family:'Noto Sans TC',sans-serif;margin-left:6px;vertical-align:middle;letter-spacing:1px;}
+
+  /* BAR */
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bar-name{width:66px;font-size:11px;font-weight:300;text-align:right;flex-shrink:0;color:var(--muted);font-family:'Noto Sans TC',sans-serif;}
+  .bar-wrap{flex:1;height:22px;background:var(--bg);border-radius:2px;overflow:hidden;border:1px solid var(--card-border);}
+  .bar-fill{height:100%;border-radius:2px;display:flex;align-items:center;padding-left:8px;font-family:'Noto Sans TC',sans-serif;font-size:9px;font-weight:700;color:#1A1A1A;min-width:28px;}
+  .bar-num{width:22px;font-family:'Noto Sans TC',sans-serif;font-size:16px;color:var(--muted);text-align:right;flex-shrink:0;}
+
+  /* LOG CARDS */
+  .log-cards{display:flex;flex-direction:column;gap:5px;}
+  .log-card{background:var(--card);border:1px solid var(--card-border);border-radius:3px;padding:11px 16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;transition:background 0.2s;}
+  .log-card:hover{background:var(--card-hover);}
+  .log-date{font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--gold);white-space:nowrap;letter-spacing:1px;font-weight:300;}
+  .log-info{display:flex;flex-direction:column;gap:2px;}
+  .log-name{font-weight:500;font-size:13px;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;}
+  .log-note{font-size:10px;color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-weight:300;}
+  .del-btn{background:none;border:1px solid rgba(192,57,43,0.25);border-radius:2px;color:rgba(192,57,43,0.5);font-size:10px;padding:4px 9px;cursor:pointer;transition:all 0.2s;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;}
+  .del-btn:hover{border-color:var(--red);color:var(--red);}
+
+  .empty-state{text-align:center;padding:40px;color:var(--muted);font-size:11px;font-family:'Noto Sans TC',sans-serif;letter-spacing:4px;font-weight:300;}
+  .footer{text-align:center;margin-top:52px;color:var(--muted);font-size:9px;font-family:'Noto Sans TC',sans-serif;letter-spacing:3px;line-height:2.5;font-weight:300;}
+  .gold-line{width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto;}
+
+
+  /* SCHEDULER */
+  .sch-section{margin:0 auto 28px;background:#2D2D2D;border:1px solid rgba(201,168,76,0.25);border-radius:4px;overflow:hidden;}
+  .sch-toggle{width:100%;padding:16px 20px;background:none;border:none;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:4px;transition:background 0.2s;}
+  .sch-toggle:hover{background:#383838;}
+  .sch-toggle .arrow{transition:transform 0.3s;font-size:10px;color:#9A8E78;margin-left:auto;}
+  .sch-toggle.open .arrow{transform:rotate(180deg);}
+  .sch-body{display:none;padding:0 20px 24px;border-top:1px solid rgba(201,168,76,0.2);}
+  .sch-body.open{display:block;}
+  .sch-row{margin-top:18px;}
+  .sch-label{font-size:9px;letter-spacing:3px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .sch-label::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.18);}
+  .sch-select{background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px 12px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;outline:none;-webkit-appearance:none;width:100%;}
+  .sch-select:focus{border-color:#C9A84C;}
+  .sch-info{font-size:10px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px;margin-top:6px;line-height:1.8;}
+  .sch-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .sch-chip{padding:4px 12px;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:20px;font-size:11px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;}
+  .sch-chip .cnt{font-size:9px;color:#C9A84C;margin-left:4px;}
+  .upload-box{border:1px dashed rgba(201,168,76,0.3);border-radius:4px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;background:#1A1A1A;position:relative;}
+  .upload-box:hover{border-color:#C9A84C;}
+  .upload-box input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-box p{font-size:12px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;pointer-events:none;margin-top:4px;}
+  .upload-box .ico{font-size:22px;pointer-events:none;}
+  .btn-gen{margin-top:18px;padding:13px 24px;background:linear-gradient(135deg,#C9A84C,#9A7A30);border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;letter-spacing:2px;cursor:pointer;transition:opacity 0.2s;width:100%;}
+  .btn-gen:hover{opacity:0.88;}
+  .btn-gen:disabled{background:#444;color:#777;cursor:not-allowed;}
+  .sch-result{margin-top:18px;display:none;}
+  .sch-result-title{font-size:9px;letter-spacing:3px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;margin-bottom:10px;}
+  .sch-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .sch-table th{background:#1A1A1A;color:#C9A84C;padding:8px 12px;text-align:left;font-family:'Noto Sans TC',sans-serif;font-weight:300;letter-spacing:2px;font-size:10px;}
+  .sch-table td{padding:9px 12px;border-bottom:1px solid rgba(201,168,76,0.1);color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;}
+  .sch-table tr:hover td{background:#383838;}
+  .btn-copy{margin-top:10px;padding:9px 18px;background:none;border:1px solid rgba(201,168,76,0.35);border-radius:50px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
+</script>
+
+<script>
+function downloadXlsx() {
   const rows = document.querySelectorAll('#schBody2 tr');
   if (!rows.length) { alert('請先產生排班表'); return; }
+  if (!window._schOriginalFile) { alert('請先上傳休假表 xlsx'); return; }
 
-  // 取得排班月份
-  const sheetM = (window._schTargetMonth || '').match(/(\d+)/);
-  const monthStr = sheetM ? sheetM[1] + '月' : '';
-  const year = new Date().getFullYear();
-
-  // 整理資料
-  const data = [...rows].map(r => {
+  const assignments = {};
+  [...rows].forEach(r => {
     const cells = r.querySelectorAll('td');
-    return { date: cells[0].textContent.trim(), person: cells[1].textContent.trim() };
+    const dateText = cells[0].textContent.trim();
+    const person = cells[1].textContent.trim();
+    const parts = dateText.split('/');
+    if (parts.length >= 2) {
+      const day = parseInt(parts[parts.length - 1]);
+      assignments[day] = person;
+    }
   });
 
-  // 統計每人天數
-  const countMap = {};
-  data.forEach(d => { countMap[d.person] = (countMap[d.person]||0)+1; });
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type: 'array'});
+      const targetSheet = window._schTargetMonth || wb.SheetNames[0];
+      const ws = wb.Sheets[targetSheet];
+      if (!ws) { alert('找不到對應工作表'); return; }
 
-  const now = new Date();
-  const printDate = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+      const data = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+      let headerIdx = -1;
+      for (let i = 0; i < Math.min(data.length, 5); i++) {
+        if (data[i].filter(c => typeof c === 'string' && c.trim().length > 0).length > 3) {
+          headerIdx = i; break;
+        }
+      }
+      if (headerIdx < 0) { alert('找不到標題列'); return; }
 
-  const html = `<!DOCTYPE html><html lang="zh-TW"><head>
-<meta charset="UTF-8">
-<title>${year}年${monthStr}值日生排班表</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Noto Sans TC',sans-serif;background:#fff;color:#1a1a1a;padding:40px;}
-  .header{text-align:center;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #C9A84C;}
-  .header .en{font-size:11px;letter-spacing:6px;color:#9A8E78;margin-bottom:6px;}
-  .header h1{font-size:28px;font-weight:900;color:#1a1a1a;letter-spacing:4px;margin-bottom:4px;}
-  .header .meta{font-size:12px;color:#9A8E78;letter-spacing:2px;}
-  .gold-line{width:60px;height:2px;background:#C9A84C;margin:10px auto;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:32px;}
-  .day-card{border:1px solid #e8e4dc;border-radius:4px;padding:12px 14px;background:#faf8f4;}
-  .day-card .date{font-size:10px;color:#9A8E78;letter-spacing:1px;margin-bottom:4px;}
-  .day-card .person{font-size:15px;font-weight:700;color:#1a1a1a;letter-spacing:1px;}
-  .day-card.gold{border-color:#C9A84C;background:#fffcf0;}
-  .day-card.gold .person{color:#9A7A30;}
-  h2{font-size:11px;letter-spacing:4px;color:#C9A84C;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #e8e4dc;}
-  .summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;}
-  .s-chip{background:#faf8f4;border:1px solid #e8e4dc;border-radius:3px;padding:6px 14px;font-size:12px;}
-  .s-chip .name{font-weight:700;margin-right:6px;}
-  .s-chip .cnt{color:#C9A84C;font-size:11px;}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{background:#1a1a1a;color:#C9A84C;padding:9px 14px;text-align:left;font-weight:400;letter-spacing:2px;font-size:10px;}
-  td{padding:9px 14px;border-bottom:1px solid #e8e4dc;}
-  tr:nth-child(even) td{background:#faf8f4;}
-  .footer{text-align:center;margin-top:40px;color:#ccc;font-size:9px;letter-spacing:3px;}
-  @media print{body{padding:20px;}button{display:none!important;}}
-</style>
-</head><body>
-<div style="text-align:right;margin-bottom:20px;">
-  <button onclick="window.print()" style="background:#1a1a1a;color:#C9A84C;border:none;padding:10px 20px;font-family:'Noto Sans TC',sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:3px;">🖨️ 列印 / 存成 PDF</button>
-</div>
+      const lastColIdx = data[headerIdx].length;
+      const headerCell = XLSX.utils.encode_cell({r: headerIdx, c: lastColIdx});
+      ws[headerCell] = {v: '值日生', t: 's'};
 
-<div class="header">
-  <div class="en">VIOLATION DUTY ROSTER</div>
-  <h1>${year}年${monthStr}值日生排班表</h1>
-  <div class="gold-line"></div>
-  <div class="meta">共 ${data.length} 天需排班 &nbsp;·&nbsp; 製表日期：${printDate}</div>
-</div>
+      for (let r = headerIdx + 1; r < data.length; r++) {
+        const dateCell = String(data[r][0] || '').trim();
+        const dayMatch = dateCell.match(/^(\d+)/);
+        if (!dayMatch) continue;
+        const day = parseInt(dayMatch[1]);
+        const cellAddr = XLSX.utils.encode_cell({r: r, c: lastColIdx});
+        ws[cellAddr] = {v: assignments[day] || '', t: 's'};
+      }
 
-<h2>排班總覽</h2>
-<div class="summary">
-${Object.entries(countMap).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>`
-  <div class="s-chip"><span class="name">${name}</span><span class="cnt">${cnt} 天</span></div>`).join('')}
-</div>
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+      if (range.e.c < lastColIdx) range.e.c = lastColIdx;
+      ws['!ref'] = XLSX.utils.encode_range(range);
 
-<h2>日期明細</h2>
-<div class="grid">
-${data.map((d,i)=>`
-  <div class="day-card ${i%3===0?'gold':''}">
-    <div class="date">${year}/${monthStr.replace('月','')}/${d.date.replace(/(\d+)\/(\d+)/,'$2')}</div>
-    <div class="person">${d.person}</div>
-  </div>`).join('')}
-</div>
-
-<h2>完整列表</h2>
-<table>
-  <tr><th>#</th><th>日期</th><th>值日生</th></tr>
-  ${data.map((d,i)=>`<tr><td style="color:#aaa;font-size:10px">${String(i+1).padStart(2,'0')}</td><td>${d.date}</td><td style="font-weight:600">${d.person}</td></tr>`).join('')}
-</table>
-
-<div class="footer">VIOLATION MANAGEMENT SYSTEM &nbsp;·&nbsp; ${printDate}</div>
-</body></html>`;
-
-  const w = window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  // 自動觸發列印對話框
-  setTimeout(() => w.print(), 800);
+      const sheetM = targetSheet.match(/(\d+)/);
+      const monthStr = sheetM ? sheetM[1] + '月' : targetSheet;
+      XLSX.writeFile(wb, monthStr + '值日生排班表.xlsx');
+    } catch(err) {
+      alert('下載失敗：' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(window._schOriginalFile);
 }
 </script>
 
