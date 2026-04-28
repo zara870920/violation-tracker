@@ -373,7 +373,7 @@ function showMsg(type,text){
     <div class="sch-body" id="schBody">
 
       <div class="sch-row">
-        <div class="sch-label">選擇違規月份</div>
+        <div class="sch-label">STEP 1　選擇違規月份（系統自動抓違規者）</div>
         <select class="sch-select" id="schMonth" onchange="onSchMonthChange()">
           <option value="">-- 選擇月份 --</option>
         </select>
@@ -382,7 +382,7 @@ function showMsg(type,text){
       </div>
 
       <div class="sch-row">
-        <div class="sch-label">上傳下個月休假表（xlsx）</div>
+        <div class="sch-label">STEP 2　上傳下個月休假表（xlsx，系統自動對應下個月）</div>
         <div class="upload-box">
           <input type="file" id="schFile" accept=".xlsx,.xls" onchange="handleSchFile(this)">
           <div class="ico">📂</div>
@@ -391,6 +391,7 @@ function showMsg(type,text){
         <div class="sch-info" id="schFileInfo"></div>
       </div>
 
+      <div class="sch-info" id="schPlanInfo" style="margin-bottom:4px;"></div>
       <button class="btn-gen" id="btnGen" onclick="runSchedule()" disabled>✨ 隨機產生排班表</button>
 
       <div class="sch-result" id="schResult">
@@ -400,7 +401,10 @@ function showMsg(type,text){
           <tbody id="schBody2"></tbody>
         </table>
         <div class="sch-info" id="schSummary" style="margin-top:10px;"></div>
-        <button class="btn-copy" onclick="copySchedule()">📋 複製排班表</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn-copy" onclick="copySchedule()">📋 複製排班表</button>
+          <button class="btn-copy" onclick="downloadPDF()" style="border-color:rgba(201,168,76,0.6);color:#C9A84C;background:rgba(201,168,76,0.08);">⬇ 下載 PDF</button>
+        </div>
       </div>
 
     </div>
@@ -628,15 +632,26 @@ let schTargetMonth = null;
 function toggleSch(btn) {
   btn.classList.toggle('open');
   document.getElementById('schBody').classList.toggle('open');
-  if (btn.classList.contains('open')) initSchMonths();
+  // 每次展開都重新載入，確保資料是最新的
+  if (btn.classList.contains('open')) {
+    setTimeout(initSchMonths, 100);
+  }
 }
 
 function initSchMonths() {
+  if (!records || !records.length) {
+    document.getElementById('schInfo').textContent = '資料載入中，請稍後再開啟...';
+    return;
+  }
   const months = getMonths();
   const sel = document.getElementById('schMonth');
+  const prevVal = sel.value;
   sel.innerHTML = '<option value="">-- 選擇月份 --</option>' +
     months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
-  if (months.length) { sel.value = months[months.length-1]; onSchMonthChange(); }
+  // 保留上次選擇，或預設最後一個月
+  if (prevVal && months.includes(prevVal)) sel.value = prevVal;
+  else if (months.length) sel.value = months[months.length-1];
+  if (sel.value) onSchMonthChange();
 }
 
 function onSchMonthChange() {
@@ -704,9 +719,24 @@ async function handleSchFile(input) {
 
       schLeaveData = allSheets;
 
-      // 找最適合的工作表（取第一個，或月份最大的）
-      // 預設用第一個有資料的工作表
-      schTargetMonth = wb.SheetNames.find(sn => allSheets[sn] && allSheets[sn].names.length > 0) || wb.SheetNames[0];
+      // 找對應下個月的工作表
+      // 違規月份的下一個月才是要排班的月份
+      const violationMonth = document.getElementById('schMonth').value;
+      const vMonthNum = violationMonth ? parseInt(violationMonth.split('-')[1]) : null;
+      const nextMonthNum = vMonthNum ? (vMonthNum % 12) + 1 : null;
+
+      // 從工作表名稱找下個月
+      let bestSheet = null;
+      if (nextMonthNum) {
+        bestSheet = wb.SheetNames.find(sn => {
+          const m = sn.match(/(\d+)/);
+          return m && parseInt(m[1]) === nextMonthNum;
+        });
+      }
+      // 若找不到，用第一個有資料的工作表
+      if (!bestSheet) bestSheet = wb.SheetNames.find(sn => allSheets[sn] && allSheets[sn].names.length > 0) || wb.SheetNames[0];
+      schTargetMonth = bestSheet;
+      window._schTargetMonth = bestSheet;
 
       const info = allSheets[schTargetMonth];
       document.getElementById('schUploadText').textContent = '✓ ' + file.name;
@@ -723,7 +753,18 @@ async function handleSchFile(input) {
 }
 
 function checkBtnGen() {
-  document.getElementById('btnGen').disabled = !(schViolators.length && schTargetMonth);
+  const ready = schViolators.length > 0 && schTargetMonth;
+  document.getElementById('btnGen').disabled = !ready;
+  if (ready) {
+    const vMonth = document.getElementById('schMonth').value;
+    const vMonthStr = vMonth ? monthLabel(vMonth) : '';
+    const sheetM = schTargetMonth ? schTargetMonth.match(/(\d+)/) : null;
+    const schedStr = sheetM ? sheetM[1] + '月' : schTargetMonth;
+    document.getElementById('schPlanInfo').textContent =
+      `📋 將根據「${vMonthStr}違規名單」，排出「${schedStr}份值日生班表」`;
+  } else {
+    document.getElementById('schPlanInfo').textContent = '';
+  }
 }
 
 function runSchedule() {
@@ -734,7 +775,7 @@ function runSchedule() {
 
   const leaves = sheetInfo.leaves; // {姓名: [休假日]}
 
-  // 判斷是哪個月份（從休假表工作表名稱）
+  // 排班月份 = 從休假表工作表名稱抓，這才是要排的月份
   const sheetName = schTargetMonth;
   const mMatch = sheetName.match(/(\d+)/);
   const targetMonthNum = mMatch ? parseInt(mMatch[1]) : new Date().getMonth() + 2;
@@ -796,6 +837,101 @@ function copySchedule() {
     btn.textContent = '✓ 已複製！';
     setTimeout(() => btn.textContent = '📋 複製排班表', 2000);
   });
+}
+
+function downloadPDF() {
+  const rows = document.querySelectorAll('#schBody2 tr');
+  if (!rows.length) { alert('請先產生排班表'); return; }
+
+  // 取得排班月份
+  const sheetM = (window._schTargetMonth || '').match(/(\d+)/);
+  const monthStr = sheetM ? sheetM[1] + '月' : '';
+  const year = new Date().getFullYear();
+
+  // 整理資料
+  const data = [...rows].map(r => {
+    const cells = r.querySelectorAll('td');
+    return { date: cells[0].textContent.trim(), person: cells[1].textContent.trim() };
+  });
+
+  // 統計每人天數
+  const countMap = {};
+  data.forEach(d => { countMap[d.person] = (countMap[d.person]||0)+1; });
+
+  const now = new Date();
+  const printDate = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+
+  const html = `<!DOCTYPE html><html lang="zh-TW"><head>
+<meta charset="UTF-8">
+<title>${year}年${monthStr}值日生排班表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans TC',sans-serif;background:#fff;color:#1a1a1a;padding:40px;}
+  .header{text-align:center;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #C9A84C;}
+  .header .en{font-size:11px;letter-spacing:6px;color:#9A8E78;margin-bottom:6px;}
+  .header h1{font-size:28px;font-weight:900;color:#1a1a1a;letter-spacing:4px;margin-bottom:4px;}
+  .header .meta{font-size:12px;color:#9A8E78;letter-spacing:2px;}
+  .gold-line{width:60px;height:2px;background:#C9A84C;margin:10px auto;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:32px;}
+  .day-card{border:1px solid #e8e4dc;border-radius:4px;padding:12px 14px;background:#faf8f4;}
+  .day-card .date{font-size:10px;color:#9A8E78;letter-spacing:1px;margin-bottom:4px;}
+  .day-card .person{font-size:15px;font-weight:700;color:#1a1a1a;letter-spacing:1px;}
+  .day-card.gold{border-color:#C9A84C;background:#fffcf0;}
+  .day-card.gold .person{color:#9A7A30;}
+  h2{font-size:11px;letter-spacing:4px;color:#C9A84C;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #e8e4dc;}
+  .summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;}
+  .s-chip{background:#faf8f4;border:1px solid #e8e4dc;border-radius:3px;padding:6px 14px;font-size:12px;}
+  .s-chip .name{font-weight:700;margin-right:6px;}
+  .s-chip .cnt{color:#C9A84C;font-size:11px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:#1a1a1a;color:#C9A84C;padding:9px 14px;text-align:left;font-weight:400;letter-spacing:2px;font-size:10px;}
+  td{padding:9px 14px;border-bottom:1px solid #e8e4dc;}
+  tr:nth-child(even) td{background:#faf8f4;}
+  .footer{text-align:center;margin-top:40px;color:#ccc;font-size:9px;letter-spacing:3px;}
+  @media print{body{padding:20px;}button{display:none!important;}}
+</style>
+</head><body>
+<div style="text-align:right;margin-bottom:20px;">
+  <button onclick="window.print()" style="background:#1a1a1a;color:#C9A84C;border:none;padding:10px 20px;font-family:'Noto Sans TC',sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:3px;">🖨️ 列印 / 存成 PDF</button>
+</div>
+
+<div class="header">
+  <div class="en">VIOLATION DUTY ROSTER</div>
+  <h1>${year}年${monthStr}值日生排班表</h1>
+  <div class="gold-line"></div>
+  <div class="meta">共 ${data.length} 天需排班 &nbsp;·&nbsp; 製表日期：${printDate}</div>
+</div>
+
+<h2>排班總覽</h2>
+<div class="summary">
+${Object.entries(countMap).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>`
+  <div class="s-chip"><span class="name">${name}</span><span class="cnt">${cnt} 天</span></div>`).join('')}
+</div>
+
+<h2>日期明細</h2>
+<div class="grid">
+${data.map((d,i)=>`
+  <div class="day-card ${i%3===0?'gold':''}">
+    <div class="date">${year}/${monthStr.replace('月','')}/${d.date.replace(/(\d+)\/(\d+)/,'$2')}</div>
+    <div class="person">${d.person}</div>
+  </div>`).join('')}
+</div>
+
+<h2>完整列表</h2>
+<table>
+  <tr><th>#</th><th>日期</th><th>值日生</th></tr>
+  ${data.map((d,i)=>`<tr><td style="color:#aaa;font-size:10px">${String(i+1).padStart(2,'0')}</td><td>${d.date}</td><td style="font-weight:600">${d.person}</td></tr>`).join('')}
+</table>
+
+<div class="footer">VIOLATION MANAGEMENT SYSTEM &nbsp;·&nbsp; ${printDate}</div>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  // 自動觸發列印對話框
+  setTimeout(() => w.print(), 800);
 }
 </script>
 
