@@ -160,47 +160,40 @@
   .footer{text-align:center;margin-top:52px;color:var(--muted);font-size:9px;font-family:'Noto Sans TC',sans-serif;letter-spacing:3px;line-height:2.5;font-weight:300;}
   .gold-line{width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto;}
 
+
   /* SCHEDULER */
-  .scheduler-section{margin:0 auto 28px;background:#2D2D2D;border:1px solid rgba(201,168,76,0.25);border-radius:4px;overflow:hidden;}
-  .scheduler-toggle{width:100%;padding:16px 20px;background:none;border:none;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:4px;transition:background 0.2s;}
-  .scheduler-toggle:hover{background:#383838;}
-  .scheduler-toggle .arrow{transition:transform 0.3s;font-size:10px;color:#9A8E78;margin-left:auto;}
-  .scheduler-toggle.open .arrow{transform:rotate(180deg);}
-  .scheduler-body{display:none;padding:0 20px 24px;border-top:1px solid rgba(201,168,76,0.2);}
-  .scheduler-body.open{display:block;}
-  .sch-step{margin-top:20px;}
-  .sch-step-title{font-size:9px;letter-spacing:3px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-  .sch-step-title::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.2);}
-  .upload-area{border:1px dashed rgba(201,168,76,0.3);border-radius:4px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:#1A1A1A;position:relative;}
-  .upload-area:hover{border-color:#C9A84C;background:#222;}
-  .upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-  .upload-area p{font-size:12px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px;pointer-events:none;}
-  .upload-area .upload-icon{font-size:24px;margin-bottom:6px;pointer-events:none;}
-  .violators-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
-  .violator-chip{padding:4px 12px;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:20px;font-size:11px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;display:flex;align-items:center;gap:6px;}
-  .violator-chip .vcount{font-size:9px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;}
-  .violator-chip.excluded{opacity:0.4;text-decoration:line-through;}
-  .date-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px;}
-  .date-cell{padding:8px 4px;text-align:center;font-size:11px;border:1px solid rgba(201,168,76,0.15);border-radius:3px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all 0.2s;background:#1A1A1A;color:#9A8E78;}
-  .date-cell:hover{border-color:#C9A84C;color:#F0EAD6;}
-  .date-cell.selected{background:rgba(201,168,76,0.2);border-color:#C9A84C;color:#C9A84C;font-weight:700;}
-  .date-cell.holiday{background:#111;color:#555;cursor:default;text-decoration:line-through;}
-  .date-cell.disabled{opacity:0.3;cursor:default;}
-  .btn-generate{margin-top:16px;padding:13px 24px;background:linear-gradient(135deg,#C9A84C,#9A7A30);border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;letter-spacing:2px;cursor:pointer;transition:opacity 0.2s;width:100%;}
-  .btn-generate:hover{opacity:0.88;}
-  .btn-generate:disabled{background:#444;color:#777;cursor:not-allowed;}
-  .schedule-result{margin-top:16px;display:none;}
-  .schedule-result-title{font-size:9px;letter-spacing:3px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;margin-bottom:10px;}
-  .schedule-table{width:100%;border-collapse:collapse;font-size:12px;}
-  .schedule-table th{background:#1A1A1A;color:#C9A84C;padding:8px 12px;text-align:left;font-family:'Noto Sans TC',sans-serif;font-weight:300;letter-spacing:2px;font-size:10px;}
-  .schedule-table td{padding:9px 12px;border-bottom:1px solid rgba(201,168,76,0.1);color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;}
-  .schedule-table tr:hover td{background:#383838;}
-  .btn-copy-schedule{margin-top:10px;padding:9px 18px;background:none;border:1px solid rgba(201,168,76,0.35);border-radius:50px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
-  .btn-copy-schedule:hover{background:rgba(201,168,76,0.1);}
-  .month-select-wrap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .sch-select{background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:8px 12px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none;-webkit-appearance:none;}
+  .sch-section{margin:0 auto 28px;background:#2D2D2D;border:1px solid rgba(201,168,76,0.25);border-radius:4px;overflow:hidden;}
+  .sch-toggle{width:100%;padding:16px 20px;background:none;border:none;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:4px;transition:background 0.2s;}
+  .sch-toggle:hover{background:#383838;}
+  .sch-toggle .arrow{transition:transform 0.3s;font-size:10px;color:#9A8E78;margin-left:auto;}
+  .sch-toggle.open .arrow{transform:rotate(180deg);}
+  .sch-body{display:none;padding:0 20px 24px;border-top:1px solid rgba(201,168,76,0.2);}
+  .sch-body.open{display:block;}
+  .sch-row{margin-top:18px;}
+  .sch-label{font-size:9px;letter-spacing:3px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .sch-label::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.18);}
+  .sch-select{background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px 12px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;outline:none;-webkit-appearance:none;width:100%;}
   .sch-select:focus{border-color:#C9A84C;}
-  .sch-info{font-size:10px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px;margin-top:6px;}
+  .sch-info{font-size:10px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;letter-spacing:1px;margin-top:6px;line-height:1.8;}
+  .sch-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .sch-chip{padding:4px 12px;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:20px;font-size:11px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;}
+  .sch-chip .cnt{font-size:9px;color:#C9A84C;margin-left:4px;}
+  .upload-box{border:1px dashed rgba(201,168,76,0.3);border-radius:4px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;background:#1A1A1A;position:relative;}
+  .upload-box:hover{border-color:#C9A84C;}
+  .upload-box input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-box p{font-size:12px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;pointer-events:none;margin-top:4px;}
+  .upload-box .ico{font-size:22px;pointer-events:none;}
+  .btn-gen{margin-top:18px;padding:13px 24px;background:linear-gradient(135deg,#C9A84C,#9A7A30);border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;letter-spacing:2px;cursor:pointer;transition:opacity 0.2s;width:100%;}
+  .btn-gen:hover{opacity:0.88;}
+  .btn-gen:disabled{background:#444;color:#777;cursor:not-allowed;}
+  .sch-result{margin-top:18px;display:none;}
+  .sch-result-title{font-size:9px;letter-spacing:3px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;margin-bottom:10px;}
+  .sch-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .sch-table th{background:#1A1A1A;color:#C9A84C;padding:8px 12px;text-align:left;font-family:'Noto Sans TC',sans-serif;font-weight:300;letter-spacing:2px;font-size:10px;}
+  .sch-table td{padding:9px 12px;border-bottom:1px solid rgba(201,168,76,0.1);color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;}
+  .sch-table tr:hover td{background:#383838;}
+  .btn-copy{margin-top:10px;padding:9px 18px;background:none;border:1px solid rgba(201,168,76,0.35);border-radius:50px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
+  .btn-copy:hover{background:rgba(201,168,76,0.1);}
 </style>
 </head>
 <body>
@@ -372,54 +365,42 @@ function showMsg(type,text){
   </div>
 
   <!-- SCHEDULER -->
-  <div class="scheduler-section">
-    <button class="scheduler-toggle" onclick="toggleScheduler(this)">
+  <div class="sch-section">
+    <button class="sch-toggle" onclick="toggleSch(this)">
       📅 &nbsp;值日生排班產生器
       <span class="arrow">▼</span>
     </button>
-    <div class="scheduler-body" id="schedulerBody">
+    <div class="sch-body" id="schBody">
 
-      <!-- STEP 1: 選擇月份 -->
-      <div class="sch-step">
-        <div class="sch-step-title">STEP 1　選擇要排班的月份</div>
-        <div class="month-select-wrap">
-          <select class="sch-select" id="schedMonth" onchange="onMonthChange()">
-          </select>
-          <span class="sch-info" id="violatorInfo">請先選擇月份</span>
+      <div class="sch-row">
+        <div class="sch-label">選擇違規月份</div>
+        <select class="sch-select" id="schMonth" onchange="onSchMonthChange()">
+          <option value="">-- 選擇月份 --</option>
+        </select>
+        <div class="sch-info" id="schInfo">選擇月份後，系統自動列出違規人員</div>
+        <div class="sch-chips" id="schChips"></div>
+      </div>
+
+      <div class="sch-row">
+        <div class="sch-label">上傳下個月休假表（xlsx）</div>
+        <div class="upload-box">
+          <input type="file" id="schFile" accept=".xlsx,.xls" onchange="handleSchFile(this)">
+          <div class="ico">📂</div>
+          <p id="schUploadText">點擊上傳休假表</p>
         </div>
-        <div class="sch-step-title" style="margin-top:14px;">違規人員名單（點擊可排除）</div>
-        <div class="violators-list" id="violatorsList"><span style="font-size:11px;color:#555;font-family:'Noto Sans TC',sans-serif;">選擇月份後自動載入</span></div>
+        <div class="sch-info" id="schFileInfo"></div>
       </div>
 
-      <!-- STEP 2: 上傳休假表 -->
-      <div class="sch-step">
-        <div class="sch-step-title">STEP 2　上傳休假表（xlsx）</div>
-        <div class="upload-area" id="uploadArea">
-          <input type="file" id="xlsxFile" accept=".xlsx,.xls" onchange="handleXlsx(this)">
-          <div class="upload-icon">📂</div>
-          <p id="uploadText">點擊或拖曳上傳休假表 xlsx</p>
-        </div>
-        <div class="sch-info" id="xlsxInfo"></div>
-      </div>
+      <button class="btn-gen" id="btnGen" onclick="runSchedule()" disabled>✨ 隨機產生排班表</button>
 
-      <!-- STEP 3: 選擇排班日期 -->
-      <div class="sch-step">
-        <div class="sch-step-title">STEP 3　選擇需要值日生的日期（可多選）</div>
-        <div class="sch-info" style="margin-bottom:8px;">灰色＝全員休假或公休，無法排班</div>
-        <div class="date-grid" id="dateGrid"><span style="font-size:11px;color:#555;font-family:'Noto Sans TC',sans-serif;">請先完成步驟 1 & 2</span></div>
-      </div>
-
-      <!-- GENERATE -->
-      <button class="btn-generate" id="btnGenerate" onclick="generateSchedule()" disabled>✨ 產生排班表</button>
-
-      <!-- RESULT -->
-      <div class="schedule-result" id="scheduleResult">
-        <div class="schedule-result-title">排班結果</div>
-        <table class="schedule-table">
-          <thead><tr><th>日期</th><th>值日生</th><th>備註</th></tr></thead>
-          <tbody id="scheduleBody"></tbody>
+      <div class="sch-result" id="schResult">
+        <div class="sch-result-title">排班結果</div>
+        <table class="sch-table">
+          <thead><tr><th>日期</th><th>值日生</th></tr></thead>
+          <tbody id="schBody2"></tbody>
         </table>
-        <button class="btn-copy-schedule" onclick="copySchedule()">📋 複製排班表</button>
+        <div class="sch-info" id="schSummary" style="margin-top:10px;"></div>
+        <button class="btn-copy" onclick="copySchedule()">📋 複製排班表</button>
       </div>
 
     </div>
@@ -638,74 +619,47 @@ function doExport() {
 }
 </script>
 
-<script>
-// ── SCHEDULER ──────────────────────────────────────────────────
-let schedViolators = [];
-let excludedNames = new Set();
-let xlsxLeaves = {};
-let selectedDates = [];
-let xlsxMonth = null;
 
-function toggleScheduler(btn) {
+<script>
+let schViolators = [];
+let schLeaveData = {};
+let schTargetMonth = null;
+
+function toggleSch(btn) {
   btn.classList.toggle('open');
-  document.getElementById('schedulerBody').classList.toggle('open');
-  if (btn.classList.contains('open')) initSchedulerMonths();
+  document.getElementById('schBody').classList.toggle('open');
+  if (btn.classList.contains('open')) initSchMonths();
 }
 
-function initSchedulerMonths() {
+function initSchMonths() {
   const months = getMonths();
-  const sel = document.getElementById('schedMonth');
+  const sel = document.getElementById('schMonth');
   sel.innerHTML = '<option value="">-- 選擇月份 --</option>' +
     months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
-  if (months.length) { sel.value = months[months.length-1]; onMonthChange(); }
+  if (months.length) { sel.value = months[months.length-1]; onSchMonthChange(); }
 }
 
-function onMonthChange() {
-  const m = document.getElementById('schedMonth').value;
+function onSchMonthChange() {
+  const m = document.getElementById('schMonth').value;
   if (!m) return;
+
+  // 抓該月違規者
   const filtered = records.filter(r => getMonthKey(r.date) === m);
   const pm = {};
-  filtered.forEach(r => {
-    const n = String(r.name).trim();
-    pm[n] = (pm[n]||0)+1;
-  });
-  schedViolators = Object.entries(pm).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count);
-  excludedNames = new Set();
-  document.getElementById('violatorInfo').textContent = `共 ${schedViolators.length} 人違規`;
-  renderViolatorChips();
-  selectedDates = [];
-  renderDateGrid();
-  checkGenerateBtn();
+  filtered.forEach(r => { const n = String(r.name).trim(); pm[n]=(pm[n]||0)+1; });
+  schViolators = Object.entries(pm).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count);
+
+  document.getElementById('schInfo').textContent = `共 ${schViolators.length} 位違規人員，全部需排值日生`;
+  document.getElementById('schChips').innerHTML = schViolators.map(v =>
+    `<div class="sch-chip">${v.name}<span class="cnt">${v.count}次</span></div>`).join('');
+
+  checkBtnGen();
 }
 
-function renderViolatorChips() {
-  const el = document.getElementById('violatorsList');
-  if (!schedViolators.length) {
-    el.innerHTML = '<span style="font-size:11px;color:#555;font-family:Noto Sans TC,sans-serif;">該月無違規記錄</span>';
-    return;
-  }
-  el.innerHTML = schedViolators.map(v => `
-    <div class="violator-chip ${excludedNames.has(v.name)?'excluded':''}" onclick="toggleExclude('${v.name}')">
-      ${v.name} <span class="vcount">${v.count}次</span>
-    </div>`).join('');
-}
-
-function toggleExclude(name) {
-  if (excludedNames.has(name)) excludedNames.delete(name);
-  else excludedNames.add(name);
-  renderViolatorChips();
-  renderDateGrid();
-  checkGenerateBtn();
-}
-
-function getActiveViolators() {
-  return schedViolators.filter(v => !excludedNames.has(v.name));
-}
-
-async function handleXlsx(input) {
+async function handleSchFile(input) {
   const file = input.files[0];
   if (!file) return;
-  document.getElementById('uploadText').textContent = '解析中...';
+  document.getElementById('schUploadText').textContent = '解析中...';
 
   if (!window.XLSX) {
     await new Promise((res, rej) => {
@@ -720,162 +674,125 @@ async function handleXlsx(input) {
   reader.onload = e => {
     try {
       const wb = XLSX.read(e.target.result, {type:'array'});
-      let allParsed = {};
+      // 解析所有工作表
+      const allSheets = {};
       wb.SheetNames.forEach(sn => {
         const ws = wb.Sheets[sn];
         const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        // 找標題列（有多個非空字串的那列）
         let headerRow = null, headerIdx = 0;
-        for (let i=0; i<data.length; i++) {
-          if (data[i].filter(c=>typeof c==='string' && c.trim().length>0).length > 3) {
-            headerRow = data[i]; headerIdx = i; break;
-          }
+        for (let i=0; i<Math.min(data.length,5); i++) {
+          const nonEmpty = data[i].filter(c => typeof c==='string' && c.trim().length>0);
+          if (nonEmpty.length > 3) { headerRow = data[i]; headerIdx = i; break; }
         }
         if (!headerRow) return;
         const names = headerRow.slice(1).map(n=>String(n).trim()).filter(Boolean);
-        const leaveDays = {};
-        names.forEach(n => leaveDays[n] = []);
+        const leaves = {};
+        names.forEach(n => leaves[n] = []);
         for (let r=headerIdx+1; r<data.length; r++) {
           const row = data[r];
-          const dateCell = String(row[0]||'').trim();
-          const dayMatch = dateCell.match(/^(\d+)/);
+          const dayMatch = String(row[0]||'').trim().match(/^(\d+)/);
           if (!dayMatch) continue;
           const day = parseInt(dayMatch[1]);
           names.forEach((name, ci) => {
             const val = String(row[ci+1]||'').trim();
-            if (val === '休') leaveDays[name].push(day);
+            if (val === '休') leaves[name].push(day);
           });
         }
-        allParsed[sn] = leaveDays;
+        allSheets[sn] = { names, leaves };
       });
 
-      xlsxLeaves = allParsed;
-      const scheM = document.getElementById('schedMonth').value;
-      const matchedSheet = findMatchingSheet(scheM, wb.SheetNames);
-      xlsxMonth = matchedSheet;
-      const names = matchedSheet && allParsed[matchedSheet] ? Object.keys(allParsed[matchedSheet]) : [];
-      document.getElementById('uploadText').textContent = '✓ ' + file.name;
-      document.getElementById('xlsxInfo').textContent = matchedSheet
-        ? `已對應「${matchedSheet}」，人員：${names.join('、')}`
-        : `找不到對應月份，可用：${wb.SheetNames.join('、')}`;
+      schLeaveData = allSheets;
 
-      renderDateGrid();
-      checkGenerateBtn();
+      // 找最適合的工作表（取第一個，或月份最大的）
+      // 預設用第一個有資料的工作表
+      schTargetMonth = wb.SheetNames.find(sn => allSheets[sn] && allSheets[sn].names.length > 0) || wb.SheetNames[0];
+
+      const info = allSheets[schTargetMonth];
+      document.getElementById('schUploadText').textContent = '✓ ' + file.name;
+      document.getElementById('schFileInfo').textContent =
+        `已讀取「${schTargetMonth}」工作表，人員：${info.names.join('、')}`;
+
+      checkBtnGen();
     } catch(err) {
-      document.getElementById('uploadText').textContent = '❌ 解析失敗';
-      document.getElementById('xlsxInfo').textContent = err.message;
+      document.getElementById('schUploadText').textContent = '❌ 解析失敗';
+      document.getElementById('schFileInfo').textContent = err.message;
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function findMatchingSheet(monthKey, sheetNames) {
-  if (!monthKey) return sheetNames[0];
-  const m = parseInt(monthKey.split('-')[1]);
-  for (const sn of sheetNames) {
-    const digits = sn.match(/(\d+)/);
-    if (digits && parseInt(digits[1]) === m) return sn;
-  }
-  return sheetNames[0];
+function checkBtnGen() {
+  document.getElementById('btnGen').disabled = !(schViolators.length && schTargetMonth);
 }
 
-function renderDateGrid() {
-  const m = document.getElementById('schedMonth').value;
-  if (!m) return;
-  const [y, mo] = m.split('-').map(Number);
-  const daysInMonth = new Date(y, mo, 0).getDate();
-  const activeViolators = getActiveViolators().map(v=>v.name);
-  let leaveDays = {};
-  if (xlsxMonth && xlsxLeaves[xlsxMonth]) leaveDays = xlsxLeaves[xlsxMonth];
+function runSchedule() {
+  if (!schViolators.length || !schTargetMonth) return;
 
-  let html = '';
-  ['日','一','二','三','四','五','六'].forEach(d => {
-    html += `<div style="text-align:center;font-size:9px;color:#9A8E78;padding:4px;font-family:'Noto Sans TC',sans-serif;">${d}</div>`;
-  });
+  const sheetInfo = schLeaveData[schTargetMonth];
+  if (!sheetInfo) return;
 
-  const firstDay = new Date(y, mo-1, 1).getDay();
-  for (let i=0;i<firstDay;i++) html += '<div></div>';
+  const leaves = sheetInfo.leaves; // {姓名: [休假日]}
 
-  for (let d=1; d<=daysInMonth; d++) {
-    const dateStr = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isSelected = selectedDates.includes(dateStr);
-    const availableToday = activeViolators.filter(name => {
-      const leaves = leaveDays[name] || [];
-      return !leaves.includes(d);
-    });
-    const allOnLeave = activeViolators.length > 0 && availableToday.length === 0;
-    const weekday = new Date(y, mo-1, d).getDay();
-    const isSun = weekday === 0;
+  // 判斷是哪個月份（從休假表工作表名稱）
+  const sheetName = schTargetMonth;
+  const mMatch = sheetName.match(/(\d+)/);
+  const targetMonthNum = mMatch ? parseInt(mMatch[1]) : new Date().getMonth() + 2;
+  const targetYear = new Date().getFullYear();
+  const daysInMonth = new Date(targetYear, targetMonthNum, 0).getDate();
 
-    let cls = 'date-cell';
-    if (allOnLeave) cls += ' holiday';
-    else if (isSelected) cls += ' selected';
+  const violatorNames = schViolators.map(v => v.name);
 
-    const onclick = allOnLeave ? '' : `onclick="toggleDate('${dateStr}')"`;
-    html += `<div class="${cls}" ${onclick} title="${dateStr}">${d}${isSun?'⊙':''}${allOnLeave?'×':''}</div>`;
-  }
+  // 打亂違規者順序做隨機基底
+  const shuffled = [...violatorNames].sort(() => Math.random() - 0.5);
 
-  document.getElementById('dateGrid').innerHTML = html;
-}
-
-function toggleDate(dateStr) {
-  const idx = selectedDates.indexOf(dateStr);
-  if (idx >= 0) selectedDates.splice(idx, 1);
-  else selectedDates.push(dateStr);
-  selectedDates.sort();
-  renderDateGrid();
-  checkGenerateBtn();
-}
-
-function checkGenerateBtn() {
-  const active = getActiveViolators();
-  const btn = document.getElementById('btnGenerate');
-  btn.disabled = !(active.length && selectedDates.length);
-}
-
-function generateSchedule() {
-  const m = document.getElementById('schedMonth').value;
-  if (!m) return;
-  const [y, mo] = m.split('-').map(Number);
-  const activeViolators = getActiveViolators().map(v=>v.name);
-  let leaveDays = {};
-  if (xlsxMonth && xlsxLeaves[xlsxMonth]) leaveDays = xlsxLeaves[xlsxMonth];
-
-  const shuffled = [...activeViolators].sort(()=>Math.random()-0.5);
-  let rotIdx = 0;
   const assignments = [];
+  let rotIdx = 0;
 
-  selectedDates.forEach(dateStr => {
-    const d = parseInt(dateStr.split('-')[2]);
-    const available = shuffled.filter(name => !(leaveDays[name]||[]).includes(d));
-    if (!available.length) {
-      assignments.push({date:dateStr, person:'⚠ 無可用人員', note:'全員休假'});
-      return;
-    }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${targetYear}-${String(targetMonthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    // 找今天可以排班的人（不在休假中）
+    const available = shuffled.filter(name => {
+      const personLeaves = leaves[name] || [];
+      return !personLeaves.includes(d);
+    });
+
+    if (available.length === 0) continue; // 全員休假，跳過
+
+    // 從可用名單中輪流選
     const person = available[rotIdx % available.length];
     rotIdx++;
-    assignments.push({date:dateStr, person, note:''});
-  });
+    assignments.push({ date: dateStr, person });
+  }
 
-  const tbody = document.getElementById('scheduleBody');
+  // 顯示結果
+  const tbody = document.getElementById('schBody2');
   tbody.innerHTML = assignments.map(a => `
     <tr>
       <td>${fmtDate(a.date)}</td>
-      <td style="font-weight:600;color:${a.person.startsWith('⚠')?'#C0392B':'#C9A84C'}">${a.person}</td>
-      <td style="font-size:10px;color:#9A8E78">${a.note}</td>
+      <td style="font-weight:600;color:#C9A84C;">${a.person}</td>
     </tr>`).join('');
 
-  document.getElementById('scheduleResult').style.display = 'block';
-  document.getElementById('scheduleResult').scrollIntoView({behavior:'smooth', block:'nearest'});
+  // 統計每人幾天
+  const countMap = {};
+  assignments.forEach(a => countMap[a.person] = (countMap[a.person]||0)+1);
+  const summary = Object.entries(countMap).sort((a,b)=>b[1]-a[1])
+    .map(([name,cnt])=>`${name} ${cnt}天`).join('　');
+  document.getElementById('schSummary').textContent = `共 ${assignments.length} 天需排班｜` + summary;
+
+  document.getElementById('schResult').style.display = 'block';
+  document.getElementById('schResult').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function copySchedule() {
-  const rows = document.querySelectorAll('#scheduleBody tr');
+  const rows = document.querySelectorAll('#schBody2 tr');
   const text = [...rows].map(r => {
     const cells = r.querySelectorAll('td');
     return cells[0].textContent.trim() + '\t' + cells[1].textContent.trim();
   }).join('\n');
   navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.btn-copy-schedule');
+    const btn = document.querySelector('.btn-copy');
     btn.textContent = '✓ 已複製！';
     setTimeout(() => btn.textContent = '📋 複製排班表', 2000);
   });
