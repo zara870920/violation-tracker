@@ -637,5 +637,250 @@ function doExport() {
   w.document.close();
 }
 </script>
+
+<script>
+// ── SCHEDULER ──────────────────────────────────────────────────
+let schedViolators = [];
+let excludedNames = new Set();
+let xlsxLeaves = {};
+let selectedDates = [];
+let xlsxMonth = null;
+
+function toggleScheduler(btn) {
+  btn.classList.toggle('open');
+  document.getElementById('schedulerBody').classList.toggle('open');
+  if (btn.classList.contains('open')) initSchedulerMonths();
+}
+
+function initSchedulerMonths() {
+  const months = getMonths();
+  const sel = document.getElementById('schedMonth');
+  sel.innerHTML = '<option value="">-- 選擇月份 --</option>' +
+    months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  if (months.length) { sel.value = months[months.length-1]; onMonthChange(); }
+}
+
+function onMonthChange() {
+  const m = document.getElementById('schedMonth').value;
+  if (!m) return;
+  const filtered = records.filter(r => getMonthKey(r.date) === m);
+  const pm = {};
+  filtered.forEach(r => {
+    const n = String(r.name).trim();
+    pm[n] = (pm[n]||0)+1;
+  });
+  schedViolators = Object.entries(pm).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count);
+  excludedNames = new Set();
+  document.getElementById('violatorInfo').textContent = `共 ${schedViolators.length} 人違規`;
+  renderViolatorChips();
+  selectedDates = [];
+  renderDateGrid();
+  checkGenerateBtn();
+}
+
+function renderViolatorChips() {
+  const el = document.getElementById('violatorsList');
+  if (!schedViolators.length) {
+    el.innerHTML = '<span style="font-size:11px;color:#555;font-family:Noto Sans TC,sans-serif;">該月無違規記錄</span>';
+    return;
+  }
+  el.innerHTML = schedViolators.map(v => `
+    <div class="violator-chip ${excludedNames.has(v.name)?'excluded':''}" onclick="toggleExclude('${v.name}')">
+      ${v.name} <span class="vcount">${v.count}次</span>
+    </div>`).join('');
+}
+
+function toggleExclude(name) {
+  if (excludedNames.has(name)) excludedNames.delete(name);
+  else excludedNames.add(name);
+  renderViolatorChips();
+  renderDateGrid();
+  checkGenerateBtn();
+}
+
+function getActiveViolators() {
+  return schedViolators.filter(v => !excludedNames.has(v.name));
+}
+
+async function handleXlsx(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('uploadText').textContent = '解析中...';
+
+  if (!window.XLSX) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      let allParsed = {};
+      wb.SheetNames.forEach(sn => {
+        const ws = wb.Sheets[sn];
+        const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        let headerRow = null, headerIdx = 0;
+        for (let i=0; i<data.length; i++) {
+          if (data[i].filter(c=>typeof c==='string' && c.trim().length>0).length > 3) {
+            headerRow = data[i]; headerIdx = i; break;
+          }
+        }
+        if (!headerRow) return;
+        const names = headerRow.slice(1).map(n=>String(n).trim()).filter(Boolean);
+        const leaveDays = {};
+        names.forEach(n => leaveDays[n] = []);
+        for (let r=headerIdx+1; r<data.length; r++) {
+          const row = data[r];
+          const dateCell = String(row[0]||'').trim();
+          const dayMatch = dateCell.match(/^(\d+)/);
+          if (!dayMatch) continue;
+          const day = parseInt(dayMatch[1]);
+          names.forEach((name, ci) => {
+            const val = String(row[ci+1]||'').trim();
+            if (val === '休') leaveDays[name].push(day);
+          });
+        }
+        allParsed[sn] = leaveDays;
+      });
+
+      xlsxLeaves = allParsed;
+      const scheM = document.getElementById('schedMonth').value;
+      const matchedSheet = findMatchingSheet(scheM, wb.SheetNames);
+      xlsxMonth = matchedSheet;
+      const names = matchedSheet && allParsed[matchedSheet] ? Object.keys(allParsed[matchedSheet]) : [];
+      document.getElementById('uploadText').textContent = '✓ ' + file.name;
+      document.getElementById('xlsxInfo').textContent = matchedSheet
+        ? `已對應「${matchedSheet}」，人員：${names.join('、')}`
+        : `找不到對應月份，可用：${wb.SheetNames.join('、')}`;
+
+      renderDateGrid();
+      checkGenerateBtn();
+    } catch(err) {
+      document.getElementById('uploadText').textContent = '❌ 解析失敗';
+      document.getElementById('xlsxInfo').textContent = err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function findMatchingSheet(monthKey, sheetNames) {
+  if (!monthKey) return sheetNames[0];
+  const m = parseInt(monthKey.split('-')[1]);
+  for (const sn of sheetNames) {
+    const digits = sn.match(/(\d+)/);
+    if (digits && parseInt(digits[1]) === m) return sn;
+  }
+  return sheetNames[0];
+}
+
+function renderDateGrid() {
+  const m = document.getElementById('schedMonth').value;
+  if (!m) return;
+  const [y, mo] = m.split('-').map(Number);
+  const daysInMonth = new Date(y, mo, 0).getDate();
+  const activeViolators = getActiveViolators().map(v=>v.name);
+  let leaveDays = {};
+  if (xlsxMonth && xlsxLeaves[xlsxMonth]) leaveDays = xlsxLeaves[xlsxMonth];
+
+  let html = '';
+  ['日','一','二','三','四','五','六'].forEach(d => {
+    html += `<div style="text-align:center;font-size:9px;color:#9A8E78;padding:4px;font-family:'Noto Sans TC',sans-serif;">${d}</div>`;
+  });
+
+  const firstDay = new Date(y, mo-1, 1).getDay();
+  for (let i=0;i<firstDay;i++) html += '<div></div>';
+
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isSelected = selectedDates.includes(dateStr);
+    const availableToday = activeViolators.filter(name => {
+      const leaves = leaveDays[name] || [];
+      return !leaves.includes(d);
+    });
+    const allOnLeave = activeViolators.length > 0 && availableToday.length === 0;
+    const weekday = new Date(y, mo-1, d).getDay();
+    const isSun = weekday === 0;
+
+    let cls = 'date-cell';
+    if (allOnLeave) cls += ' holiday';
+    else if (isSelected) cls += ' selected';
+
+    const onclick = allOnLeave ? '' : `onclick="toggleDate('${dateStr}')"`;
+    html += `<div class="${cls}" ${onclick} title="${dateStr}">${d}${isSun?'⊙':''}${allOnLeave?'×':''}</div>`;
+  }
+
+  document.getElementById('dateGrid').innerHTML = html;
+}
+
+function toggleDate(dateStr) {
+  const idx = selectedDates.indexOf(dateStr);
+  if (idx >= 0) selectedDates.splice(idx, 1);
+  else selectedDates.push(dateStr);
+  selectedDates.sort();
+  renderDateGrid();
+  checkGenerateBtn();
+}
+
+function checkGenerateBtn() {
+  const active = getActiveViolators();
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = !(active.length && selectedDates.length);
+}
+
+function generateSchedule() {
+  const m = document.getElementById('schedMonth').value;
+  if (!m) return;
+  const [y, mo] = m.split('-').map(Number);
+  const activeViolators = getActiveViolators().map(v=>v.name);
+  let leaveDays = {};
+  if (xlsxMonth && xlsxLeaves[xlsxMonth]) leaveDays = xlsxLeaves[xlsxMonth];
+
+  const shuffled = [...activeViolators].sort(()=>Math.random()-0.5);
+  let rotIdx = 0;
+  const assignments = [];
+
+  selectedDates.forEach(dateStr => {
+    const d = parseInt(dateStr.split('-')[2]);
+    const available = shuffled.filter(name => !(leaveDays[name]||[]).includes(d));
+    if (!available.length) {
+      assignments.push({date:dateStr, person:'⚠ 無可用人員', note:'全員休假'});
+      return;
+    }
+    const person = available[rotIdx % available.length];
+    rotIdx++;
+    assignments.push({date:dateStr, person, note:''});
+  });
+
+  const tbody = document.getElementById('scheduleBody');
+  tbody.innerHTML = assignments.map(a => `
+    <tr>
+      <td>${fmtDate(a.date)}</td>
+      <td style="font-weight:600;color:${a.person.startsWith('⚠')?'#C0392B':'#C9A84C'}">${a.person}</td>
+      <td style="font-size:10px;color:#9A8E78">${a.note}</td>
+    </tr>`).join('');
+
+  document.getElementById('scheduleResult').style.display = 'block';
+  document.getElementById('scheduleResult').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function copySchedule() {
+  const rows = document.querySelectorAll('#scheduleBody tr');
+  const text = [...rows].map(r => {
+    const cells = r.querySelectorAll('td');
+    return cells[0].textContent.trim() + '\t' + cells[1].textContent.trim();
+  }).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy-schedule');
+    btn.textContent = '✓ 已複製！';
+    setTimeout(() => btn.textContent = '📋 複製排班表', 2000);
+  });
+}
+</script>
+
 </body>
 </html>
