@@ -710,18 +710,24 @@ async function handleSchFile(input) {
         if (!headerRow) return;
         const names = headerRow.slice(1).map(n=>String(n).trim()).filter(Boolean);
         const leaves = {};
+        const skipDays = [];
         names.forEach(n => leaves[n] = []);
         for (let r=headerIdx+1; r<data.length; r++) {
           const row = data[r];
           const dayMatch = String(row[0]||'').trim().match(/^(\d+)/);
           if (!dayMatch) continue;
           const day = parseInt(dayMatch[1]);
+          // 公休或課／盤 整天不排
+          const rowVals = row.slice(1).map(v=>String(v||'').trim());
+          if (rowVals.some(v=>v==='公休'||v==='課／盤'||v==='課/盤')) {
+            if (!skipDays.includes(day)) skipDays.push(day);
+          }
           names.forEach((name, ci) => {
             const val = String(row[ci+1]||'').trim();
-            if (val === '休') leaves[name].push(day);
+            if (['休','課','課/盤','課／盤','公休'].includes(val)) leaves[name].push(day);
           });
         }
-        allSheets[sn] = { names, leaves };
+        allSheets[sn] = { names, leaves, skipDays };
       });
 
       schLeaveData = allSheets;
@@ -780,7 +786,8 @@ function runSchedule() {
   const sheetInfo = schLeaveData[schTargetMonth];
   if (!sheetInfo) return;
 
-  const leaves = sheetInfo.leaves; // {姓名: [休假日]}
+  const leaves = sheetInfo.leaves;
+  const skipDays = sheetInfo.skipDays || [];
 
   // 排班月份 = 從休假表工作表名稱抓，這才是要排的月份
   const sheetName = schTargetMonth;
@@ -799,6 +806,9 @@ function runSchedule() {
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${targetYear}-${String(targetMonthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    // 公休或課／盤，跳過
+    if (skipDays.includes(d)) continue;
 
     // 找今天可以排班的人（不在休假中）
     const available = shuffled.filter(name => {
