@@ -796,57 +796,79 @@ function runSchedule() {
   const targetYear = new Date().getFullYear();
   const daysInMonth = new Date(targetYear, targetMonthNum, 0).getDate();
 
-  // 建立排班隊列：每人依違規次數展開
-  // 例如違規3次就有3個名額，違規1次就只有1個名額
-  let queue = [];
-  schViolators.forEach(v => {
-    for (let i = 0; i < v.count; i++) queue.push(v.name);
-  });
-  // 打亂隊列讓分配更隨機自然
-  queue = queue.sort(() => Math.random() - 0.5);
+  // 取得本月所有日期資訊
+  const allDays = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const weekday = new Date(targetYear, targetMonthNum - 1, d).getDay();
+    allDays.push({ d, weekday, isSkip: skipDays.includes(d) });
+  }
+  const availableDays = allDays.filter(x => !x.isSkip).map(x => x.d);
+  // 禮拜五(5)、六(6)、日(0) 可用日（補班備用，允許同天多人）
+  const weekendDays = allDays.filter(x => !x.isSkip && (x.weekday === 5 || x.weekday === 6 || x.weekday === 0)).map(x => x.d);
 
   const assignments = [];
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    // 所有人的次數都排完了就停止
-    if (queue.length === 0) break;
+  schViolators.forEach(v => {
+    const name = v.name;
+    let needed = v.count;
+    const personLeaves = leaves[name] || [];
 
-    const dateStr = `${targetYear}-${String(targetMonthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    // 第一輪：從未被佔用的可用天中，找不衝突的天
+    const usedDays = new Set(assignments.map(a => a.day));
+    const candidates = availableDays
+      .filter(d => !personLeaves.includes(d) && !usedDays.has(d))
+      .sort(() => Math.random() - 0.5);
 
-    // 公休或課／盤，整天跳過
-    if (skipDays.includes(d)) continue;
+    const firstRound = candidates.slice(0, needed);
+    firstRound.forEach(d => {
+      const dateStr = `${targetYear}-${String(targetMonthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      assignments.push({ date: dateStr, day: d, person: name });
+      needed--;
+    });
 
-    // 從隊列中找第一個今天可以排的人（不在休假中）
-    let foundIdx = -1;
-    for (let i = 0; i < queue.length; i++) {
-      const personLeaves = leaves[queue[i]] || [];
-      if (!personLeaves.includes(d)) {
-        foundIdx = i;
-        break;
+    // 第二輪：剩餘次數補排到禮拜五/六/日（允許同天多人）
+    if (needed > 0) {
+      const fallback = weekendDays
+        .filter(d => !personLeaves.includes(d))
+        .sort(() => Math.random() - 0.5);
+      for (let i = 0; i < needed; i++) {
+        if (!fallback.length) break;
+        const d = fallback[i % fallback.length];
+        const dateStr = `${targetYear}-${String(targetMonthNum).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        assignments.push({ date: dateStr, day: d, person: name });
       }
     }
+  });
 
-    if (foundIdx < 0) continue; // 這天所有剩餘待排的人都在休假，跳過
+  // 依日期排序
+  assignments.sort((a, b) => a.day - b.day);
 
-    const person = queue[foundIdx];
-    queue.splice(foundIdx, 1); // 從隊列移除，確保每次只排一次
-    assignments.push({ date: dateStr, person });
-  }
+  // 同天多人合併顯示
+  const dayMap = {};
+  assignments.forEach(a => {
+    if (!dayMap[a.date]) dayMap[a.date] = [];
+    dayMap[a.date].push(a.person);
+  });
 
   // 顯示結果
   const tbody = document.getElementById('schBody2');
-  tbody.innerHTML = assignments.map(a => `
+  tbody.innerHTML = Object.entries(dayMap)
+    .sort(([a],[b]) => a.localeCompare(b))
+    .map(([date, persons]) => `
     <tr>
-      <td>${fmtDate(a.date)}</td>
-      <td style="font-weight:600;color:#C9A84C;">${a.person}</td>
+      <td>${fmtDate(date)}</td>
+      <td style="font-weight:600;color:#C9A84C;">${persons.join(' ＋ ')}${persons.length > 1 ? ' <span style="font-size:9px;color:#CC7A3A;font-family:Noto Sans TC,sans-serif;">（二值日生）</span>' : ''}</td>
     </tr>`).join('');
 
-  // 統計每人幾天
+  // 統計每人幾天 & 總次數
   const countMap = {};
   assignments.forEach(a => countMap[a.person] = (countMap[a.person]||0)+1);
+  const totalDuty = assignments.length;
+  const totalNeeded = schViolators.reduce((s, v) => s + v.count, 0);
   const summary = Object.entries(countMap).sort((a,b)=>b[1]-a[1])
     .map(([name,cnt])=>`${name} ${cnt}天`).join('　');
-  document.getElementById('schSummary').textContent = `共 ${assignments.length} 天需排班｜` + summary;
+  const warn = totalDuty < totalNeeded ? ` ⚠ 尚缺 ${totalNeeded - totalDuty} 次（請手動補排）` : ' ✓ 全數安排完畢';
+  document.getElementById('schSummary').textContent = `共安排 ${totalDuty} 次 / 需要 ${totalNeeded} 次${warn}｜${summary}`;
 
   document.getElementById('schResult').style.display = 'block';
   document.getElementById('schResult').scrollIntoView({behavior:'smooth', block:'nearest'});
