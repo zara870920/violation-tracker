@@ -1038,25 +1038,34 @@ function exportSignSheet() {
   .footer { margin-top:14px; text-align:center; color:#ccc; font-size:9px; letter-spacing:2px; }
 
   .del-row-btn {
-    display:none; background:#C0392B; color:#fff;
-    border:none; border-radius:2px; width:20px; height:20px;
-    font-size:10px; cursor:pointer; padding:0; line-height:1;
+    background:#C0392B; color:#fff;
+    border:none; border-radius:2px; width:22px; height:22px;
+    font-size:11px; cursor:pointer; padding:0; line-height:1;
+    opacity:0; pointer-events:none; transition:opacity 0.2s;
   }
-  .del-cell { width:24px; padding:2px !important; border:none !important; }
+  .del-cell { width:28px; padding:2px !important; border:1px solid #eee !important; text-align:center; }
   .add-row-btn {
-    display:none; margin-top:6px;
+    margin-top:6px;
     background:none; border:1px dashed #C9A84C;
     color:#C9A84C; font-size:10px; padding:5px 12px;
     cursor:pointer; border-radius:3px; width:100%;
     font-family:'Noto Sans TC',sans-serif; letter-spacing:1px;
+    opacity:0; pointer-events:none; transition:opacity 0.2s;
   }
   .add-row-btn:hover { background:#fffcf0; }
+  /* 編輯模式下顯示按鈕 */
+  .edit-mode .del-row-btn {
+    opacity:1; pointer-events:auto;
+  }
+  .edit-mode .add-row-btn {
+    opacity:1; pointer-events:auto;
+  }
   @media print {
     body { padding:8px 12px; }
     .toolbar { display:none !important; }
     .edit-hint { display:none !important; }
-    .del-row-btn { display:none !important; }
-    .add-row-btn { display:none !important; }
+    .del-row-btn { display:none !important; opacity:0 !important; }
+    .add-row-btn { display:none !important; opacity:0 !important; }
     .del-cell { display:none !important; }
     .edit-mode .editable { border:none !important; background:transparent !important; }
     @page { margin:0.8cm; size:A4; }
@@ -1154,7 +1163,6 @@ function toggleEdit(btn) {
   isEditing = !isEditing;
   document.body.classList.toggle('edit-mode', isEditing);
   document.querySelectorAll('.editable').forEach(el => el.contentEditable = isEditing ? 'true' : 'false');
-  document.querySelectorAll('.del-row-btn, .add-row-btn').forEach(el => el.style.display = isEditing ? '' : 'none');
   btn.textContent = isEditing ? '🔒 鎖定' : '✏️ 編輯模式';
   btn.style.background = isEditing ? '#C0392B' : '#C9A84C';
   btn.style.color = '#fff';
