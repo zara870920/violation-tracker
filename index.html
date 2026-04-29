@@ -411,6 +411,7 @@ function showMsg(type,text){
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn-copy" onclick="copySchedule()">📋 複製排班表</button>
           <button class="btn-copy" onclick="downloadXlsx()" style="border-color:rgba(201,168,76,0.6);color:#C9A84C;background:rgba(201,168,76,0.08);">⬇ 下載 Excel（含值日生）</button>
+          <button class="btn-copy" onclick="exportSignSheet()" style="border-color:rgba(42,157,143,0.6);color:#4A8C6F;background:rgba(42,157,143,0.08);">📝 匯出簽到表 PDF</button>
         </div>
         <div class="sch-info" style="margin-top:6px;">下載後用 Excel 開啟，另存為 PDF 即可 📄</div>
       </div>
@@ -945,5 +946,169 @@ function downloadXlsx() {
   reader.readAsArrayBuffer(window._schOriginalFile);
 }
 </script>
+
+<script>
+function exportSignSheet() {
+  const rows = document.querySelectorAll('#schBody2 tr');
+  if (!rows.length) { alert('請先產生排班表'); return; }
+
+  // 收集資料
+  const assignments = [];
+  [...rows].forEach(r => {
+    const cells = r.querySelectorAll('td');
+    const dateText = cells[0].textContent.trim();
+    const personText = cells[1].textContent.replace(/（二值日生）/g, '').trim();
+    const persons = personText.split('＋').map(p => p.trim()).filter(Boolean);
+    persons.forEach(person => {
+      assignments.push({ date: dateText, person });
+    });
+  });
+
+  // 取得月份資訊
+  const sheetM = (window._schTargetMonth || '').match(/(\d+)/);
+  const monthStr = sheetM ? sheetM[1] + '月' : '';
+  const year = new Date().getFullYear();
+  const now = new Date();
+  const printDate = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>${year}年${monthStr}值日生簽到表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans TC',sans-serif; background:#fff; color:#1a1a1a; padding:30px 36px; font-size:13px; }
+
+  .header { text-align:center; margin-bottom:24px; }
+  .header h1 { font-size:20px; font-weight:900; letter-spacing:4px; margin-bottom:4px; }
+  .header .sub { font-size:11px; color:#888; letter-spacing:2px; margin-bottom:2px; }
+  .gold-line { width:80px; height:2px; background:#C9A84C; margin:8px auto 0; }
+
+  .notice {
+    border:1px solid #C9A84C; border-radius:4px;
+    padding:10px 16px; margin-bottom:20px;
+    background:#fffcf0; font-size:12px; color:#7A5A00;
+    display:flex; align-items:center; gap:8px;
+  }
+
+  table {
+    width:100%; border-collapse:collapse;
+    font-size:12px;
+  }
+  thead tr { background:#1a1a1a; }
+  thead th {
+    color:#C9A84C; padding:10px 8px;
+    text-align:center; font-weight:500;
+    letter-spacing:1px; font-size:11px;
+    border:1px solid #333;
+  }
+  tbody tr { height:52px; }
+  tbody tr:nth-child(even) td { background:#faf8f4; }
+  tbody tr:hover td { background:#f5f0e8; }
+  tbody td {
+    border:1px solid #ddd; padding:6px 10px;
+    vertical-align:middle; text-align:center;
+  }
+  .td-no { width:44px; color:#aaa; font-size:11px; }
+  .td-date { width:70px; font-weight:600; color:#C9A84C; font-size:13px; }
+  .td-name { width:100px; font-weight:700; font-size:14px; }
+  .td-sign { width:120px; }
+  .td-check { width:120px; }
+  .td-fine {
+    width:180px; text-align:left; padding:6px 12px;
+    font-size:11px; color:#aaa;
+  }
+  .sign-line {
+    border-bottom:1px solid #ccc;
+    height:28px; margin:0 8px;
+    display:flex; align-items:flex-end;
+    justify-content:flex-end;
+    padding-bottom:2px;
+  }
+  .fine-box {
+    border:1px dashed #ddd; border-radius:3px;
+    padding:4px 8px; font-size:10px; color:#bbb;
+    text-align:center; min-height:32px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .footer {
+    margin-top:24px; text-align:center;
+    color:#ccc; font-size:10px; letter-spacing:2px;
+  }
+  .summary {
+    margin-bottom:16px; font-size:11px; color:#666;
+    display:flex; gap:24px; flex-wrap:wrap;
+  }
+  .summary span { color:#1a1a1a; font-weight:600; }
+  @media print {
+    body { padding:16px 20px; }
+    button { display:none !important; }
+    @page { margin:1cm; }
+  }
+</style>
+</head>
+<body>
+
+<div style="text-align:right;margin-bottom:16px;">
+  <button onclick="window.print()" style="background:#1a1a1a;color:#C9A84C;border:none;padding:10px 22px;font-family:'Noto Sans TC',sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:3px;">🖨️ 列印 / 存成 PDF</button>
+</div>
+
+<div class="header">
+  <div class="sub">VIOLATION DUTY SIGN-IN SHEET</div>
+  <h1>${year} 年 ${monthStr} 值日生簽到表</h1>
+  <div class="gold-line"></div>
+</div>
+
+<div class="summary">
+  <div>製表日期：<span>${printDate}</span></div>
+  <div>總值日生次數：<span>${assignments.length} 次</span></div>
+  <div>月份：<span>${year}年${monthStr}</span></div>
+</div>
+
+<div class="notice">
+  ⚠️ <strong>注意事項：</strong>值日生需確實完成打掃工作，若打掃未完成或不合格，將處以罰款 <strong style="color:#C0392B;">NT$ 200</strong>，請檢查者確認後簽名。
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="td-no">#</th>
+      <th class="td-date">日期</th>
+      <th class="td-name">值日生</th>
+      <th class="td-sign">值日生簽到</th>
+      <th class="td-check">檢查者簽名</th>
+      <th class="td-fine">罰款記錄（未完成 NT$200）</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${assignments.map((a, i) => `
+    <tr>
+      <td class="td-no">${String(i+1).padStart(2,'0')}</td>
+      <td class="td-date">${a.date}</td>
+      <td class="td-name">${a.person}</td>
+      <td class="td-sign"><div class="sign-line"></div></td>
+      <td class="td-check"><div class="sign-line"></div></td>
+      <td class="td-fine"><div class="fine-box">□ 完成　□ 未完成 NT$200</div></td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+
+<div class="footer">
+  <p>VIOLATION MANAGEMENT SYSTEM &nbsp;·&nbsp; ${printDate}</p>
+  <p style="margin-top:4px;">本表由系統自動產生，請妥善保存</p>
+</div>
+
+</body>
+</html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 800);
+}
+</script>
+
 </body>
 </html>
