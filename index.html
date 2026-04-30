@@ -1147,13 +1147,19 @@ function exportSignSheet() {
   while (rightCol.length < leftCol.length) rightCol.push(null);
 
   function makeRowHtml(a) {
-    if (!a) return '<tr class="empty-row"><td></td><td></td><td><div class="sign-area"></div></td><td><div class="sign-area"></div></td><td><div class="fine-area">□完成 □未完成</div></td></tr>';
-    return '<tr>' +
-      '<td class="td-date">' + a.date + '</td>' +
-      '<td class="td-name">' + a.person + '</td>' +
-      '<td><div class="sign-area"></div></td>' +
-      '<td><div class="sign-area"></div></td>' +
-      '<td class="td-fine"><div class="fine-area">□完成 □未完成</div></td>' +
+    var date = a ? a.date : '';
+    var person = a ? a.person : '';
+    var cls = a ? '' : ' class="empty-row"';
+    return '<tr' + cls + '>' +
+      '<td class="td-date"><div class="editable" contenteditable="false">' + date + '</div></td>' +
+      '<td class="td-name"><div class="editable" contenteditable="false">' + person + '</div></td>' +
+      '<td><div class="editable sign-area" contenteditable="false"></div></td>' +
+      '<td><div class="editable sign-area" contenteditable="false"></div></td>' +
+      '<td class="td-fine"><div class="editable fine-area" contenteditable="false">□完成 □未完成</div></td>' +
+      '<td class="act-cell"><div class="act-btns">' +
+        '<button class="ins-btn" onclick="insertRowAfter(this)" title="在此行下方插入">＋</button>' +
+        '<button class="del-btn" onclick="deleteRow(this)" title="刪除此行">✕</button>' +
+      '</div></td>' +
       '</tr>';
   }
 
@@ -1258,11 +1264,17 @@ function exportSignSheet() {
     '<\/script>' +
     '</body></html>';
 
-  const w = window.open('', '_blank');
-  if (!w) { alert('請允許彈出視窗！'); return; }
-  w.document.write(html);
-  w.document.close();
-  setTimeout(function() { w.print(); }, 800);
+  // 用 Blob URL 開新分頁，避免瀏覽器擋彈出視窗
+  const blob = new Blob([html], {type: 'text/html; charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
 }
 
 function makeRow(date, person) {
