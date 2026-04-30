@@ -1122,159 +1122,102 @@ function downloadXlsx() {
 
 <script>
 function exportSignSheet() {
-  const rows = document.querySelectorAll('#schBody2 tr');
+  var rows = document.querySelectorAll('#schBody2 tr');
   if (!rows.length) { alert('請先產生排班表'); return; }
 
-  const assignments = [];
-  [...rows].forEach(r => {
-    const cells = r.querySelectorAll('td');
-    const dateText = cells[0].textContent.trim();
-    const personText = cells[1].textContent.replace(/（二值日生）/g, '').trim();
-    personText.split('＋').map(p => p.trim()).filter(Boolean).forEach(person => {
-      assignments.push({ date: dateText, person });
+  // 收集排班資料
+  var data = [];
+  rows.forEach(function(r) {
+    var cells = r.querySelectorAll('td');
+    if (cells.length < 2) return;
+    var dateText = cells[0].textContent.trim();
+    var personText = cells[1].textContent.replace('（二值日生）','').trim();
+    personText.split('＋').forEach(function(p) {
+      p = p.trim();
+      if (p) data.push({ date: dateText, person: p });
     });
   });
 
-  const sheetM = (window._schTargetMonth || '').match(/(\d+)/);
-  const monthStr = sheetM ? sheetM[1] + '月' : '';
-  const year = new Date().getFullYear();
-  const now = new Date();
-  const printDate = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate();
+  if (!data.length) { alert('沒有排班資料'); return; }
 
-  const half = Math.ceil(assignments.length / 2);
-  const leftCol = assignments.slice(0, half);
-  const rightCol = assignments.slice(half);
-  while (rightCol.length < leftCol.length) rightCol.push(null);
+  var sheetM = (window._schTargetMonth || '').match(/(\d+)/);
+  var monthStr = sheetM ? sheetM[1] + '月' : '';
+  var year = new Date().getFullYear();
+  var now = new Date();
+  var printDate = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate();
+  var half = Math.ceil(data.length / 2);
+  var left = data.slice(0, half);
+  var right = data.slice(half);
+  while (right.length < left.length) right.push(null);
 
-  function makeRowHtml(a) {
-    var date = a ? a.date : '';
-    var person = a ? a.person : '';
-    var cls = a ? '' : ' class="empty-row"';
-    return '<tr' + cls + '>' +
-      '<td class="td-date"><div class="editable" contenteditable="false">' + date + '</div></td>' +
-      '<td class="td-name"><div class="editable" contenteditable="false">' + person + '</div></td>' +
-      '<td><div class="editable sign-area" contenteditable="false"></div></td>' +
-      '<td><div class="editable sign-area" contenteditable="false"></div></td>' +
-      '<td class="td-fine"><div class="editable fine-area" contenteditable="false">□完成 □未完成</div></td>' +
-      '<td class="act-cell"><div class="act-btns">' +
-        '<button class="ins-btn" onclick="insertRowAfter(this)" title="在此行下方插入">＋</button>' +
-        '<button class="del-btn" onclick="deleteRow(this)" title="刪除此行">✕</button>' +
-      '</div></td>' +
+  function row(a) {
+    var d = a ? a.date : '';
+    var p = a ? a.person : '';
+    return '<tr style="height:44px;">' +
+      '<td style="width:46px;text-align:center;font-weight:700;color:#C9A84C;font-size:13px;border:1px solid #ddd;">' + d + '</td>' +
+      '<td style="width:58px;text-align:center;font-weight:700;font-size:13px;border:1px solid #ddd;">' + p + '</td>' +
+      '<td style="border:1px solid #ddd;border-bottom:2px solid #ccc;"></td>' +
+      '<td style="border:1px solid #ddd;border-bottom:2px solid #ccc;"></td>' +
+      '<td style="border:1px solid #ddd;text-align:center;font-size:10px;color:#999;">□完成 □未完成</td>' +
       '</tr>';
   }
 
-  const leftRows = leftCol.map(makeRowHtml).join('');
-  const rightRows = rightCol.map(makeRowHtml).join('');
+  function th(t) {
+    return '<th style="background:#1a1a1a;color:#C9A84C;padding:8px 4px;font-size:10px;letter-spacing:1px;border:1px solid #333;">' + t + '</th>';
+  }
 
-  const html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">' +
-    '<title>' + year + '年' + monthStr + '值日生簽到表</title>' +
-    '<style>' +
-    '@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap");' +
-    '* { margin:0; padding:0; box-sizing:border-box; }' +
-    'body { font-family:"Noto Sans TC",sans-serif; background:#fff; color:#1a1a1a; padding:16px 20px; font-size:12px; }' +
-    '.toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }' +
-    '.toolbar button { border:none; padding:8px 16px; font-family:"Noto Sans TC",sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer; border-radius:3px; }' +
-    '.btn-print { background:#1a1a1a; color:#C9A84C; }' +
-    '.btn-edit { background:#C9A84C; color:#1a1a1a; font-weight:700; }' +
-    '.edit-hint { font-size:10px; color:#9A7A30; padding:5px 10px; background:#fffcf0; border:1px solid #C9A84C; border-radius:3px; display:none; }' +
-    '.header { text-align:center; margin-bottom:12px; }' +
-    '.header h1 { font-size:16px; font-weight:900; letter-spacing:3px; margin-bottom:2px; }' +
-    '.header .sub { font-size:9px; color:#888; letter-spacing:2px; }' +
-    '.gold-line { width:50px; height:2px; background:#C9A84C; margin:5px auto 0; }' +
-    '.notice { border:1px solid #C9A84C; border-radius:3px; padding:6px 12px; margin-bottom:10px; background:#fffcf0; font-size:10px; color:#7A5A00; }' +
-    '.summary { margin-bottom:10px; font-size:10px; color:#666; display:flex; gap:20px; }' +
-    '.summary span { color:#1a1a1a; font-weight:600; }' +
-    '.two-col { display:grid; grid-template-columns:1fr 8px 1fr; gap:0; align-items:start; }' +
-    '.col-divider { background:#e0d8c8; margin:0 4px; align-self:stretch; }' +
-    'table { width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed; }' +
-    'thead tr { background:#1a1a1a; }' +
-    'thead th { color:#C9A84C; padding:6px 4px; text-align:center; font-weight:500; font-size:9px; border:1px solid #333; }' +
-    'tbody tr { height:40px; }' +
-    'tbody tr:nth-child(even) td { background:#faf8f4; }' +
-    'tbody td { border:1px solid #ddd; padding:3px 5px; vertical-align:middle; text-align:center; }' +
-    '.td-date { width:42px; font-weight:700; color:#C9A84C; font-size:11px; }' +
-    '.td-name { width:52px; font-weight:700; font-size:11px; }' +
-    '.td-fine { font-size:9px; }' +
-    '.editable { min-height:24px; padding:2px 3px; border-radius:2px; cursor:default; outline:none; display:block; width:100%; }' +
-    '.edit-mode .editable { cursor:text; border:1px dashed #C9A84C !important; background:#fffdf5 !important; }' +
-    '.edit-mode .editable:focus { border:1px solid #C9A84C !important; background:#fff8e0 !important; }' +
-    '.sign-area { border-bottom:1px solid #ccc; height:24px; display:flex; align-items:flex-end; }' +
-    '.fine-area { border:1px dashed #ddd; border-radius:2px; padding:2px 3px; font-size:9px; color:#bbb; min-height:24px; display:flex; align-items:center; justify-content:center; white-space:nowrap; }' +
-    '.act-cell { width:40px; border:none !important; background:transparent !important; padding:2px !important; }' +
-    '.act-btns { display:flex; flex-direction:column; gap:2px; align-items:center; opacity:0; pointer-events:none; }' +
-    '.edit-mode .act-btns { opacity:1; pointer-events:auto; }' +
-    '.del-btn { background:#C0392B; color:#fff; border:none; border-radius:2px; width:18px; height:18px; font-size:10px; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; }' +
-    '.ins-btn { background:#C9A84C; color:#1a1a1a; border:none; border-radius:2px; width:18px; height:18px; font-size:13px; font-weight:700; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; }' +
-    '.empty-row td { background:#f8f8f8 !important; border-color:#eee; }' +
-    '.footer { margin-top:12px; text-align:center; color:#ccc; font-size:9px; letter-spacing:2px; }' +
-    '@media print {' +
-    'body { padding:6px 10px; }' +
-    '.toolbar, .edit-hint, .act-cell, .act-btns { display:none !important; }' +
-    '.edit-mode .editable { border:none !important; background:transparent !important; }' +
-    '@page { margin:0.6cm; size:A4; }' +
-    '}' +
+  function makeTable(rows) {
+    return '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
+      '<thead><tr>' + th('日期') + th('值日生') + th('值日生簽到') + th('檢查者') + th('罰款NT$200') + '</tr></thead>' +
+      '<tbody>' + rows.map(row).join('') + '</tbody>' +
+      '</table>';
+  }
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<style>@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap");' +
+    'body{font-family:"Noto Sans TC",sans-serif;padding:16px 20px;color:#1a1a1a;}' +
+    '.no-print{margin-bottom:12px;}' +
+    'button{background:#1a1a1a;color:#C9A84C;border:none;padding:9px 20px;font-size:12px;cursor:pointer;border-radius:3px;letter-spacing:1px;}' +
+    '@media print{.no-print{display:none;}}' +
     '</style></head><body>' +
-    '<div class="toolbar">' +
-    '<button class="btn-print" onclick="window.print()">🖨️ 列印 / 存成 PDF</button>' +
-    '<button class="btn-edit" onclick="toggleEdit(this)">✏️ 編輯模式</button>' +
-    '<div class="edit-hint" id="editHint">✏️ 點格子可修改 ｜ ＋ 插入新行 ｜ ✕ 刪除該行</div>' +
+    '<div class="no-print"><button onclick="window.print()">🖨️ 列印 / 存成 PDF</button></div>' +
+    '<div style="text-align:center;margin-bottom:14px;">' +
+    '<div style="font-size:10px;color:#888;letter-spacing:3px;margin-bottom:4px;">VIOLATION DUTY SIGN-IN SHEET</div>' +
+    '<div style="font-size:18px;font-weight:900;letter-spacing:3px;">' + year + ' 年 ' + monthStr + ' 值日生簽到表</div>' +
+    '<div style="width:50px;height:2px;background:#C9A84C;margin:6px auto;"></div>' +
     '</div>' +
-    '<div class="header">' +
-    '<div class="sub">VIOLATION DUTY SIGN-IN SHEET</div>' +
-    '<h1>' + year + ' 年 ' + monthStr + ' 值日生簽到表</h1>' +
-    '<div class="gold-line"></div>' +
+    '<div style="font-size:10px;color:#666;margin-bottom:10px;display:flex;gap:20px;">' +
+    '<span>製表日期：<strong>' + printDate + '</strong></span>' +
+    '<span>總次數：<strong>' + data.length + ' 次</strong></span>' +
     '</div>' +
-    '<div class="summary">' +
-    '<div>製表日期：<span>' + printDate + '</span></div>' +
-    '<div>總值日生次數：<span>' + assignments.length + ' 次</span></div>' +
+    '<div style="border:1px solid #C9A84C;border-radius:3px;padding:7px 12px;margin-bottom:12px;background:#fffcf0;font-size:10px;color:#7A5A00;">' +
+    '⚠️ <strong>注意：</strong>值日生需確實完成打掃，若未完成或不合格，將處以罰款 <strong style="color:#C0392B;">NT$ 200</strong>，請檢查者確認後簽名。' +
     '</div>' +
-    '<div class="notice">⚠️ <strong>注意事項：</strong>值日生需確實完成打掃工作，若打掃未完成或不合格，將處以罰款 <strong style="color:#C0392B;">NT$ 200</strong>，請檢查者確認後簽名。</div>' +
-    '<div class="two-col">' +
-    '<table><colgroup><col style="width:42px"><col style="width:52px"><col style="width:22%"><col style="width:18%"><col><col style="width:40px"></colgroup>' +
-    '<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款 NT$200</th><th></th></tr></thead>' +
-    '<tbody id="leftTbody">' + leftRows + '</tbody></table>' +
-    '<div class="col-divider"></div>' +
-    '<table><colgroup><col style="width:42px"><col style="width:52px"><col style="width:22%"><col style="width:18%"><col><col style="width:40px"></colgroup>' +
-    '<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款 NT$200</th><th></th></tr></thead>' +
-    '<tbody id="rightTbody">' + rightRows + '</tbody></table>' +
+    '<div style="display:grid;grid-template-columns:1fr 6px 1fr;gap:0;">' +
+    makeTable(left) +
+    '<div style="background:#e0d8c8;margin:0 3px;"></div>' +
+    makeTable(right) +
     '</div>' +
-    '<div class="footer">VIOLATION MANAGEMENT SYSTEM · ' + printDate + '</div>' +
-    '<script>' +
-    'var isEditing=false;' +
-    'function makeRowEl(date,person){var tr=document.createElement("tr");tr.innerHTML=' +
-    '"<td class=\\"td-date\\"><div class=\\"editable\\" contenteditable=\\"false\\">"+(date||"")+"</div></td>"' +
-    '+"<td class=\\"td-name\\"><div class=\\"editable\\" contenteditable=\\"false\\">"+(person||"")+"</div></td>"' +
-    '+"<td><div class=\\"editable sign-area\\" contenteditable=\\"false\\"></div></td>"' +
-    '+"<td><div class=\\"editable sign-area\\" contenteditable=\\"false\\"></div></td>"' +
-    '+"<td class=\\"td-fine\\"><div class=\\"editable fine-area\\" contenteditable=\\"false\\">□完成 □未完成</div></td>"' +
-    '+"<td class=\\"act-cell\\"><div class=\\"act-btns\\">"' +
-    '+"<button class=\\"ins-btn\\" onclick=\\"insertRowAfter(this)\\" title=\\"插入\\">＋</button>"' +
-    '+"<button class=\\"del-btn\\" onclick=\\"deleteRow(this)\\" title=\\"刪除\\">✕</button>"' +
-    '+"</div></td>";return tr;}' +
-    'function toggleEdit(btn){isEditing=!isEditing;document.body.classList.toggle("edit-mode",isEditing);' +
-    'document.querySelectorAll(".editable").forEach(function(el){el.contentEditable=isEditing?"true":"false";});' +
-    'btn.textContent=isEditing?"🔒 鎖定":"✏️ 編輯模式";' +
-    'btn.style.background=isEditing?"#C0392B":"#C9A84C";' +
-    'btn.style.color=isEditing?"#fff":"#1a1a1a";' +
-    'document.getElementById("editHint").style.display=isEditing?"block":"none";}' +
-    'function deleteRow(btn){btn.closest("tr").remove();}' +
-    'function insertRowAfter(btn){var tr=btn.closest("tr");var newRow=makeRowEl("","");' +
-    'if(isEditing)newRow.querySelectorAll(".editable").forEach(function(el){el.contentEditable="true";});' +
-    'tr.parentNode.insertBefore(newRow,tr.nextSibling);}' +
-    '<\/script>' +
+    '<div style="text-align:center;margin-top:12px;color:#ccc;font-size:9px;letter-spacing:2px;">VIOLATION MANAGEMENT SYSTEM · ' + printDate + '</div>' +
     '</body></html>';
 
-  // 用 Blob URL 開新分頁，避免瀏覽器擋彈出視窗
-  const blob = new Blob([html], {type: 'text/html; charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
+  // 開新分頁顯示
+  var newTab = window.open('about:blank', '_blank');
+  if (newTab) {
+    newTab.document.open();
+    newTab.document.write(html);
+    newTab.document.close();
+  } else {
+    // 備用：下載 HTML 檔
+    var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = year + '年' + monthStr + '值日生簽到表.html';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+    alert('已下載 HTML 檔案，用瀏覽器開啟後即可列印成 PDF');
+  }
 }
 
 function makeRow(date, person) {
