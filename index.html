@@ -1267,26 +1267,9 @@ function insertRowAfter(btn) {
   const newRow = document.createElement('tr');
   newRow.innerHTML = makeRow('', '').replace('<tr>', '').replace('</tr>', '');
   tr.parentNode.insertBefore(newRow, tr.nextSibling);
-  // 新行要套用目前編輯模式
   if (isEditing) {
     newRow.querySelectorAll('.editable').forEach(el => el.contentEditable = 'true');
   }
-}
-<\/script>
-
-</body>
-</html>`;
-  tbody.appendChild(tr);
-}
-<\/script>
-
-</body>
-</html>`;
-
-  const w = window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => w.print(), 800);
 }
 </script>
 
