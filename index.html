@@ -194,6 +194,59 @@
   .sch-table tr:hover td{background:#383838;}
   .btn-copy{margin-top:10px;padding:9px 18px;background:none;border:1px solid rgba(201,168,76,0.35);border-radius:50px;color:#C9A84C;font-family:'Noto Sans TC',sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
   .btn-copy:hover{background:rgba(201,168,76,0.1);}
+
+  /* ── 權限系統 ── */
+  .lock-overlay {
+    position:fixed; inset:0; background:rgba(15,10,8,0.92);
+    z-index:9999; display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+  }
+  .lock-box {
+    background:#2D2D2D; border:1px solid rgba(201,168,76,0.35);
+    border-radius:8px; padding:36px 32px; width:90%; max-width:360px;
+    text-align:center;
+  }
+  .lock-box .lock-icon { font-size:32px; margin-bottom:12px; }
+  .lock-box h2 { font-family:'Noto Sans TC',sans-serif; font-size:14px; font-weight:700; color:var(--gold); letter-spacing:3px; margin-bottom:4px; }
+  .lock-box p { font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:20px; }
+  .lock-box input {
+    width:100%; background:#1A1A1A; border:1px solid rgba(201,168,76,0.3);
+    border-radius:4px; padding:12px 14px; color:var(--text);
+    font-family:'Noto Sans TC',sans-serif; font-size:16px;
+    text-align:center; letter-spacing:4px; outline:none; margin-bottom:12px;
+  }
+  .lock-box input:focus { border-color:var(--gold); }
+  .lock-box .btn-login {
+    width:100%; padding:12px; background:linear-gradient(135deg,var(--gold),#9A7A30);
+    border:none; border-radius:50px; color:#1A1208;
+    font-family:'Nunito',sans-serif; font-weight:800; font-size:13px;
+    letter-spacing:3px; cursor:pointer; margin-bottom:10px;
+  }
+  .lock-box .btn-login:hover { opacity:0.88; }
+  .lock-box .btn-guest { 
+    background:none; border:1px solid rgba(201,168,76,0.25);
+    border-radius:50px; color:var(--muted); font-family:'Noto Sans TC',sans-serif;
+    font-size:11px; padding:8px 20px; cursor:pointer; letter-spacing:2px;
+    transition:all 0.2s; width:100%;
+  }
+  .lock-box .btn-guest:hover { border-color:var(--gold); color:var(--gold); }
+  .lock-box .err-msg { color:#C0392B; font-size:11px; margin-top:8px; display:none; letter-spacing:1px; }
+
+  /* 管理員標示 */
+  .admin-badge {
+    display:none; position:fixed; bottom:16px; right:16px;
+    background:var(--gold); color:#1A1208;
+    font-family:'Noto Sans TC',sans-serif; font-size:10px; font-weight:700;
+    padding:5px 12px; border-radius:20px; letter-spacing:2px; z-index:100;
+    cursor:pointer; box-shadow:0 2px 8px rgba(201,168,76,0.3);
+  }
+  .admin-badge:hover { opacity:0.88; }
+
+  /* 訪客模式下隱藏管理功能 */
+  body.guest-mode .add-section { display:none !important; }
+  body.guest-mode .sch-section { display:none !important; }
+  body.guest-mode .refresh-wrap .export-only { display:none !important; }
+  body.guest-mode [onclick="addRecord()"] { display:none !important; }
 </style>
 </head>
 <body>
@@ -336,6 +389,22 @@ function showMsg(type,text){
 
 
 <!-- HEADER -->
+<!-- 登入彈窗 -->
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-box">
+    <div class="lock-icon">🔐</div>
+    <h2>值日生違規統計</h2>
+    <p>請輸入管理員密碼，或以訪客身分查看</p>
+    <input type="password" id="pwdInput" placeholder="輸入密碼" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="btn-login" onclick="tryLogin()">確認登入</button>
+    <button class="btn-guest" onclick="enterGuest()">👁 訪客查看（僅限閱覽）</button>
+    <div class="err-msg" id="errMsg">⚠ 密碼錯誤，請重試</div>
+  </div>
+</div>
+
+<!-- 管理員標示 -->
+<div class="admin-badge" id="adminBadge" onclick="logout()">⚙ 管理員 ｜ 登出</div>
+
 <div class="header">
   <div class="h-main">RECORD</div>
   <div class="h-sub">VIOLATION MANAGEMENT SYSTEM</div>
@@ -437,6 +506,110 @@ function showMsg(type,text){
   </div>
 </div>
 
+<script>
+
+// ── 權限系統 ──────────────────────────────────────────────────
+const ADMIN_HASH = 'c2427950740baa216335905879b3c03ba1de80a546862049e613d32eb722627f';
+const AUTH_KEY = 'vt_auth_v1';
+const AUTH_DATE_KEY = 'vt_auth_date_v1';
+
+async function hashPassword(pwd) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+function checkSavedAuth() {
+  try {
+    const savedHash = localStorage.getItem(AUTH_KEY);
+    const savedDate = localStorage.getItem(AUTH_DATE_KEY);
+    if (savedHash === ADMIN_HASH && savedDate === todayStr()) {
+      enterAdmin(false);
+      return true;
+    }
+    if (savedDate === todayStr() + '_guest') {
+      enterGuest(false);
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+async function tryLogin() {
+  const pwd = document.getElementById('pwdInput').value;
+  if (!pwd) return;
+  const hash = await hashPassword(pwd);
+  if (hash === ADMIN_HASH) {
+    try {
+      localStorage.setItem(AUTH_KEY, hash);
+      localStorage.setItem(AUTH_DATE_KEY, todayStr());
+    } catch(e) {}
+    enterAdmin(true);
+  } else {
+    const err = document.getElementById('errMsg');
+    err.style.display = 'block';
+    document.getElementById('pwdInput').value = '';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+
+function enterAdmin(showWelcome) {
+  document.getElementById('lockOverlay').style.display = 'none';
+  document.getElementById('adminBadge').style.display = 'block';
+  document.body.classList.remove('guest-mode');
+  if (showWelcome) {
+    showToast('✓ 管理員模式已啟用', 'ok');
+  }
+}
+
+function enterGuest(showMsg) {
+  try {
+    localStorage.setItem(AUTH_DATE_KEY, todayStr() + '_guest');
+    localStorage.removeItem(AUTH_KEY);
+  } catch(e) {}
+  document.getElementById('lockOverlay').style.display = 'none';
+  document.getElementById('adminBadge').style.display = 'none';
+  document.body.classList.add('guest-mode');
+  if (showMsg !== false) showToast('👁 訪客模式 — 僅限閱覽', 'guest');
+}
+
+function logout() {
+  if (!confirm('確認登出管理員？')) return;
+  try {
+    localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(AUTH_DATE_KEY);
+  } catch(e) {}
+  document.getElementById('lockOverlay').style.display = 'flex';
+  document.getElementById('adminBadge').style.display = 'none';
+  document.getElementById('pwdInput').value = '';
+  document.body.classList.remove('guest-mode');
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);
+    background:${type==='ok'?'#C9A84C':type==='guest'?'#2D2D2D':'#C0392B'};
+    color:${type==='ok'?'#1A1208':'#F0EAD6'};
+    padding:10px 24px;border-radius:30px;font-family:'Noto Sans TC',sans-serif;
+    font-size:12px;letter-spacing:2px;z-index:10000;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// 頁面載入時檢查登入狀態
+window.addEventListener('DOMContentLoaded', () => {
+  if (!checkSavedAuth()) {
+    document.getElementById('lockOverlay').style.display = 'flex';
+  }
+});
+
+</script>
 <script>
   document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
   loadRecords();
@@ -952,167 +1125,145 @@ function exportSignSheet() {
   const rows = document.querySelectorAll('#schBody2 tr');
   if (!rows.length) { alert('請先產生排班表'); return; }
 
-  // 收集資料
   const assignments = [];
   [...rows].forEach(r => {
     const cells = r.querySelectorAll('td');
     const dateText = cells[0].textContent.trim();
     const personText = cells[1].textContent.replace(/（二值日生）/g, '').trim();
-    const persons = personText.split('＋').map(p => p.trim()).filter(Boolean);
-    persons.forEach(person => {
+    personText.split('＋').map(p => p.trim()).filter(Boolean).forEach(person => {
       assignments.push({ date: dateText, person });
     });
   });
 
-  // 取得月份資訊
   const sheetM = (window._schTargetMonth || '').match(/(\d+)/);
   const monthStr = sheetM ? sheetM[1] + '月' : '';
   const year = new Date().getFullYear();
   const now = new Date();
-  const printDate = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+  const printDate = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate();
 
-  // 左右兩欄：將資料分成兩半
-  const half = Math.ceil(assignments.length / 2);
-  const leftCol = assignments.slice(0, half);
-  const rightCol = assignments.slice(half);
-
-  // 補齊右欄（讓左右等長）
-  while (rightCol.length < leftCol.length) rightCol.push(null);
-
-    // 左右兩欄：將資料分成兩半
   const half = Math.ceil(assignments.length / 2);
   const leftCol = assignments.slice(0, half);
   const rightCol = assignments.slice(half);
   while (rightCol.length < leftCol.length) rightCol.push(null);
 
-  const html = `<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<title>${year}年${monthStr}值日生簽到表</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Noto Sans TC',sans-serif; background:#fff; color:#1a1a1a; padding:16px 20px; font-size:12px; }
-
-  .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
-  .toolbar button { border:none; padding:8px 16px; font-family:'Noto Sans TC',sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer; border-radius:3px; }
-  .btn-print { background:#1a1a1a; color:#C9A84C; }
-  .btn-edit { background:#C9A84C; color:#1a1a1a; font-weight:700; }
-  .edit-hint { font-size:10px; color:#9A7A30; padding:5px 10px; background:#fffcf0; border:1px solid #C9A84C; border-radius:3px; display:none; }
-
-  .header { text-align:center; margin-bottom:12px; }
-  .header h1 { font-size:16px; font-weight:900; letter-spacing:3px; margin-bottom:2px; }
-  .header .sub { font-size:9px; color:#888; letter-spacing:2px; }
-  .gold-line { width:50px; height:2px; background:#C9A84C; margin:5px auto 0; }
-
-  .notice { border:1px solid #C9A84C; border-radius:3px; padding:6px 12px; margin-bottom:10px; background:#fffcf0; font-size:10px; color:#7A5A00; }
-  .summary { margin-bottom:10px; font-size:10px; color:#666; display:flex; gap:20px; }
-  .summary span { color:#1a1a1a; font-weight:600; }
-
-  /* 兩欄容器 */
-  .two-col { display:grid; grid-template-columns:1fr 8px 1fr; gap:0; align-items:start; }
-  .col-divider { background:#e0d8c8; margin:0 4px; align-self:stretch; }
-
-  table { width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed; }
-  colgroup col.col-date { width:42px; }
-  colgroup col.col-name { width:52px; }
-  colgroup col.col-sign { width:22%; }
-  colgroup col.col-check { width:18%; }
-  colgroup col.col-fine { width:auto; }
-  colgroup col.col-act { width:40px; }
-
-  thead tr { background:#1a1a1a; }
-  thead th { color:#C9A84C; padding:6px 4px; text-align:center; font-weight:500; letter-spacing:0.5px; font-size:9px; border:1px solid #333; overflow:hidden; }
-
-  tbody tr { height:40px; }
-  tbody tr:nth-child(even) td { background:#faf8f4; }
-  tbody td { border:1px solid #ddd; padding:3px 5px; vertical-align:middle; text-align:center; overflow:hidden; }
-
-  .td-date { font-weight:700; color:#C9A84C; font-size:11px; }
-  .td-name { font-weight:700; font-size:11px; }
-  .td-fine { text-align:center; font-size:9px; color:#999; }
-
-  .editable { min-height:24px; padding:2px 3px; border-radius:2px; cursor:default; outline:none; display:block; width:100%; }
-  .edit-mode .editable { cursor:text; border:1px dashed #C9A84C !important; background:#fffdf5 !important; }
-  .edit-mode .editable:focus { border:1px solid #C9A84C !important; background:#fff8e0 !important; }
-
-  .sign-area { border-bottom:1px solid #ccc; height:24px; display:flex; align-items:flex-end; }
-  .fine-area { border:1px dashed #ddd; border-radius:2px; padding:2px 3px; font-size:9px; color:#bbb; min-height:24px; display:flex; align-items:center; justify-content:center; white-space:nowrap; }
-
-  /* 操作欄 */
-  .act-cell { width:40px; border:none !important; background:transparent !important; padding:2px !important; }
-  .act-btns { display:flex; flex-direction:column; gap:2px; align-items:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
-  .edit-mode .act-btns { opacity:1; pointer-events:auto; }
-
-  .del-btn { background:#C0392B; color:#fff; border:none; border-radius:2px; width:18px; height:18px; font-size:10px; cursor:pointer; padding:0; line-height:1; display:flex; align-items:center; justify-content:center; }
-  .ins-btn { background:#C9A84C; color:#1a1a1a; border:none; border-radius:2px; width:18px; height:18px; font-size:13px; font-weight:700; cursor:pointer; padding:0; line-height:1; display:flex; align-items:center; justify-content:center; }
-  .del-btn:hover { background:#a93226; }
-  .ins-btn:hover { background:#b8963e; }
-
-  .empty-row td { background:#f8f8f8 !important; border-color:#eee; }
-
-  .footer { margin-top:12px; text-align:center; color:#ccc; font-size:9px; letter-spacing:2px; }
-
-  @media print {
-    body { padding:6px 10px; }
-    .toolbar, .edit-hint, .act-cell, .act-btns { display:none !important; }
-    .edit-mode .editable { border:none !important; background:transparent !important; }
-    @page { margin:0.6cm; size:A4; }
+  function makeRowHtml(a) {
+    if (!a) return '<tr class="empty-row"><td></td><td></td><td><div class="sign-area"></div></td><td><div class="sign-area"></div></td><td><div class="fine-area">□完成 □未完成</div></td></tr>';
+    return '<tr>' +
+      '<td class="td-date">' + a.date + '</td>' +
+      '<td class="td-name">' + a.person + '</td>' +
+      '<td><div class="sign-area"></div></td>' +
+      '<td><div class="sign-area"></div></td>' +
+      '<td class="td-fine"><div class="fine-area">□完成 □未完成</div></td>' +
+      '</tr>';
   }
-</style>
-</head>
-<body>
 
-<div class="toolbar">
-  <button class="btn-print" onclick="window.print()">🖨️ 列印 / 存成 PDF</button>
-  <button class="btn-edit" onclick="toggleEdit(this)">✏️ 編輯模式</button>
-  <div class="edit-hint" id="editHint">✏️ 點格子可修改 &nbsp;｜&nbsp; ＋ 插入新行 &nbsp;｜&nbsp; ✕ 刪除該行</div>
-</div>
+  const leftRows = leftCol.map(makeRowHtml).join('');
+  const rightRows = rightCol.map(makeRowHtml).join('');
 
-<div class="header">
-  <div class="sub">VIOLATION DUTY SIGN-IN SHEET</div>
-  <h1 class="editable" contenteditable="false">${year} 年 ${monthStr} 值日生簽到表</h1>
-  <div class="gold-line"></div>
-</div>
+  const html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">' +
+    '<title>' + year + '年' + monthStr + '值日生簽到表</title>' +
+    '<style>' +
+    '@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap");' +
+    '* { margin:0; padding:0; box-sizing:border-box; }' +
+    'body { font-family:"Noto Sans TC",sans-serif; background:#fff; color:#1a1a1a; padding:16px 20px; font-size:12px; }' +
+    '.toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }' +
+    '.toolbar button { border:none; padding:8px 16px; font-family:"Noto Sans TC",sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer; border-radius:3px; }' +
+    '.btn-print { background:#1a1a1a; color:#C9A84C; }' +
+    '.btn-edit { background:#C9A84C; color:#1a1a1a; font-weight:700; }' +
+    '.edit-hint { font-size:10px; color:#9A7A30; padding:5px 10px; background:#fffcf0; border:1px solid #C9A84C; border-radius:3px; display:none; }' +
+    '.header { text-align:center; margin-bottom:12px; }' +
+    '.header h1 { font-size:16px; font-weight:900; letter-spacing:3px; margin-bottom:2px; }' +
+    '.header .sub { font-size:9px; color:#888; letter-spacing:2px; }' +
+    '.gold-line { width:50px; height:2px; background:#C9A84C; margin:5px auto 0; }' +
+    '.notice { border:1px solid #C9A84C; border-radius:3px; padding:6px 12px; margin-bottom:10px; background:#fffcf0; font-size:10px; color:#7A5A00; }' +
+    '.summary { margin-bottom:10px; font-size:10px; color:#666; display:flex; gap:20px; }' +
+    '.summary span { color:#1a1a1a; font-weight:600; }' +
+    '.two-col { display:grid; grid-template-columns:1fr 8px 1fr; gap:0; align-items:start; }' +
+    '.col-divider { background:#e0d8c8; margin:0 4px; align-self:stretch; }' +
+    'table { width:100%; border-collapse:collapse; font-size:10px; table-layout:fixed; }' +
+    'thead tr { background:#1a1a1a; }' +
+    'thead th { color:#C9A84C; padding:6px 4px; text-align:center; font-weight:500; font-size:9px; border:1px solid #333; }' +
+    'tbody tr { height:40px; }' +
+    'tbody tr:nth-child(even) td { background:#faf8f4; }' +
+    'tbody td { border:1px solid #ddd; padding:3px 5px; vertical-align:middle; text-align:center; }' +
+    '.td-date { width:42px; font-weight:700; color:#C9A84C; font-size:11px; }' +
+    '.td-name { width:52px; font-weight:700; font-size:11px; }' +
+    '.td-fine { font-size:9px; }' +
+    '.editable { min-height:24px; padding:2px 3px; border-radius:2px; cursor:default; outline:none; display:block; width:100%; }' +
+    '.edit-mode .editable { cursor:text; border:1px dashed #C9A84C !important; background:#fffdf5 !important; }' +
+    '.edit-mode .editable:focus { border:1px solid #C9A84C !important; background:#fff8e0 !important; }' +
+    '.sign-area { border-bottom:1px solid #ccc; height:24px; display:flex; align-items:flex-end; }' +
+    '.fine-area { border:1px dashed #ddd; border-radius:2px; padding:2px 3px; font-size:9px; color:#bbb; min-height:24px; display:flex; align-items:center; justify-content:center; white-space:nowrap; }' +
+    '.act-cell { width:40px; border:none !important; background:transparent !important; padding:2px !important; }' +
+    '.act-btns { display:flex; flex-direction:column; gap:2px; align-items:center; opacity:0; pointer-events:none; }' +
+    '.edit-mode .act-btns { opacity:1; pointer-events:auto; }' +
+    '.del-btn { background:#C0392B; color:#fff; border:none; border-radius:2px; width:18px; height:18px; font-size:10px; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; }' +
+    '.ins-btn { background:#C9A84C; color:#1a1a1a; border:none; border-radius:2px; width:18px; height:18px; font-size:13px; font-weight:700; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; }' +
+    '.empty-row td { background:#f8f8f8 !important; border-color:#eee; }' +
+    '.footer { margin-top:12px; text-align:center; color:#ccc; font-size:9px; letter-spacing:2px; }' +
+    '@media print {' +
+    'body { padding:6px 10px; }' +
+    '.toolbar, .edit-hint, .act-cell, .act-btns { display:none !important; }' +
+    '.edit-mode .editable { border:none !important; background:transparent !important; }' +
+    '@page { margin:0.6cm; size:A4; }' +
+    '}' +
+    '</style></head><body>' +
+    '<div class="toolbar">' +
+    '<button class="btn-print" onclick="window.print()">🖨️ 列印 / 存成 PDF</button>' +
+    '<button class="btn-edit" onclick="toggleEdit(this)">✏️ 編輯模式</button>' +
+    '<div class="edit-hint" id="editHint">✏️ 點格子可修改 ｜ ＋ 插入新行 ｜ ✕ 刪除該行</div>' +
+    '</div>' +
+    '<div class="header">' +
+    '<div class="sub">VIOLATION DUTY SIGN-IN SHEET</div>' +
+    '<h1>' + year + ' 年 ' + monthStr + ' 值日生簽到表</h1>' +
+    '<div class="gold-line"></div>' +
+    '</div>' +
+    '<div class="summary">' +
+    '<div>製表日期：<span>' + printDate + '</span></div>' +
+    '<div>總值日生次數：<span>' + assignments.length + ' 次</span></div>' +
+    '</div>' +
+    '<div class="notice">⚠️ <strong>注意事項：</strong>值日生需確實完成打掃工作，若打掃未完成或不合格，將處以罰款 <strong style="color:#C0392B;">NT$ 200</strong>，請檢查者確認後簽名。</div>' +
+    '<div class="two-col">' +
+    '<table><colgroup><col style="width:42px"><col style="width:52px"><col style="width:22%"><col style="width:18%"><col><col style="width:40px"></colgroup>' +
+    '<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款 NT$200</th><th></th></tr></thead>' +
+    '<tbody id="leftTbody">' + leftRows + '</tbody></table>' +
+    '<div class="col-divider"></div>' +
+    '<table><colgroup><col style="width:42px"><col style="width:52px"><col style="width:22%"><col style="width:18%"><col><col style="width:40px"></colgroup>' +
+    '<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款 NT$200</th><th></th></tr></thead>' +
+    '<tbody id="rightTbody">' + rightRows + '</tbody></table>' +
+    '</div>' +
+    '<div class="footer">VIOLATION MANAGEMENT SYSTEM · ' + printDate + '</div>' +
+    '<script>' +
+    'var isEditing=false;' +
+    'function makeRowEl(date,person){var tr=document.createElement("tr");tr.innerHTML=' +
+    '"<td class=\\"td-date\\"><div class=\\"editable\\" contenteditable=\\"false\\">"+(date||"")+"</div></td>"' +
+    '+"<td class=\\"td-name\\"><div class=\\"editable\\" contenteditable=\\"false\\">"+(person||"")+"</div></td>"' +
+    '+"<td><div class=\\"editable sign-area\\" contenteditable=\\"false\\"></div></td>"' +
+    '+"<td><div class=\\"editable sign-area\\" contenteditable=\\"false\\"></div></td>"' +
+    '+"<td class=\\"td-fine\\"><div class=\\"editable fine-area\\" contenteditable=\\"false\\">□完成 □未完成</div></td>"' +
+    '+"<td class=\\"act-cell\\"><div class=\\"act-btns\\">"' +
+    '+"<button class=\\"ins-btn\\" onclick=\\"insertRowAfter(this)\\" title=\\"插入\\">＋</button>"' +
+    '+"<button class=\\"del-btn\\" onclick=\\"deleteRow(this)\\" title=\\"刪除\\">✕</button>"' +
+    '+"</div></td>";return tr;}' +
+    'function toggleEdit(btn){isEditing=!isEditing;document.body.classList.toggle("edit-mode",isEditing);' +
+    'document.querySelectorAll(".editable").forEach(function(el){el.contentEditable=isEditing?"true":"false";});' +
+    'btn.textContent=isEditing?"🔒 鎖定":"✏️ 編輯模式";' +
+    'btn.style.background=isEditing?"#C0392B":"#C9A84C";' +
+    'btn.style.color=isEditing?"#fff":"#1a1a1a";' +
+    'document.getElementById("editHint").style.display=isEditing?"block":"none";}' +
+    'function deleteRow(btn){btn.closest("tr").remove();}' +
+    'function insertRowAfter(btn){var tr=btn.closest("tr");var newRow=makeRowEl("","");' +
+    'if(isEditing)newRow.querySelectorAll(".editable").forEach(function(el){el.contentEditable="true";});' +
+    'tr.parentNode.insertBefore(newRow,tr.nextSibling);}' +
+    '<\/script>' +
+    '</body></html>';
 
-<div class="summary">
-  <div>製表日期：<span>${printDate}</span></div>
-  <div>總值日生次數：<span>${assignments.length} 次</span></div>
-</div>
-
-<div class="notice">
-  ⚠️ <strong>注意事項：</strong>值日生需確實完成打掃工作，若打掃未完成或不合格，將處以罰款 <strong style="color:#C0392B;">NT$ 200</strong>，請檢查者確認後簽名。
-</div>
-
-<div class="two-col">
-  <table id="leftTable">
-    <colgroup><col class="col-date"><col class="col-name"><col class="col-sign"><col class="col-check"><col class="col-fine"><col class="col-act"></colgroup>
-    <thead><tr>
-      <th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款 NT$200</th><th></th>
-    </tr></thead>
-    <tbody id="leftTbody">
-      ${leftCol.map(a => a ? makeRow(a.date, a.person) : makeEmptyRow()).join('')}
-    </tbody>
-  </table>
-
-  <div class="col-divider"></div>
-
-  <table id="rightTable">
-    <colgroup><col class="col-date"><col class="col-name"><col class="col-sign"><col class="col-check"><col class="col-fine"><col class="col-act"></colgroup>
-    <thead><tr>
-      <th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款 NT$200</th><th></th>
-    </tr></thead>
-    <tbody id="rightTbody">
-      ${rightCol.map(a => a ? makeRow(a.date, a.person) : makeEmptyRow()).join('')}
-    </tbody>
-  </table>
-</div>
-
-<div class="footer">VIOLATION MANAGEMENT SYSTEM &nbsp;·&nbsp; ${printDate}</div>
-
-<script>
-let isEditing = false;
+  const w = window.open('', '_blank');
+  if (!w) { alert('請允許彈出視窗！'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function() { w.print(); }, 800);
+}
 
 function makeRow(date, person) {
   return '<tr>' +
