@@ -319,7 +319,11 @@ body.guest-mode .admin-only{display:none!important;}
 
 <script>
 // ══ CONFIG ══════════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCj2BTMt8ACc17l4xiylqEsXd8v8IuDaVmwlGL3CTTJhqGBVAX5LvXi05U9Y2gsOi5/exec';
+// 網址設定：可以從 config.json 讀取，或直接改這裡
+const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzCj2BTMt8ACc17l4xiylqEsXd8v8IuDaVmwlGL3CTTJhqGBVAX5LvXi05U9Y2gsOi5/exec';
+let SCRIPT_URL = SCRIPT_URL_DEFAULT;
+// 嘗試從 config.json 讀取（如果存在）
+fetch('./config.json').then(r=>r.json()).then(c=>{if(c&&c.scriptUrl)SCRIPT_URL=c.scriptUrl;}).catch(()=>{});
 const ADMIN_HASH = 'c2427950740baa216335905879b3c03ba1de80a546862049e613d32eb722627f';
 const AUTH_KEY = 'vt_auth_v3';
 const AUTH_DATE = 'vt_date_v3';
