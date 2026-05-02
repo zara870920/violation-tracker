@@ -756,30 +756,47 @@ function runSchedule() {
     const weekday=new Date(targetYear,targetMonthNum-1,d).getDay();
     allDays.push({d,weekday,isSkip:skipDays.includes(d)});
   }
-  const availableDays=allDays.filter(x=>!x.isSkip).map(x=>x.d);
-  const weekendDays=allDays.filter(x=>!x.isSkip&&(x.weekday===5||x.weekday===6||x.weekday===0)).map(x=>x.d);
 
-  const assignments=[];
-  schViolators.forEach(v=>{
-    const name=v.name;let needed=v.count;
-    const personLeaves=leaves[name]||[];
-    const usedDays=new Set(assignments.map(a=>a.day));
-    const candidates=availableDays.filter(d=>!personLeaves.includes(d)&&!usedDays.has(d)).sort(()=>Math.random()-0.5);
-    const first=candidates.slice(0,needed);
-    first.forEach(d=>{
-      assignments.push({date:targetYear+'-'+String(targetMonthNum).padStart(2,'0')+'-'+String(d).padStart(2,'0'),day:d,person:name});
-      needed--;
-    });
-    if(needed>0){
-      const fallback=weekendDays.filter(d=>!personLeaves.includes(d)).sort(()=>Math.random()-0.5);
-      for(let i=0;i<needed;i++){
-        if(!fallback.length)break;
-        const d=fallback[i%fallback.length];
-        assignments.push({date:targetYear+'-'+String(targetMonthNum).padStart(2,'0')+'-'+String(d).padStart(2,'0'),day:d,person:name});
-      }
-    }
+  // 每天需要的值日生人數：週六(6)、週日(0) 需要2位，其他天1位
+  function slotsNeeded(weekday){ return (weekday===0||weekday===6)?2:1; }
+
+  // 建立每天的名額槽：{day, slot(0或1), weekday}
+  const slots=[];
+  allDays.filter(x=>!x.isSkip).forEach(x=>{
+    const n=slotsNeeded(x.weekday);
+    for(let s=0;s<n;s++) slots.push({day:x.d,slot:s,weekday:x.weekday,person:null});
   });
-  assignments.sort((a,b)=>a.day-b.day);
+
+  // 建立排班隊列：每人依違規次數展開，打亂順序
+  let queue=[];
+  schViolators.forEach(v=>{for(let i=0;i<v.count;i++)queue.push(v.name);});
+  queue=queue.sort(()=>Math.random()-0.5);
+
+  // 依序為每個人找到可以安排的名額槽
+  queue.forEach(name=>{
+    const personLeaves=leaves[name]||[];
+    // 找還沒有此人、且此人不在休假的空槽
+    const available=slots.filter(s=>
+      s.person===null &&
+      !personLeaves.includes(s.day) &&
+      // 同一天同一槽不能有同一個人
+      !slots.some(s2=>s2.day===s.day&&s2.person===name)
+    );
+    if(!available.length) return; // 找不到可排的天，跳過
+    // 隨機選一個空槽
+    const pick=available[Math.floor(Math.random()*available.length)];
+    pick.person=name;
+  });
+
+  // 整理結果：只取有人的槽
+  const assignments=slots
+    .filter(s=>s.person!==null)
+    .map(s=>({
+      date:targetYear+'-'+String(targetMonthNum).padStart(2,'0')+'-'+String(s.day).padStart(2,'0'),
+      day:s.day,
+      person:s.person
+    }))
+    .sort((a,b)=>a.day-b.day);
 
   // group by date
   const dayMap={};
@@ -794,7 +811,11 @@ function runSchedule() {
   const totalNeeded=schViolators.reduce((s,v)=>s+v.count,0);
   const summary=Object.entries(countMap).sort((a,b)=>b[1]-a[1]).map(([n,c])=>n+' '+c+'天').join('　');
   const ok=assignments.length>=totalNeeded;
-  document.getElementById('schSummary').textContent='共安排 '+assignments.length+' 次 / 需要 '+totalNeeded+' 次 '+(ok?'✓ 全數完畢':'⚠ 天數不足')+' ｜ '+summary;
+  // 統計週末雙人天數
+  const weekendDouble=allDays.filter(x=>!x.isSkip&&(x.weekday===0||x.weekday===6)).length;
+  document.getElementById('schSummary').textContent=
+    '共安排 '+assignments.length+' 次 / 需要 '+totalNeeded+' 次 '+(ok?'✓ 全數完畢':'⚠ 部分未排到')+
+    ' ｜ 週末雙人天數：'+weekendDouble+' 天 ｜ '+summary;
   document.getElementById('schResult').style.display='block';
   document.getElementById('schResult').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
