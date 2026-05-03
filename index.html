@@ -774,12 +774,13 @@ function runSchedule() {
 
   // 依序為每個人找到可以安排的名額槽
   queue.forEach(name=>{
-    const personLeaves=leaves[name]||[];
+    // 確保休假日都是數字格式比對
+    const personLeaves=(leaves[name]||[]).map(d=>parseInt(d));
     // 找還沒有此人、且此人不在休假的空槽
     const available=slots.filter(s=>
       s.person===null &&
-      !personLeaves.includes(s.day) &&
-      // 同一天同一槽不能有同一個人
+      !personLeaves.includes(parseInt(s.day)) &&
+      // 同一天不能排同一個人兩次
       !slots.some(s2=>s2.day===s.day&&s2.person===name)
     );
     if(!available.length) return; // 找不到可排的天，跳過
@@ -999,6 +1000,62 @@ function exportSignSheet() {
     +mkTbl(left)
     +'<div class="divider"></div>'
     +mkTbl(right)
+    +'</div>'
+    +'<div class="two-col" style="margin-top:16px;">'
+    // 左側：規範文字
+    +'<div style="font-size:9px;color:#1a1a1a;line-height:1.8;padding-right:8px;">'
+    +'<div style="font-weight:900;font-size:11px;letter-spacing:1px;color:#1a1a1a;margin-bottom:6px;border-bottom:2px solid #C9A84C;padding-bottom:4px;">值日生規範</div>'
+    +'<div style="margin-bottom:6px;font-weight:700;">違規罰則（各一次值日生）</div>'
+    +'<div>一、50分未集合</div>'
+    +'<div>二、名牌、call機沒戴</div>'
+    +'<div>三、未找職代、打掃未拍照、值日生未拍照、打掃未完成</div>'
+    +'<div style="margin-top:8px;font-weight:700;color:#C9A84C;">📌【值日生清潔規範公告】</div>'
+    +'<div style="margin-top:4px;font-weight:700;">平日一位、假日兩位</div>'
+    +'<div style="margin-top:6px;font-weight:700;">1️⃣ 值日生簽名制度</div>'
+    +'<div>每位值日生需於值日單上「親自簽署自己的英文名字（正楷）」</div>'
+    +'<div>兩位值日生需使用「三個不同的英文名字」</div>'
+    +'<div style="color:#666;">（例：Yuni / Yu）</div>'
+    +'<div>需要做完找第三個人檢查後、雙方簽名才算完成</div>'
+    +'<div style="margin-top:6px;font-weight:700;">2️⃣ 值日生名單回報</div>'
+    +'<div>當日值日生分配完成後，請於群組公告</div>'
+    +'<div style="margin-top:6px;font-weight:700;">3️⃣ 清潔完成證明（選擇性）</div>'
+    +'<div>若想確保自身權益與清白，可拍照上傳群組，作為完成證明</div>'
+    +'<div style="margin-top:6px;font-weight:700;">4️⃣ 共同檢查責任制</div>'
+    +'<div>值日生需互相提醒、互相檢查，以維護整體環境品質</div>'
+    +'<div>未完成區域，視為值日生共同責任</div>'
+    +'<div style="margin-top:8px;font-weight:700;">值日生工作項目：</div>'
+    +'<div>一、收齊1.2.3所有的毛巾拖到門口</div>'
+    +'<div>二、收齊1.2.3.樓的垃圾</div>'
+    +'<div>三、每天上三樓收取棉條和護髮帽洗並放回一樓的原位</div>'
+    +'<div>四、大門玻璃隔日開店前發現有指紋、手印或痕跡、當天值日生負責擦乾淨</div>'
+    +'</div>'
+    // 分隔線
+    +'<div style="background:#e0d8c8;margin:0 6px;"></div>'
+    // 右側：罰款 NT$200 名單
+    +'<div>'
+    +'<div style="font-weight:900;font-size:11px;letter-spacing:1px;color:#C0392B;margin-bottom:6px;border-bottom:2px solid #C0392B;padding-bottom:4px;">罰款 NT$200 名單</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:9px;">'
+    +'<thead><tr>'
+    +'<th style="background:#C0392B;color:#fff;padding:5px 4px;text-align:center;border:1px solid #c0392b;font-size:9px;">日期</th>'
+    +'<th style="background:#C0392B;color:#fff;padding:5px 4px;text-align:center;border:1px solid #c0392b;font-size:9px;">姓名</th>'
+    +'<th style="background:#C0392B;color:#fff;padding:5px 4px;text-align:center;border:1px solid #c0392b;font-size:9px;">原因</th>'
+    +'<th style="background:#C0392B;color:#fff;padding:5px 4px;text-align:center;border:1px solid #c0392b;font-size:9px;">繳款</th>'
+    +'<th style="background:#C0392B;color:#fff;padding:5px 4px;text-align:center;border:1px solid #c0392b;font-size:9px;">確認</th>'
+    +'</tr></thead>'
+    +'<tbody id="fineBody">'
+    +Array(12).fill(0).map(()=>
+      '<tr style="height:32px;">'
+      +'<td style="border:1px solid #ddd;"><div class="ed" contenteditable="false"></div></td>'
+      +'<td style="border:1px solid #ddd;"><div class="ed" contenteditable="false"></div></td>'
+      +'<td style="border:1px solid #ddd;"><div class="ed" contenteditable="false"></div></td>'
+      +'<td style="border:1px solid #ddd;text-align:center;"><div class="ed" contenteditable="false">□</div></td>'
+      +'<td style="border:1px solid #ddd;"><div class="ed sign-line" contenteditable="false"></div></td>'
+      +'</tr>'
+    ).join('')
+    +'</tbody>'
+    +'</table>'
+    +'<div style="margin-top:6px;font-size:9px;color:#C0392B;font-weight:700;">※ 罰款需於當月底前繳清</div>'
+    +'</div>'
     +'</div>'
     +'<div class="footer">VIOLATION MANAGEMENT SYSTEM · '+printDate+'</div>'
     +'</body></html>';
