@@ -454,7 +454,7 @@ function renderAll() {
   renderTabs();
   const months=getMonths();
   if(!months.length){document.getElementById('mainContent').innerHTML='<div class="empty-state">— 尚無違規記錄 —</div>';return;}
-  const filtered=records.filter(r=>getMonthKey(r.date)===currentTab).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const filtered=records.filter(r=>getMonthKey(r.date)===currentTab).sort((a,b)=>{const da=parseDate(a.date),db=parseDate(b.date);return da&&db?da-db:0;});
   const stats=computeStats(filtered);
   let html='';
 
