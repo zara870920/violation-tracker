@@ -804,8 +804,8 @@ function runSchedule() {
   assignments.forEach(a=>{if(!dayMap[a.date])dayMap[a.date]=[];dayMap[a.date].push(a.person);});
 
   const tbody=document.getElementById('schBody2');
-  tbody.innerHTML=Object.entries(dayMap).sort(([a],[b])=>a.localeCompare(b)).map(([date,persons])=>
-    '<tr><td>'+fmtDate(date)+'</td><td style="font-weight:600;color:var(--gold);">'+persons.join(' ＋ ')+(persons.length>1?' <span style="font-size:9px;color:var(--orange);">（二值日生）</span>':'')+'</td></tr>'
+  tbody.innerHTML=Object.entries(dayMap).sort(([a],[b])=>a.localeCompare(b)).flatMap(([date,persons])=>
+    persons.map(p=>'<tr><td>'+fmtDate(date)+'</td><td style="font-weight:600;color:var(--gold);">'+p+'</td></tr>')
   ).join('');
 
   const countMap={};assignments.forEach(a=>countMap[a.person]=(countMap[a.person]||0)+1);
@@ -868,126 +868,99 @@ function downloadXlsx() {
 }
 
 function exportSignSheet() {
-  var rows=document.querySelectorAll('#schBody2 tr');
+  var rows = document.querySelectorAll('#schBody2 tr');
   if(!rows.length){alert('請先產生排班表');return;}
 
-  var data=[];
+  // 收集資料，每人一筆
+  var data = [];
   rows.forEach(function(r){
-    var cells=r.querySelectorAll('td');
-    if(cells.length<2)return;
-    var dateText=cells[0].textContent.trim();
-    var personText=cells[1].textContent.trim();
-    if(dateText&&personText) data.push({date:dateText,person:personText});
+    var cells = r.querySelectorAll('td');
+    if(cells.length < 2) return;
+    var d = cells[0].textContent.trim();
+    var p = cells[1].textContent.trim();
+    if(d && p) data.push({date:d, person:p});
   });
 
-  var sheetM=document.getElementById('schMonth2')?document.getElementById('schMonth2').value.split('-'):null;
-  var monthStr=sheetM?sheetM[1]+'月':'';
-  var year=new Date().getFullYear();
-  var now=new Date();
-  var printDate=now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
+  var sheetM = document.getElementById('schMonth2') ? document.getElementById('schMonth2').value.split('-') : null;
+  var monthStr = sheetM ? sheetM[1]+'月' : '';
+  var year = new Date().getFullYear();
+  var now = new Date();
+  var printDate = now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
 
-  var half=Math.ceil(data.length/2);
-  var left=data.slice(0,half);
-  var right=data.slice(half);
-  while(right.length<left.length) right.push(null);
+  // 固定左18筆、右18筆，不足補空行
+  var left = data.slice(0, 18);
+  var right = data.slice(18, 36);
+  while(left.length < 18) left.push(null);
+  while(right.length < 18) right.push(null);
 
-  // 動態行高：A4 297mm，頁邊 0.5cm*2=10mm → 可用 287mm
-  // header 13mm + notice 8mm + summary 5mm + rules 58mm + footer 4mm = 88mm
-  // table 可用 287-88 = 199mm，扣 thead 4mm → 195mm ÷ half 筆
-  var rowHmm = Math.max(4.5, Math.min(11, 195 / Math.max(half, 1)));
-  var rowH = Math.round(rowHmm * 3.7795);
+  // A4=297mm，頁邊0.5cm*2=10mm → 可用287mm
+  // header≈13mm, meta≈5mm, notice≈6mm, rules≈58mm, footer≈4mm → table可用201mm
+  // thead≈5mm → 196mm ÷ 18行 ≈ 10.9mm → 約10mm
+  var rowH = Math.round(10 * 3.7795); // 約38px
 
-  function mkRow(a){
-    var d=a?a.date:'', p=a?a.person:'';
-    var isEmpty = !a;
+  function mkRow(a) {
+    var d = a ? a.date : '';
+    var p = a ? a.person : '';
     return '<tr style="height:'+rowH+'px;">'
-      +'<td class="tc date">'+d+'</td>'
-      +'<td class="tc name">'+p+'</td>'
-      +'<td class="sign ed" contenteditable="false"></td>'
-      +'<td class="check ed" contenteditable="false"></td>'
-      +'<td class="tc fine">'+(isEmpty?'':'<span class="cb">□完成 □未完成</span>')+'</td>'
+      +'<td class="c date">'+d+'</td>'
+      +'<td class="c name">'+p+'</td>'
+      +'<td class="sign"></td>'
+      +'<td class="chk"></td>'
+      +'<td class="c fine">'+(a ? '□完成 □未完成' : '')+'</td>'
       +'</tr>';
   }
-
-  var rulesLeft =
-    '<b>【值日生清潔規範公告】</b>\n'
-    +'平日一位、假日兩位\n\n'
-    +'1、值日生簽名制度\n'
-    +'每位值日生需於值日單上「親自簽署自己的英文名字（正楷）」\n'
-    +'兩位值日生需使用「三個不同的英文名字」（例：Yuni / Yu）\n'
-    +'需要做完找第三個人檢查後、雙方簽名才算完成\n\n'
-    +'2、值日生名單回報\n'
-    +'當日值日生分配完成後，請於群組公告\n\n'
-    +'3、清潔完成證明（選擇性）\n'
-    +'若想確保自身權益與清白，可拍照上傳群組，作為完成證明\n\n'
-    +'4、共同檢查責任制\n'
-    +'值日生需互相提醒、互相檢查，以維護整體環境品質\n'
-    +'未完成區域，視為值日生共同責任';
-
-  var rulesRight =
-    '<b>值日生工作項目：</b>\n'
-    +'三樓教室鏡桌椅 + color吧\n\n'
-    +'ㄧ、擦三樓所有鏡桌椅還有檯面\n'
-    +'二、Color水槽濾網超過一半要換新、檯面包含後面的大平台都要擦乾淨、不能有水漬，工具物品排列整齊\n'
-    +'三、地板「每天」都要掃地和拖地、拖地要加漂白水喔，才不會有蟲蟲\n'
-    +'四、廁所鏡子要擦拭乾淨、不能有水痕、洗手台要刷過\n'
-    +'五、沖水區要用泡棉刷洗乾淨、旁邊的洗髮精護髮檯面要收拾乾淨、洗髮精沒有了可以到二樓裝一半使用護髮也是\n'
-    +'六、color bar垃圾每天都要收乾淨、未超過一半可以和休息室的垃圾一起收';
 
   var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">'
     +'<title>'+year+'年'+monthStr+'值日生簽到表</title>'
     +'<style>'
     +'*{margin:0;padding:0;box-sizing:border-box;}'
-    +'body{font-family:"Noto Sans TC",sans-serif;font-size:10px;color:#1a1a1a;padding:6px 10px;background:#fff;}'
+    +'body{font-family:"Noto Sans TC",sans-serif;color:#1a1a1a;background:#fff;padding:6px 10px;}'
     +'@page{size:A4;margin:0.5cm;}'
-    +'@media print{.no-print{display:none!important;}}'
-
-    +'.no-print{margin-bottom:6px;display:flex;gap:8px;}'
-    +'.no-print button{padding:4px 12px;border:1px solid #C9A84C;border-radius:4px;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;}'
-    +'.no-print button.on{background:#C9A84C;color:#fff;}'
-
-    +'.hdr{text-align:center;margin-bottom:4px;}'
-    +'.hdr .sub{font-size:6.5px;letter-spacing:5px;color:#aaa;margin-bottom:2px;}'
-    +'.hdr h1{font-size:15px;font-weight:900;letter-spacing:4px;}'
-    +'.hdr .gl{width:44px;height:1px;background:#C9A84C;margin:3px auto 0;}'
-
-    +'.meta{font-size:9px;color:#555;margin:4px 0 3px;display:flex;gap:18px;}'
+    +'@media print{.noprint{display:none!important;}}'
+    // 按鈕列
+    +'.noprint{margin-bottom:6px;display:flex;gap:8px;}'
+    +'.noprint button{padding:4px 14px;border:1px solid #C9A84C;border-radius:4px;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;}'
+    +'.noprint button.on{background:#C9A84C;color:#fff;}'
+    // 標題
+    +'.hdr{text-align:center;margin-bottom:4px;line-height:1.4;}'
+    +'.hdr .sub{font-size:6.5px;letter-spacing:5px;color:#aaa;}'
+    +'.hdr h1{font-size:15px;font-weight:900;letter-spacing:4px;margin:1px 0 3px;}'
+    +'.hdr .gl{width:44px;height:1px;background:#C9A84C;margin:0 auto;}'
+    // meta + notice
+    +'.meta{font-size:9px;color:#555;margin:4px 0 3px;display:flex;gap:20px;}'
     +'.meta b{color:#1a1a1a;}'
-
-    +'.notice{border:1px solid #C9A84C;border-radius:3px;padding:3px 8px;margin-bottom:5px;background:#fffcf0;font-size:8.5px;color:#7A5A00;line-height:1.5;}'
-
-    +'.grid{display:grid;grid-template-columns:1fr 6px 1fr;}'
-    +'.vline{width:1px;background:#C9A84C;margin:0 auto;}'
-
-    +'table{width:100%;border-collapse:collapse;table-layout:fixed;}'
-    +'th{background:#C9A84C;color:#fff;text-align:center;border:1px solid #a07830;font-size:8px;font-weight:700;padding:3px 1px;white-space:nowrap;}'
-    +'td{border:1px solid #ddd;padding:1px 2px;font-size:10px;overflow:hidden;}'
-    +'td.tc{text-align:center;}'
+    +'.notice{border:1px solid #C9A84C;border-radius:3px;padding:3px 8px;margin-bottom:5px;background:#fffcf0;font-size:8.5px;color:#7A5A00;}'
+    // 兩欄表格
+    +'.grid{display:grid;grid-template-columns:1fr 5px 1fr;}'
+    +'.vl{width:1px;background:#C9A84C;margin:0 auto;}'
+    +'table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;}'
+    +'th{background:#C9A84C;color:#fff;border:1px solid #a07830;font-size:8px;font-weight:700;padding:3px 2px;text-align:center;white-space:nowrap;}'
+    +'td{border:1px solid #ddd;padding:1px 2px;overflow:hidden;}'
+    +'td.c{text-align:center;}'
     +'td.date{width:36px;font-weight:700;color:#C9A84C;font-size:11px;}'
-    +'td.name{width:54px;font-weight:700;font-size:11px;}'
+    +'td.name{width:56px;font-weight:700;font-size:11px;}'
     +'td.sign{}'
-    +'td.check{width:58px;}'
-    +'td.fine{width:78px;}'
-    +'.cb{font-size:8px;white-space:nowrap;color:#444;}'
-
-    +'.rules{margin-top:7px;border-top:1.5px solid #C9A84C;padding-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}'
-    +'.rc{font-size:8px;line-height:1.7;white-space:pre-wrap;outline:none;padding:4px 6px;border:1px solid #e0d8c0;border-radius:3px;background:#fafaf8;}'
+    +'td.chk{width:62px;}'
+    +'td.fine{width:80px;font-size:8px;white-space:nowrap;color:#444;}'
+    // 規範區塊
+    +'.rules{margin-top:6px;border-top:1.5px solid #C9A84C;padding-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}'
+    +'.rc{font-size:8px;line-height:1.7;white-space:pre-wrap;border:1px solid #e0d8c0;border-radius:3px;padding:5px 7px;background:#fafaf8;outline:none;}'
     +'.rc[contenteditable="true"]{border:1px dashed #C9A84C;background:#fffef8;}'
-
-    +'.ftr{text-align:center;font-size:6.5px;color:#ccc;letter-spacing:3px;margin-top:5px;}'
+    // footer
+    +'.ftr{text-align:center;font-size:6.5px;color:#ccc;letter-spacing:3px;margin-top:4px;}'
     +'</style>'
     +'<script>'
     +'var ed=false;'
     +'function tog(btn){'
     +'  ed=!ed;'
-    +'  document.querySelectorAll(".ed,.rc").forEach(function(e){e.contentEditable=ed?"true":"false";});'
+    +'  document.querySelectorAll(".rc").forEach(function(e){e.contentEditable=ed?"true":"false";});'
     +'  btn.textContent=ed?"🔒 鎖定":"✏️ 編輯模式";'
     +'  btn.classList.toggle("on",ed);'
     +'}'
     +'<\/script>'
     +'</head><body>'
 
-    +'<div class="no-print">'
+    +'<div class="noprint">'
     +'<button onclick="window.print()">🖨️ 列印 / 存成 PDF</button>'
     +'<button onclick="tog(this)">✏️ 編輯模式</button>'
     +'</div>'
@@ -999,45 +972,68 @@ function exportSignSheet() {
     +'</div>'
 
     +'<div class="meta"><span>製表日期：<b>'+printDate+'</b></span><span>總次數：<b>'+data.length+' 次</b></span></div>'
-    +'<div class="notice">⚠️ <b>注意：</b>值日生需確實完成打掃，若未完成或不合格，將處以罰款 <b style="color:#C0392B;">NT$ 200</b>，請檢查者確認後簽名。</div>'
+    +'<div class="notice">⚠️ <b>注意：</b>值日生需確實完成打掃，若未完成或不合格，將處以罰款 <b style="color:#C0392B;">NT$200</b>，請檢查者確認後簽名。</div>'
 
     +'<div class="grid">';
 
-  // 左表
+  // 左表（第1~18筆）
   html += '<table>'
-    +'<colgroup><col style="width:36px"><col style="width:54px"><col><col style="width:58px"><col style="width:78px"></colgroup>'
+    +'<colgroup><col style="width:36px"><col style="width:56px"><col><col style="width:62px"><col style="width:80px"></colgroup>'
     +'<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款NT$200</th></tr></thead>'
     +'<tbody>';
-  left.forEach(function(a){ html+=mkRow(a); });
+  left.forEach(function(a){ html += mkRow(a); });
   html += '</tbody></table>';
 
-  html += '<div class="vline"></div>';
+  html += '<div class="vl"></div>';
 
-  // 右表
+  // 右表（第19~36筆）
   html += '<table>'
-    +'<colgroup><col style="width:36px"><col style="width:54px"><col><col style="width:58px"><col style="width:78px"></colgroup>'
+    +'<colgroup><col style="width:36px"><col style="width:56px"><col><col style="width:62px"><col style="width:80px"></colgroup>'
     +'<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款NT$200</th></tr></thead>'
     +'<tbody>';
-  right.forEach(function(a){ html+=mkRow(a); });
+  right.forEach(function(a){ html += mkRow(a); });
   html += '</tbody></table>';
 
   html += '</div>';
 
   // 規範區塊
   html += '<div class="rules">'
-    +'<div class="rc" contenteditable="false">'+rulesLeft+'</div>'
-    +'<div class="rc" contenteditable="false">'+rulesRight+'</div>'
+    +'<div class="rc" contenteditable="false">'
+    +'【值日生清潔規範公告】\n'
+    +'平日一位、假日兩位\n\n'
+    +'1、值日生簽名制度\n'
+    +'每位值日生需於值日單上「親自簽署自己的英文名字（正楷）」\n'
+    +'兩位值日生需使用「三個不同的英文名字」（例：Yuni / Yu）\n'
+    +'需要做完找第三個人檢查後、雙方簽名才算完成\n\n'
+    +'2、值日生名單回報\n'
+    +'當日值日生分配完成後，請於群組公告\n\n'
+    +'3、清潔完成證明（選擇性）\n'
+    +'若想確保自身權益與清白，可拍照上傳群組，作為完成證明\n\n'
+    +'4、共同檢查責任制\n'
+    +'值日生需互相提醒、互相檢查，以維護整體環境品質\n'
+    +'未完成區域，視為值日生共同責任'
+    +'</div>'
+    +'<div class="rc" contenteditable="false">'
+    +'值日生工作項目：\n'
+    +'三樓教室鏡桌椅 + color吧\n\n'
+    +'ㄧ、擦三樓所有鏡桌椅還有檯面\n'
+    +'二、Color水槽濾網超過一半要換新、檯面包含後面的大平台都要擦乾淨、不能有水漬，工具物品排列整齊\n'
+    +'三、地板「每天」都要掃地和拖地、拖地要加漂白水喔，才不會有蟲蟲\n'
+    +'四、廁所鏡子要擦拭乾淨、不能有水痕、洗手台要刷過\n'
+    +'五、沖水區要用泡棉刷洗乾淨、旁邊的洗髮精護髮檯面要收拾乾淨、洗髮精沒有了可以到二樓裝一半使用護髮也是\n'
+    +'六、color bar垃圾每天都要收乾淨、未超過一半可以和休息室的垃圾一起收'
+    +'</div>'
     +'</div>';
 
   html += '<div class="ftr">V I O L A T I O N &nbsp; M A N A G E M E N T &nbsp; S Y S T E M &nbsp;·&nbsp; '+printDate+'</div>'
     +'</body></html>';
 
-  var w=window.open('about:blank','_blank');
+  var w = window.open('about:blank','_blank');
   if(w){w.document.open();w.document.write(html);w.document.close();}
   else{
-    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=url;a.download=year+'年'+monthStr+'值日生簽到表.html';
+    var blob = new Blob([html],{type:'text/html;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');a.href=url;a.download=year+'年'+monthStr+'值日生簽到表.html';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url);},5000);
   }
