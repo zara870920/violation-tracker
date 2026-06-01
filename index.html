@@ -38,7 +38,7 @@ body::after{content:'';position:fixed;top:0;left:0;right:0;height:2px;background
 .lock-sub{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:20px;}
 .lock-input{width:100%;background:var(--bg);border:1px solid var(--gold-border);border-radius:4px;padding:12px;color:var(--text);font-size:16px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:12px;font-family:'Noto Sans TC',sans-serif;}
 .lock-input:focus{border-color:var(--gold);}
-.lock-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;letter-spacing:3px;cursor:pointer;margin-bottom:10px;}
+.lock-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;letter-spacing:3px;cursor:pointer;margin-bottom:10px;}
 .lock-btn:hover{opacity:0.88;}
 .lock-guest{width:100%;background:none;border:1px solid var(--gold-border);border-radius:50px;color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:11px;padding:9px;cursor:pointer;letter-spacing:2px;transition:all 0.2s;}
 .lock-guest:hover{border-color:var(--gold);color:var(--gold);}
@@ -56,7 +56,7 @@ body::after{content:'';position:fixed;top:0;left:0;right:0;height:2px;background
 
 /* CARDS */
 .section-card{background:var(--card);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:28px;}
-.section-toggle{width:100%;padding:15px 20px;background:none;border:none;color:var(--gold);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:3px;transition:background 0.2s;}
+.section-toggle{width:100%;padding:15px 20px;background:none;border:none;color:var(--gold);font-family:'Noto Sans TC',sans-serif;font-size:12px;font-weight:300;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:3px;transition:background 0.2s;}
 .section-toggle:hover{background:var(--card-hover);}
 .section-toggle .arr{margin-left:auto;font-size:10px;color:var(--muted);transition:transform 0.3s;}
 .section-toggle.open .arr{transform:rotate(180deg);}
@@ -71,7 +71,7 @@ body::after{content:'';position:fixed;top:0;left:0;right:0;height:2px;background
 .form-group input,.form-group select{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px 12px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:300;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
 .form-group input:focus,.form-group select:focus{border-color:var(--gold);}
 .form-group select option{background:var(--bg2);}
-.btn-gold{padding:13px 24px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;letter-spacing:3px;cursor:pointer;transition:opacity 0.2s,transform 0.1s;width:100%;margin-top:16px;}
+.btn-gold{padding:13px 24px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;letter-spacing:3px;cursor:pointer;transition:opacity 0.2s,transform 0.1s;width:100%;margin-top:16px;}
 .btn-gold:hover{opacity:0.88;}
 .btn-gold:active{transform:scale(0.98);}
 .btn-gold:disabled{background:#444;color:#777;cursor:not-allowed;}
@@ -158,13 +158,13 @@ body::after{content:'';position:fixed;top:0;left:0;right:0;height:2px;background
 .log-card:hover{background:var(--card-hover);}
 .log-date{font-size:12px;color:var(--gold);white-space:nowrap;letter-spacing:1px;font-weight:300;}
 .log-info{display:flex;flex-direction:column;gap:2px;}
-.log-name{font-weight:600;font-size:13px;letter-spacing:1px;}
+.log-name{font-weight:600;font-size:12px;letter-spacing:1px;}
 .log-note{font-size:10px;color:var(--muted);}
 .del-btn{background:none;border:1px solid rgba(192,57,43,0.25);border-radius:2px;color:rgba(192,57,43,0.5);font-size:10px;padding:4px 9px;cursor:pointer;transition:all 0.2s;}
 .del-btn:hover{border-color:var(--red);color:var(--red);}
 
 /* SCHEDULER */
-.sch-select{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:9px 12px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:300;outline:none;-webkit-appearance:none;width:100%;margin-bottom:6px;}
+.sch-select{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:9px 12px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:12px;font-weight:300;outline:none;-webkit-appearance:none;width:100%;margin-bottom:6px;}
 .sch-select:focus{border-color:var(--gold);}
 .sch-info{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:4px;line-height:1.8;}
 .sch-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
@@ -556,12 +556,12 @@ function exportReport() {
     <div style="font-size:10px;letter-spacing:4px;color:#C9A84C;margin-bottom:16px;font-family:'Noto Sans TC',sans-serif;">匯出統計報表</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
       <div><div style="font-size:9px;letter-spacing:2px;color:#9A8E78;margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">開始日期</div>
-      <input type="date" id="expFrom" style="width:100%;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none;"></div>
+      <input type="date" id="expFrom" style="width:100%;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:12px;outline:none;"></div>
       <div><div style="font-size:9px;letter-spacing:2px;color:#9A8E78;margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">結束日期</div>
-      <input type="date" id="expTo" style="width:100%;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none;"></div>
+      <input type="date" id="expTo" style="width:100%;background:#1A1A1A;border:1px solid rgba(201,168,76,0.25);border-radius:3px;padding:9px;color:#F0EAD6;font-family:'Noto Sans TC',sans-serif;font-size:12px;outline:none;"></div>
     </div>
     <div style="display:flex;gap:8px;">
-      <button id="expGo" style="flex:1;padding:12px;background:linear-gradient(135deg,#C9A84C,#9A7A30);border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;">📊 產生報表</button>
+      <button id="expGo" style="flex:1;padding:12px;background:linear-gradient(135deg,#C9A84C,#9A7A30);border:none;border-radius:50px;color:#1A1208;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer;">📊 產生報表</button>
       <button onclick="this.closest('div[style]').remove()" style="padding:12px 18px;background:none;border:1px solid rgba(201,168,76,0.25);border-radius:50px;color:#9A8E78;font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;">取消</button>
     </div>
   </div>`;
@@ -590,7 +590,7 @@ function exportReport() {
 
     let h='<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><title>違規報表</title>';
     h+='<style>@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap");';
-    h+='*{margin:0;padding:0;box-sizing:border-box;}body{font-family:"Noto Sans TC",sans-serif;padding:30px;color:#1a1a1a;font-size:13px;}';
+    h+='*{margin:0;padding:0;box-sizing:border-box;}body{font-family:"Noto Sans TC",sans-serif;padding:30px;color:#1a1a1a;font-size:12px;}';
     h+='.no-print{margin-bottom:16px;}button{background:#1a1a1a;color:#C9A84C;border:none;padding:9px 20px;font-size:12px;cursor:pointer;border-radius:3px;}';
     h+='h1{font-size:22px;font-weight:900;letter-spacing:3px;margin-bottom:4px;}';
     h+='.sub{font-size:11px;color:#888;letter-spacing:2px;margin-bottom:20px;}';
@@ -893,18 +893,19 @@ function exportSignSheet() {
   var right=data.slice(half);
   while(right.length<left.length)right.push(null);
 
-  // 動態行高：A4可用高度扣掉所有固定區塊後分配給表格
-  // A4=297mm，頁邊0.5cm*2=10mm，可用287mm
-  // header≈20mm, notice≈7mm, rules≈65mm, footer≈5mm → 表格可用190mm, 扣thead5mm → 185mm
-  var tableAvailMm = 185;
-  var rowHmm = Math.max(5, Math.min(12, Math.floor(tableAvailMm / Math.max(half, 1))));
+  // 動態行高：header縮小後重新計算
+  // A4=297mm，頁邊0.5cm*2=10mm → 287mm
+  // header≈12mm, notice≈5mm, rules≈65mm, footer≈5mm → 表格可用200mm, 扣thead5mm → 195mm
+  // 195mm ÷ 18 = 10.8mm → 取10mm
+  var tableAvailMm = 195;
+  var rowHmm = Math.max(5, Math.min(10, Math.floor(tableAvailMm / Math.max(half, 1))));
   var rowH = Math.round(rowHmm * 3.7795); // mm to px
 
   function mkRow(a){
     var d=a?a.date:'',p=a?a.person:'';
     return '<tr style="height:'+rowH+'px;">'
-      +'<td style="width:42px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="false" style="font-weight:700;color:#C9A84C;font-size:13px;">'+d+'</div></td>'
-      +'<td style="width:55px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="false" style="font-weight:700;font-size:13px;">'+p+'</div></td>'
+      +'<td style="width:48px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="false" style="font-weight:700;color:#C9A84C;font-size:12px;">'+d+'</div></td>'
+      +'<td style="width:68px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="false" style="font-weight:700;font-size:12px;">'+p+'</div></td>'
       +'<td style="border:1px solid #ddd;"><div class="ed sign-line" contenteditable="false"></div></td>'
       +'<td style="width:80px;border:1px solid #ddd;"><div class="ed sign-line" contenteditable="false"></div></td>'
       +'<td style="border:1px solid #ddd;text-align:center;"><div class="ed fine-box" contenteditable="false">□完成 □未完成</div></td>'
@@ -914,9 +915,9 @@ function exportSignSheet() {
 
   function mkTbl(rows){
     return '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">'
-      +'<colgroup><col style="width:42px"><col style="width:55px"><col><col style="width:80px"></colgroup>'
+      +'<colgroup><col style="width:48px"><col style="width:68px"><col><col style="width:80px"></colgroup>'
       +'<thead><tr>'
-      +'<th style="width:42px">日期</th><th style="width:55px">值日生</th><th>值日生簽到</th><th style="width:80px">檢查者</th>'
+      +'<th style="width:48px">日期</th><th style="width:68px">值日生</th><th>值日生簽到</th><th style="width:80px">檢查者</th>'
       +'</tr></thead>'
       +'<tbody id="tb_'+Math.random().toString(36).slice(2)+'">'+rows.map(mkRow).join('')+'</tbody>'
       +'</table>';
@@ -933,12 +934,12 @@ function exportSignSheet() {
     +'.bp{background:#1a1a1a;color:#C9A84C;}'
     +'.be{background:#C9A84C;color:#1a1a1a;font-weight:700;}'
     +'.eh{font-size:10px;color:#9A7A30;padding:5px 10px;background:#fffcf0;border:1px solid #C9A84C;border-radius:3px;display:none;}'
-    +'.header{text-align:center;margin-bottom:12px;}'
-    +'.header h1{font-size:16px;font-weight:900;letter-spacing:3px;}'
-    +'.header .sub{font-size:9px;color:#888;letter-spacing:3px;margin-bottom:3px;}'
-    +'.gold-line{width:50px;height:2px;background:#C9A84C;margin:5px auto;}'
-    +'.notice{border:1px solid #C9A84C;border-radius:3px;padding:6px 12px;margin-bottom:10px;background:#fffcf0;font-size:10px;color:#7A5A00;}'
-    +'.summary{font-size:10px;color:#666;margin-bottom:10px;display:flex;gap:20px;}'
+    +'.header{text-align:center;margin-bottom:5px;}'
+    +'.header h1{font-size:13px;font-weight:900;letter-spacing:2px;margin:0;}'
+    +'.header .sub{font-size:7px;color:#888;letter-spacing:3px;margin-bottom:2px;}'
+    +'.gold-line{width:36px;height:1px;background:#C9A84C;margin:3px auto;}'
+    +'.notice{border:1px solid #C9A84C;border-radius:3px;padding:3px 10px;margin-bottom:5px;background:#fffcf0;font-size:9px;color:#7A5A00;}'
+    +'.summary{font-size:9px;color:#666;margin-bottom:5px;display:flex;gap:16px;}'
     +'.summary span{color:#1a1a1a;font-weight:700;}'
     +'.two-col{display:grid;grid-template-columns:1fr 6px 1fr;}'
     +'.divider{background:#e0d8c8;margin:0 3px;}'
@@ -982,8 +983,8 @@ function exportSignSheet() {
     +'var nr=document.createElement("tr");'
     +'nr.style.height="44px";'
     +'nr.innerHTML='
-    +'\'<td style="width:42px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="\'+editing+\'"></div></td>\''
-    +'+\'<td style="width:55px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="\'+editing+\'"></div></td>\''
+    +'\'<td style="width:48px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="\'+editing+\'"></div></td>\''
+    +'+\'<td style="width:68px;text-align:center;border:1px solid #ddd;"><div class="ed" contenteditable="\'+editing+\'"></div></td>\''
     +'+\'<td style="border:1px solid #ddd;"><div class="ed sign-line" contenteditable="\'+editing+\'"></div></td>\''
     +'+\'<td style="border:1px solid #ddd;"><div class="ed sign-line" contenteditable="\'+editing+\'"></div></td>\''
     +'+\'<td style="border:1px solid #ddd;text-align:center;"><div class="ed fine-box" contenteditable="\'+editing+\'">□完成 □未完成</div></td>\''
