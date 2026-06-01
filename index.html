@@ -868,99 +868,86 @@ function downloadXlsx() {
 }
 
 function exportSignSheet() {
-  var rows = document.querySelectorAll('#schBody2 tr');
+  var rows=document.querySelectorAll('#schBody2 tr');
   if(!rows.length){alert('請先產生排班表');return;}
 
-  // 收集資料，每人一筆
-  var data = [];
+  // 每筆資料 = 一個人一天（排班表已經每人各自一行）
+  var data=[];
   rows.forEach(function(r){
-    var cells = r.querySelectorAll('td');
-    if(cells.length < 2) return;
-    var d = cells[0].textContent.trim();
-    var p = cells[1].textContent.trim();
-    if(d && p) data.push({date:d, person:p});
+    var cells=r.querySelectorAll('td');
+    if(cells.length<2)return;
+    var d=cells[0].textContent.trim();
+    var p=cells[1].textContent.trim();
+    if(d&&p) data.push({date:d,person:p});
   });
 
-  var sheetM = document.getElementById('schMonth2') ? document.getElementById('schMonth2').value.split('-') : null;
-  var monthStr = sheetM ? sheetM[1]+'月' : '';
-  var year = new Date().getFullYear();
-  var now = new Date();
-  var printDate = now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
+  var sheetM=document.getElementById('schMonth2')?document.getElementById('schMonth2').value.split('-'):null;
+  var monthStr=sheetM?sheetM[1]+'月':'';
+  var year=new Date().getFullYear();
+  var now=new Date();
+  var printDate=now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
 
-  // 固定左18筆、右18筆，不足補空行
-  var left = data.slice(0, 18);
-  var right = data.slice(18, 36);
-  while(left.length < 18) left.push(null);
-  while(right.length < 18) right.push(null);
+  // 固定左右各18行
+  var ROWS = 18;
+  var left = data.slice(0, ROWS);
+  var right = data.slice(ROWS, ROWS*2);
+  // 補空行到18行
+  while(left.length < ROWS) left.push(null);
+  while(right.length < ROWS) right.push(null);
 
-  // A4=297mm，頁邊0.5cm*2=10mm → 可用287mm
-  // header≈13mm, meta≈5mm, notice≈6mm, rules≈58mm, footer≈4mm → table可用201mm
-  // thead≈5mm → 196mm ÷ 18行 ≈ 10.9mm → 約10mm
-  var rowH = Math.round(10 * 3.7795); // 約38px
+  // 行高固定：A4 287mm 可用，header 13mm + notice 8mm + rules 58mm + footer 4mm = 83mm
+  // table 可用 287-83=204mm，thead 4mm → 200mm ÷ 18行 = 11.1mm/行
+  var ROW_H = 36; // px ≈ 9.5mm，確保一頁
 
-  function mkRow(a) {
-    var d = a ? a.date : '';
-    var p = a ? a.person : '';
-    return '<tr style="height:'+rowH+'px;">'
-      +'<td class="c date">'+d+'</td>'
-      +'<td class="c name">'+p+'</td>'
-      +'<td class="sign"></td>'
-      +'<td class="chk"></td>'
-      +'<td class="c fine">'+(a ? '□完成 □未完成' : '')+'</td>'
+  function mkRow(a){
+    var d=a?a.date:'', p=a?a.person:'';
+    return '<tr style="height:'+ROW_H+'px;">'
+      +'<td style="width:36px;text-align:center;border:1px solid #ddd;font-weight:700;color:#C9A84C;font-size:11px;padding:1px 2px;">'+d+'</td>'
+      +'<td style="width:56px;text-align:center;border:1px solid #ddd;font-weight:700;font-size:11px;padding:1px 2px;">'+p+'</td>'
+      +'<td class="ed" contenteditable="false" style="border:1px solid #ddd;padding:1px 2px;"></td>'
+      +'<td class="ed" contenteditable="false" style="width:70px;border:1px solid #ddd;padding:1px 2px;"></td>'
+      +'<td style="width:80px;text-align:center;border:1px solid #ddd;font-size:8.5px;white-space:nowrap;padding:1px 2px;">'+(a?'□完成 □未完成':'')+'</td>'
       +'</tr>';
   }
 
-  var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">'
+  var html='<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">'
     +'<title>'+year+'年'+monthStr+'值日生簽到表</title>'
     +'<style>'
     +'*{margin:0;padding:0;box-sizing:border-box;}'
-    +'body{font-family:"Noto Sans TC",sans-serif;color:#1a1a1a;background:#fff;padding:6px 10px;}'
+    +'body{font-family:"Noto Sans TC",sans-serif;font-size:10px;color:#1a1a1a;padding:6px 10px;background:#fff;}'
     +'@page{size:A4;margin:0.5cm;}'
-    +'@media print{.noprint{display:none!important;}}'
-    // 按鈕列
-    +'.noprint{margin-bottom:6px;display:flex;gap:8px;}'
-    +'.noprint button{padding:4px 14px;border:1px solid #C9A84C;border-radius:4px;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;}'
-    +'.noprint button.on{background:#C9A84C;color:#fff;}'
-    // 標題
-    +'.hdr{text-align:center;margin-bottom:4px;line-height:1.4;}'
-    +'.hdr .sub{font-size:6.5px;letter-spacing:5px;color:#aaa;}'
-    +'.hdr h1{font-size:15px;font-weight:900;letter-spacing:4px;margin:1px 0 3px;}'
-    +'.hdr .gl{width:44px;height:1px;background:#C9A84C;margin:0 auto;}'
-    // meta + notice
-    +'.meta{font-size:9px;color:#555;margin:4px 0 3px;display:flex;gap:20px;}'
+    +'@media print{.np{display:none!important;}}'
+    +'.np{margin-bottom:6px;display:flex;gap:8px;}'
+    +'.np button{padding:4px 12px;border:1px solid #C9A84C;border-radius:4px;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;}'
+    +'.np button.on{background:#C9A84C;color:#fff;}'
+    +'.hdr{text-align:center;margin-bottom:4px;}'
+    +'.hdr .sub{font-size:6.5px;letter-spacing:5px;color:#aaa;margin-bottom:1px;}'
+    +'.hdr h1{font-size:14px;font-weight:900;letter-spacing:4px;margin-bottom:2px;}'
+    +'.gl{width:40px;height:1px;background:#C9A84C;margin:0 auto;}'
+    +'.meta{font-size:9px;color:#555;margin:4px 0 3px;display:flex;gap:18px;}'
     +'.meta b{color:#1a1a1a;}'
     +'.notice{border:1px solid #C9A84C;border-radius:3px;padding:3px 8px;margin-bottom:5px;background:#fffcf0;font-size:8.5px;color:#7A5A00;}'
-    // 兩欄表格
-    +'.grid{display:grid;grid-template-columns:1fr 5px 1fr;}'
-    +'.vl{width:1px;background:#C9A84C;margin:0 auto;}'
-    +'table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;}'
-    +'th{background:#C9A84C;color:#fff;border:1px solid #a07830;font-size:8px;font-weight:700;padding:3px 2px;text-align:center;white-space:nowrap;}'
-    +'td{border:1px solid #ddd;padding:1px 2px;overflow:hidden;}'
-    +'td.c{text-align:center;}'
-    +'td.date{width:36px;font-weight:700;color:#C9A84C;font-size:11px;}'
-    +'td.name{width:56px;font-weight:700;font-size:11px;}'
-    +'td.sign{}'
-    +'td.chk{width:62px;}'
-    +'td.fine{width:80px;font-size:8px;white-space:nowrap;color:#444;}'
-    // 規範區塊
+    +'.grid{display:grid;grid-template-columns:1fr 6px 1fr;}'
+    +'.vline{width:1px;background:#C9A84C;margin:0 auto;}'
+    +'table{width:100%;border-collapse:collapse;table-layout:fixed;}'
+    +'th{background:#C9A84C;color:#fff;text-align:center;border:1px solid #a07830;font-size:8px;font-weight:700;padding:3px 1px;white-space:nowrap;}'
     +'.rules{margin-top:6px;border-top:1.5px solid #C9A84C;padding-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}'
-    +'.rc{font-size:8px;line-height:1.7;white-space:pre-wrap;border:1px solid #e0d8c0;border-radius:3px;padding:5px 7px;background:#fafaf8;outline:none;}'
+    +'.rc{font-size:7.8px;line-height:1.65;white-space:pre-wrap;outline:none;padding:5px 7px;border:1px solid #e0d8c0;border-radius:3px;background:#fafaf8;}'
     +'.rc[contenteditable="true"]{border:1px dashed #C9A84C;background:#fffef8;}'
-    // footer
-    +'.ftr{text-align:center;font-size:6.5px;color:#ccc;letter-spacing:3px;margin-top:4px;}'
+    +'.ftr{text-align:center;font-size:6.5px;color:#ccc;letter-spacing:3px;margin-top:5px;}'
     +'</style>'
     +'<script>'
     +'var ed=false;'
     +'function tog(btn){'
-    +'  ed=!ed;'
-    +'  document.querySelectorAll(".rc").forEach(function(e){e.contentEditable=ed?"true":"false";});'
-    +'  btn.textContent=ed?"🔒 鎖定":"✏️ 編輯模式";'
-    +'  btn.classList.toggle("on",ed);'
+    +'ed=!ed;'
+    +'document.querySelectorAll(".rc,.ed").forEach(function(e){e.contentEditable=ed?"true":"false";});'
+    +'btn.textContent=ed?"🔒 鎖定":"✏️ 編輯模式";'
+    +'btn.classList.toggle("on",ed);'
     +'}'
     +'<\/script>'
     +'</head><body>'
 
-    +'<div class="noprint">'
+    +'<div class="np">'
     +'<button onclick="window.print()">🖨️ 列印 / 存成 PDF</button>'
     +'<button onclick="tog(this)">✏️ 編輯模式</button>'
     +'</div>'
@@ -972,32 +959,34 @@ function exportSignSheet() {
     +'</div>'
 
     +'<div class="meta"><span>製表日期：<b>'+printDate+'</b></span><span>總次數：<b>'+data.length+' 次</b></span></div>'
-    +'<div class="notice">⚠️ <b>注意：</b>值日生需確實完成打掃，若未完成或不合格，將處以罰款 <b style="color:#C0392B;">NT$200</b>，請檢查者確認後簽名。</div>'
+    +'<div class="notice">⚠️ <b>注意：</b>值日生需確實完成打掃，若未完成或不合格，將處以罰款 <b style="color:#C0392B;">NT$ 200</b>，請檢查者確認後簽名。</div>'
 
-    +'<div class="grid">';
+    +'<div class="grid">'
 
-  // 左表（第1~18筆）
-  html += '<table>'
-    +'<colgroup><col style="width:36px"><col style="width:56px"><col><col style="width:62px"><col style="width:80px"></colgroup>'
+    // 左表
+    +'<table>'
+    +'<colgroup><col style="width:36px"><col style="width:56px"><col><col style="width:70px"><col style="width:80px"></colgroup>'
     +'<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款NT$200</th></tr></thead>'
     +'<tbody>';
-  left.forEach(function(a){ html += mkRow(a); });
-  html += '</tbody></table>';
 
-  html += '<div class="vl"></div>';
+  left.forEach(function(a){ html+=mkRow(a); });
 
-  // 右表（第19~36筆）
-  html += '<table>'
-    +'<colgroup><col style="width:36px"><col style="width:56px"><col><col style="width:62px"><col style="width:80px"></colgroup>'
+  html+='</tbody></table>'
+    +'<div class="vline"></div>'
+
+    // 右表
+    +'<table>'
+    +'<colgroup><col style="width:36px"><col style="width:56px"><col><col style="width:70px"><col style="width:80px"></colgroup>'
     +'<thead><tr><th>日期</th><th>值日生</th><th>值日生簽到</th><th>檢查者</th><th>罰款NT$200</th></tr></thead>'
     +'<tbody>';
-  right.forEach(function(a){ html += mkRow(a); });
-  html += '</tbody></table>';
 
-  html += '</div>';
+  right.forEach(function(a){ html+=mkRow(a); });
 
-  // 規範區塊
-  html += '<div class="rules">'
+  html+='</tbody></table>'
+    +'</div>'
+
+    // 規範區塊（可編輯）
+    +'<div class="rules">'
     +'<div class="rc" contenteditable="false">'
     +'【值日生清潔規範公告】\n'
     +'平日一位、假日兩位\n\n'
@@ -1023,17 +1012,17 @@ function exportSignSheet() {
     +'五、沖水區要用泡棉刷洗乾淨、旁邊的洗髮精護髮檯面要收拾乾淨、洗髮精沒有了可以到二樓裝一半使用護髮也是\n'
     +'六、color bar垃圾每天都要收乾淨、未超過一半可以和休息室的垃圾一起收'
     +'</div>'
-    +'</div>';
+    +'</div>'
 
-  html += '<div class="ftr">V I O L A T I O N &nbsp; M A N A G E M E N T &nbsp; S Y S T E M &nbsp;·&nbsp; '+printDate+'</div>'
+    +'<div class="ftr">V I O L A T I O N &nbsp; M A N A G E M E N T &nbsp; S Y S T E M &nbsp;·&nbsp; '+printDate+'</div>'
     +'</body></html>';
 
-  var w = window.open('about:blank','_blank');
+  var w=window.open('about:blank','_blank');
   if(w){w.document.open();w.document.write(html);w.document.close();}
   else{
-    var blob = new Blob([html],{type:'text/html;charset=utf-8'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');a.href=url;a.download=year+'年'+monthStr+'值日生簽到表.html';
+    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=year+'年'+monthStr+'值日生簽到表.html';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url);},5000);
   }
