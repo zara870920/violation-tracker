@@ -893,9 +893,11 @@ function exportSignSheet() {
   var right=data.slice(half);
   while(right.length<left.length)right.push(null);
 
-  // 動態行高：依筆數自動縮放，確保一頁塞得下
-  var availMm = 195; // A4高297mm，扣掉頁邊1cm*2、header、notice、rules、footer
-  var rowHmm = Math.max(7, Math.min(15, Math.floor(availMm / Math.max(half, 1))));
+  // 動態行高：A4可用高度扣掉所有固定區塊後分配給表格
+  // A4=297mm，頁邊0.5cm*2=10mm，可用287mm
+  // header≈22mm, notice≈8mm, 規範文字≈52mm, footer≈5mm → 表格可用200mm, 扣thead6mm → 194mm
+  var tableAvailMm = 194;
+  var rowHmm = Math.max(6, Math.min(14, Math.floor(tableAvailMm / Math.max(half, 1))));
   var rowH = Math.round(rowHmm * 3.7795); // mm to px
 
   function mkRow(a){
@@ -960,6 +962,7 @@ function exportSignSheet() {
     +'.act-col{display:none!important;}'
     +'.edit-mode .ed{border:none!important;background:transparent!important;}'
     +'@page{margin:0.5cm;size:A4;}'
+    +'.rules-wrap{overflow:hidden;}'
     +'}'
     +'</style>'
     +'<script>'
@@ -1007,10 +1010,10 @@ function exportSignSheet() {
     +mkTbl(right)
     +'</div>'
     // 規範文字區塊（可編輯，編輯模式下點擊即可修改）
-    +'<div style="margin-top:6px;border-top:1px solid #C9A84C;padding-top:5px;">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;font-size:9px;color:#1a1a1a;line-height:1.75;">'
+    +'<div class="rules-wrap" style="margin-top:6px;border-top:1px solid #C9A84C;padding-top:5px;max-height:52mm;overflow:hidden;">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;font-size:9px;color:#1a1a1a;line-height:1.6;overflow:hidden;">'
     // 左欄
-    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;">'
+    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;overflow:hidden;">'
     +'<span style="font-weight:900;font-size:10px;letter-spacing:1px;border-bottom:1px solid #C9A84C;display:block;padding-bottom:2px;margin-bottom:4px;">值日生規範</span>'
     +'<span style="font-weight:700;">違規罰則（各一次值日生）</span>\n'
     +'ㄧ、50分未集合（一次）\n'
@@ -1026,7 +1029,7 @@ function exportSignSheet() {
     +'當日值日生分配完成後，請於群組公告'
     +'</div>'
     // 右欄
-    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;">'
+    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;overflow:hidden;">'
     +'<span style="font-weight:700;">3️⃣ 清潔完成證明（選擇性）</span>\n'
     +'若想確保自身權益與清白，可拍照上傳群組，作為完成證明\n\n'
     +'<span style="font-weight:700;">4️⃣ 共同檢查責任制</span>\n'
