@@ -895,9 +895,9 @@ function exportSignSheet() {
 
   // 動態行高：A4可用高度扣掉所有固定區塊後分配給表格
   // A4=297mm，頁邊0.5cm*2=10mm，可用287mm
-  // header≈22mm, notice≈8mm, 規範文字≈52mm, footer≈5mm → 表格可用200mm, 扣thead6mm → 194mm
-  var tableAvailMm = 194;
-  var rowHmm = Math.max(6, Math.min(14, Math.floor(tableAvailMm / Math.max(half, 1))));
+  // header≈20mm, notice≈7mm, rules≈65mm, footer≈5mm → 表格可用190mm, 扣thead5mm → 185mm
+  var tableAvailMm = 185;
+  var rowHmm = Math.max(5, Math.min(12, Math.floor(tableAvailMm / Math.max(half, 1))));
   var rowH = Math.round(rowHmm * 3.7795); // mm to px
 
   function mkRow(a){
@@ -1010,10 +1010,10 @@ function exportSignSheet() {
     +mkTbl(right)
     +'</div>'
     // 規範文字區塊（可編輯，編輯模式下點擊即可修改）
-    +'<div class="rules-wrap" style="margin-top:6px;border-top:1px solid #C9A84C;padding-top:5px;max-height:52mm;overflow:hidden;">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;font-size:9px;color:#1a1a1a;line-height:1.6;overflow:hidden;">'
+    +'<div class="rules-wrap" style="margin-top:8px;border-top:2px solid #C9A84C;padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">'
+    +'<div style="font-size:9px;color:#1a1a1a;line-height:1.6;display:contents;">'
     // 左欄
-    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;overflow:hidden;">'
+    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;background:#faf8f3;border:1px solid #e8dfc8;border-radius:4px;padding:6px 8px;">'
     +'<span style="font-weight:900;font-size:10px;letter-spacing:1px;border-bottom:1px solid #C9A84C;display:block;padding-bottom:2px;margin-bottom:3px;">值日生規範</span>'
     +'<span style="font-weight:700;">▸ 違規罰則（各一次值日生）</span>\n'
     +'ㄧ、50分未集合　二、名牌/call機沒戴\n'
@@ -1027,7 +1027,7 @@ function exportSignSheet() {
     +'<span style="font-weight:700;">4️⃣ 共同責任</span>　互相提醒檢查；未完成視為共同責任'
     +'</div>'
         // 右欄
-    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;overflow:hidden;">'
+    +'<div class="ed" contenteditable="false" style="outline:none;white-space:pre-wrap;background:#f3f7fa;border:1px solid #c8d8e8;border-radius:4px;padding:6px 8px;">'
     +'<span style="font-weight:700;">▸ 三樓教室鏡桌椅 + Color吧 工作項目</span>\n'
     +'ㄧ、擦三樓所有鏡桌椅還有檯面\n'
     +'二、Color水槽濾網超過一半要換新；檯面（含後方大平台）擦乾淨，不能有水漬，工具物品排列整齊\n'
