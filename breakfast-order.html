@@ -6,7 +6,6 @@
 <title>早餐點餐系統</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-
   :root {
     --bg: #FFF8F0;
     --card: #FFFFFF;
@@ -20,328 +19,88 @@
     --radius: 14px;
     --shadow: 0 2px 12px rgba(0,0,0,0.07);
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    font-family: 'Noto Sans TC', sans-serif;
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* Header */
-  .header {
-    background: var(--primary);
-    color: white;
-    padding: 20px 20px 28px;
-    text-align: center;
-    position: relative;
-  }
+  body { background: var(--bg); font-family: 'Noto Sans TC', sans-serif; color: var(--text); min-height: 100vh; }
+  .header { background: var(--primary); color: white; padding: 20px 20px 28px; text-align: center; }
   .header-emoji { font-size: 2.4rem; display: block; margin-bottom: 6px; }
-  .header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: .03em; }
+  .header h1 { font-size: 1.4rem; font-weight: 700; }
   .header p { font-size: 0.85rem; opacity: .85; margin-top: 4px; }
-  .deadline-badge {
-    display: inline-block;
-    background: rgba(255,255,255,.2);
-    border-radius: 20px;
-    padding: 4px 14px;
-    font-size: 0.8rem;
-    margin-top: 10px;
-  }
-
-  /* Main */
+  .deadline-badge { display: inline-block; background: rgba(255,255,255,.2); border-radius: 20px; padding: 4px 14px; font-size: 0.8rem; margin-top: 10px; }
   main { max-width: 480px; margin: 0 auto; padding: 20px 16px 120px; }
-
-  /* Step indicator */
-  .steps {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    margin-bottom: 22px;
-  }
-  .step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .step-circle {
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    background: var(--border);
-    color: var(--muted);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.8rem; font-weight: 700;
-    transition: all .3s;
-  }
-  .step.active .step-circle { background: var(--primary); color: white; }
-  .step.done .step-circle { background: var(--success); color: white; }
-  .step-label { font-size: 0.7rem; color: var(--muted); }
-  .step.active .step-label { color: var(--primary); font-weight: 700; }
-  .step-line { width: 40px; height: 2px; background: var(--border); margin: 0 4px; margin-bottom: 18px; }
-  .step-line.done { background: var(--success); }
-
-  /* Cards */
-  .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 18px;
-    margin-bottom: 14px;
-  }
-  .card-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    color: var(--primary);
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-
-  /* Name input */
-  .input-field {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-size: 1rem;
-    font-family: inherit;
-    color: var(--text);
-    background: #FAFAFA;
-    transition: border-color .2s;
-    outline: none;
-  }
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px; }
+  .card-label { font-size: 0.72rem; font-weight: 700; letter-spacing: .08em; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; }
+  .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 1rem; font-family: inherit; color: var(--text); background: #FAFAFA; transition: border-color .2s; outline: none; }
   .input-field:focus { border-color: var(--primary); background: white; }
-
-  /* Shop selector */
-  .shop-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  .shop-btn {
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 10px;
-    background: white;
-    cursor: pointer;
-    text-align: center;
-    transition: all .2s;
-  }
+  .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .shop-btn { border: 2px solid var(--border); border-radius: 12px; padding: 14px 10px; background: white; cursor: pointer; text-align: center; transition: all .2s; }
   .shop-btn:hover { border-color: var(--primary-light); transform: translateY(-1px); }
   .shop-btn.selected { border-color: var(--primary); background: var(--primary-light); }
   .shop-btn .shop-icon { font-size: 1.8rem; display: block; margin-bottom: 5px; }
   .shop-btn .shop-name { font-size: 0.9rem; font-weight: 700; }
   .shop-btn .shop-tag { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-
-  /* Menu */
   .menu-section { margin-bottom: 16px; }
-  .menu-section-title {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-  }
-  .menu-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #F5F5F5;
-  }
+  .menu-section-title { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F5F5F5; }
   .menu-item:last-child { border-bottom: none; }
   .item-info { flex: 1; }
   .item-name { font-size: 0.95rem; font-weight: 500; }
   .item-price { font-size: 0.8rem; color: var(--primary); margin-top: 2px; }
-  .qty-control {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .qty-btn {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: none;
-    background: var(--primary-light);
-    color: var(--primary);
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .15s;
-  }
+  .qty-control { display: flex; align-items: center; gap: 10px; }
+  .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--primary-light); color: var(--primary); font-size: 1.1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
   .qty-btn:hover { background: var(--primary); color: white; }
-  .qty-num {
-    min-width: 20px;
-    text-align: center;
-    font-weight: 700;
-    font-size: 0.95rem;
-  }
-
-  /* Note */
-  .note-field {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-family: inherit;
-    resize: none;
-    outline: none;
-    color: var(--text);
-    background: #FAFAFA;
-    transition: border-color .2s;
-  }
+  .qty-num { min-width: 20px; text-align: center; font-weight: 700; font-size: 0.95rem; }
+  .note-field { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.9rem; font-family: inherit; resize: none; outline: none; color: var(--text); background: #FAFAFA; transition: border-color .2s; }
   .note-field:focus { border-color: var(--primary); background: white; }
-
-  /* Cart summary */
-  .cart-bar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: white;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-    padding: 14px 20px;
-    z-index: 100;
-  }
+  .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); padding: 14px 20px; z-index: 100; }
   .cart-bar-inner { max-width: 480px; margin: 0 auto; }
-  .cart-summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
+  .cart-summary { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.85rem; color: var(--muted); }
   .cart-total { font-weight: 700; color: var(--primary); font-size: 1rem; }
-  .submit-btn {
-    width: 100%;
-    padding: 14px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background .2s, transform .1s;
-    letter-spacing: .02em;
-  }
-  .submit-btn:active { transform: scale(.98); }
+  .submit-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: background .2s; }
   .submit-btn:hover { background: var(--primary-dark); }
   .submit-btn:disabled { background: #CCC; cursor: not-allowed; }
-
-  /* Success screen */
-  .success-screen {
-    text-align: center;
-    padding: 60px 20px;
-    display: none;
-  }
+  .success-screen { text-align: center; padding: 60px 20px; display: none; }
   .success-screen .success-icon { font-size: 5rem; margin-bottom: 16px; }
   .success-screen h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
   .success-screen p { color: var(--muted); line-height: 1.7; }
-  .order-receipt {
-    background: var(--primary-light);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-top: 20px;
-    text-align: left;
-    font-size: 0.88rem;
-    line-height: 1.9;
-  }
-
-  /* Alert */
-  .alert {
-    background: #FFF3CD;
-    border: 1px solid #FFD580;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 0.83rem;
-    color: #7A5C00;
-    margin-bottom: 12px;
-    display: none;
-  }
-
+  .order-receipt { background: var(--primary-light); border-radius: var(--radius); padding: 16px; margin-top: 20px; text-align: left; font-size: 0.88rem; line-height: 1.9; }
+  .alert { background: #FFF3CD; border: 1px solid #FFD580; border-radius: 10px; padding: 10px 14px; font-size: 0.83rem; color: #7A5C00; margin-bottom: 12px; display: none; }
   .hidden { display: none; }
 </style>
 </head>
 <body>
-
 <div class="header">
   <span class="header-emoji">🍳</span>
   <h1>早餐點餐系統</h1>
   <p>Pan 幫你帶早餐</p>
-  <div class="deadline-badge" id="deadlineBadge">截止時間：每日 08:30</div>
+  <div class="deadline-badge">截止時間：每日 08:30</div>
 </div>
-
 <main>
-
-  <!-- Success screen -->
   <div class="success-screen" id="successScreen">
     <div class="success-icon">🎉</div>
     <h2>點餐成功！</h2>
     <p>你的點餐已送出<br>Pan 會幫你帶過來 😄</p>
     <div class="order-receipt" id="orderReceipt"></div>
   </div>
-
-  <!-- Order form -->
   <div id="orderForm">
-
-    <!-- Steps -->
-    <div class="steps">
-      <div class="step active" id="step1">
-        <div class="step-circle">1</div>
-        <div class="step-label">你是誰</div>
-      </div>
-      <div class="step-line" id="line1"></div>
-      <div class="step active" id="step2">
-        <div class="step-circle">2</div>
-        <div class="step-label">選店家</div>
-      </div>
-      <div class="step-line" id="line2"></div>
-      <div class="step" id="step3">
-        <div class="step-circle">3</div>
-        <div class="step-label">點餐</div>
-      </div>
-    </div>
-
-    <!-- Alert -->
     <div class="alert" id="alertBox"></div>
-
-    <!-- Step 1: Name -->
     <div class="card">
       <div class="card-label">你叫什麼名字？</div>
       <input class="input-field" id="userName" type="text" placeholder="輸入你的名字" maxlength="20" />
     </div>
-
-    <!-- Step 2: Shop -->
     <div class="card">
       <div class="card-label">選擇早餐店</div>
       <div class="shop-grid" id="shopGrid"></div>
     </div>
-
-    <!-- Step 3: Menu -->
     <div class="card hidden" id="menuCard">
       <div class="card-label">選擇品項</div>
       <div id="menuContainer"></div>
     </div>
-
-    <!-- Note -->
     <div class="card hidden" id="noteCard">
       <div class="card-label">備註（可略）</div>
       <textarea class="note-field" id="orderNote" rows="2" placeholder="例：少甜、去冰、不要辣..."></textarea>
     </div>
-
   </div>
 </main>
-
-<!-- Cart bar -->
 <div class="cart-bar" id="cartBar">
   <div class="cart-bar-inner">
     <div class="cart-summary">
@@ -351,113 +110,512 @@
     <button class="submit-btn" id="submitBtn" onclick="submitOrder()">確認送出點餐</button>
   </div>
 </div>
-
 <script>
-// ─────────────────────────────────────────────
-// ★ 設定區 ─ 修改這裡來自訂店家和菜單
-// ─────────────────────────────────────────────
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz46i85xGUOT5J6a1v8CTpp63DS0o4Y507idLDYxfWnRUIev4faFh1Bu-p2tejHxR5h6Q/exec"; // ← 換成你的 GAS URL
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz46i85xGUOT5J6a1v8CTpp63DS0o4Y507idLDYxfWnRUIev4faFh1Bu-p2tejHxR5h6Q/exec";
 
 const SHOPS = [
   {
-    id: "美而美",
-    name: "美而美",
-    icon: "🥪",
-    tag: "三明治・蛋餅",
-    menu: {
-      "主食": [
-        { name: "蛋餅", price: 30 },
-        { name: "培根蛋餅", price: 40 },
-        { name: "起司蛋餅", price: 40 },
-        { name: "總匯三明治", price: 55 },
-        { name: "火腿蛋三明治", price: 45 },
-        { name: "漢堡", price: 45 },
-      ],
-      "飲料": [
-        { name: "紅茶（冷）", price: 20 },
-        { name: "奶茶（冷）", price: 25 },
-        { name: "豆漿（熱）", price: 20 },
-        { name: "米漿", price: 20 },
-      ]
-    }
-  },
-  {
-    id: "麥當勞",
-    name: "麥當勞",
+    id: "城市漢堡",
+    name: "城市漢堡",
     icon: "🍔",
-    tag: "早餐套餐",
+    tag: "漢堡・吐司・蛋餅",
     menu: {
-      "早餐": [
-        { name: "豬肉滿福堡", price: 49 },
-        { name: "豬肉滿福堡加蛋", price: 59 },
-        { name: "麥香魚", price: 44 },
-        { name: "薯餅", price: 25 },
-        { name: "鬆餅（2片）", price: 39 },
+      "漢堡": [
+        { name: "招牌厚牛", price: 100 },
+        { name: "卡啪脆雞", price: 85 },
+        { name: "勁辣脆雞", price: 85 },
+        { name: "城市豬排", price: 75 },
+        { name: "鮮嫩鯛魚", price: 90 },
+        { name: "菲力雞排", price: 90 },
+        { name: "泰式檸檬雞", price: 60 },
+        { name: "主廚燒肉", price: 90 }
+      ],
+      "吐司/丹麥": [
+        { name: "巧克力吐司", price: 25 },
+        { name: "草莓吐司", price: 25 },
+        { name: "奶酥吐司", price: 30 },
+        { name: "鯛魚玉米吐司", price: 45 },
+        { name: "里肌燒肉吐司", price: 55 },
+        { name: "美式香腸吐司", price: 35 },
+        { name: "青花椒豬丹麥", price: 55 },
+        { name: "花生吐司", price: 25 }
+      ],
+      "酥脆蛋餅": [
+        { name: "原味蛋餅", price: 35 },
+        { name: "玉米蛋餅", price: 40 },
+        { name: "鯛魚玉米蛋餅", price: 55 },
+        { name: "城市豬排蛋餅", price: 70 },
+        { name: "起司薯餅瑪芬堡", price: 75 }
+      ],
+      "單品加點": [
+        { name: "薯條", price: 45 },
+        { name: "炸飯糰(8顆)", price: 40 },
+        { name: "蘿蔔糕(2塊)", price: 40 },
+        { name: "熱狗(2條)", price: 40 },
+        { name: "蔥抓餅", price: 45 },
+        { name: "麥克雞塊(5塊)", price: 45 }
       ],
       "飲料": [
-        { name: "大杯咖啡", price: 45 },
-        { name: "中杯咖啡", price: 35 },
-        { name: "熱可可", price: 35 },
-        { name: "柳橙汁", price: 35 },
+        { name: "紅茶(中杯)", price: 20 },
+        { name: "紅茶(大杯)", price: 25 },
+        { name: "奶茶(中杯)", price: 25 },
+        { name: "奶茶(大杯)", price: 30 },
+        { name: "豆漿(中杯)", price: 20 },
+        { name: "豆漿(大杯)", price: 25 },
+        { name: "鮮奶茶(中)", price: 40 },
+        { name: "鮮奶茶(大)", price: 55 }
       ]
     }
   },
   {
-    id: "清粥小菜",
-    name: "清粥小菜",
-    icon: "🍚",
-    tag: "粥品・小菜",
+    id: "想早餐",
+    name: "想早餐",
+    icon: "🥐",
+    tag: "吐司・漢堡・蛋餅",
     menu: {
-      "粥品": [
-        { name: "白粥", price: 25 },
-        { name: "皮蛋瘦肉粥", price: 45 },
-        { name: "地瓜粥", price: 25 },
+      "想吐司": [
+        { name: "奶油", price: 25 },
+        { name: "花生", price: 25 },
+        { name: "巧克力", price: 30 },
+        { name: "草莓", price: 30 },
+        { name: "起司", price: 30 },
+        { name: "鮪魚", price: 35 },
+        { name: "鮪魚起司", price: 40 },
+        { name: "鮪魚玉米", price: 40 },
+        { name: "蛋", price: 35 },
+        { name: "火腿蛋", price: 40 },
+        { name: "肉鬆蛋", price: 40 },
+        { name: "培根蛋", price: 40 }
+      ],
+      "想漢堡": [
+        { name: "特製招牌", price: 45 },
+        { name: "香雞", price: 45 },
+        { name: "鮪魚", price: 45 },
+        { name: "香雞鮪魚", price: 50 },
+        { name: "鮮嫩雞排", price: 55 },
+        { name: "黃金鯛魚", price: 55 },
+        { name: "香濃燒肉", price: 60 },
+        { name: "海陸霸排", price: 65 }
+      ],
+      "超酥乳酪餅": [
+        { name: "草莓", price: 45 },
+        { name: "巧克力", price: 45 },
+        { name: "花生", price: 45 },
+        { name: "起士", price: 45 },
+        { name: "火腿", price: 45 }
+      ],
+      "滿福堡": [
+        { name: "歡樂蛋", price: 40 },
+        { name: "火腿", price: 45 },
+        { name: "香雞", price: 55 }
+      ],
+      "蔥抓餅": [
+        { name: "原味", price: 20 },
+        { name: "加蛋", price: 30 },
+        { name: "加肉", price: 30 },
+        { name: "火腿", price: 30 },
+        { name: "花生", price: 30 },
+        { name: "燻雞", price: 30 }
+      ],
+      "冷熱飲": [
+        { name: "原味紅茶", price: 20 },
+        { name: "蜜香紅茶", price: 25 },
+        { name: "翠玉綠茶", price: 25 },
+        { name: "碳焙烏龍茶(無糖)", price: 30 },
+        { name: "研磨香草咖啡", price: 45 },
+        { name: "拿鐵咖啡", price: 60 },
+        { name: "研磨橙橙茶", price: 50 }
+      ]
+    }
+  },
+  {
+    id: "晨間廚房",
+    name: "晨間廚房",
+    icon: "🥗",
+    tag: "漢堡・蛋餅・麵類",
+    menu: {
+      "漢堡": [
+        { name: "脆皮雞腿堡", price: 75 },
+        { name: "豬肉堡", price: 40 },
+        { name: "里肌燒肉堡", price: 60 },
+        { name: "夏威夷麥香雞堡", price: 45 },
+        { name: "美式牛肉堡", price: 60 },
+        { name: "黃金豬排堡", price: 70 },
+        { name: "鮮酥魚柳堡", price: 70 }
+      ],
+      "台式蛋餅": [
+        { name: "玉米蛋餅", price: 45 },
+        { name: "雙香古早味蛋餅", price: 50 },
+        { name: "薯餅蛋餅", price: 60 },
+        { name: "鯛魚玉米蛋餅", price: 55 },
+        { name: "里肌燒肉蛋餅", price: 60 },
+        { name: "原味蛋餅", price: 30 },
+        { name: "蔬菜蛋餅", price: 50 },
+        { name: "火腿蛋餅", price: 45 }
+      ],
+      "吐司/丹麥": [
+        { name: "巧克力", price: 25 },
+        { name: "草莓", price: 25 },
+        { name: "奶酥", price: 30 },
+        { name: "鯛魚玉米", price: 45 },
+        { name: "里肌燒肉", price: 55 },
+        { name: "美式香腸", price: 35 },
+        { name: "火腿", price: 35 },
+        { name: "培根", price: 40 }
+      ],
+      "鍋燒麵": [
+        { name: "鍋燒烏龍", price: 85 },
+        { name: "鍋燒意麵", price: 85 },
+        { name: "鍋燒雞絲麵", price: 85 },
+        { name: "經典鍋燒泡麵", price: 90 }
+      ],
+      "加購點心": [
+        { name: "荷包蛋", price: 15 },
+        { name: "大火腿片(1片)", price: 15 },
+        { name: "燒肉", price: 30 },
+        { name: "小熱狗", price: 30 },
+        { name: "薯條", price: 45 },
+        { name: "蘿蔔糕(2片)", price: 40 }
+      ],
+      "特調飲品": [
+        { name: "古早紅茶(中)", price: 20 },
+        { name: "古早紅茶(大)", price: 35 },
+        { name: "古早奶茶(中)", price: 25 },
+        { name: "英式奶茶(中)", price: 25 },
+        { name: "鴛鴦奶茶(中)", price: 25 },
+        { name: "鮮奶茶(中)", price: 40 },
+        { name: "特調咖啡(中)", price: 25 },
+        { name: "鮮奶咖啡(中)", price: 40 },
+        { name: "豆漿(中)", price: 30 },
+        { name: "豆漿(大)", price: 45 }
+      ]
+    }
+  },
+  {
+    id: "盈好早餐",
+    name: "盈好早餐",
+    icon: "🍳",
+    tag: "蛋餅・鐵板麵・乳酪餅",
+    menu: {
+      "旋廢蛋餅類": [
+        { name: "原味蛋餅", price: 35 },
+        { name: "火腿蛋餅", price: 45 },
+        { name: "肉鬆蛋餅", price: 45 },
+        { name: "起司蛋餅", price: 45 },
+        { name: "玉米蛋餅", price: 45 },
+        { name: "培根蛋餅", price: 45 },
+        { name: "蔬菜蛋餅", price: 45 },
+        { name: "漢堡肉蛋餅", price: 50 },
+        { name: "鯛魚蛋餅", price: 55 },
+        { name: "燻雞蛋餅", price: 50 },
+        { name: "德式香腸蛋餅", price: 60 },
+        { name: "菲力嫩豬排蛋餅", price: 60 },
+        { name: "黑胡椒豬排蛋餅", price: 60 },
+        { name: "咔啦雞腿蛋餅(原味/辣味)", price: 85 }
+      ],
+      "鐵板麵": [
+        { name: "蘑菇麵", price: 50 },
+        { name: "黑胡椒麵", price: 50 },
+        { name: "蕃茄肉醬麵", price: 55 },
+        { name: "奶油培根麵", price: 55 },
+        { name: "青醬麵", price: 55 },
+        { name: "宮保雞丁麵", price: 65 },
+        { name: "打拋豬肉麵", price: 65 }
+      ],
+      "乳酪餅": [
+        { name: "起司乳酪餅", price: 50 },
+        { name: "火腿乳酪餅", price: 50 },
+        { name: "培根乳酪餅", price: 50 },
+        { name: "鯛魚乳酪餅", price: 65 },
+        { name: "豬排乳酪餅", price: 65 }
+      ],
+      "滿福堡(含蛋+起司)": [
+        { name: "豬肉滿福堡", price: 60 },
+        { name: "香腸滿福堡", price: 60 },
+        { name: "培根滿福堡", price: 60 },
+        { name: "燻雞滿福堡", price: 60 },
+        { name: "鯛魚滿福堡", price: 65 },
+        { name: "牛肉滿福堡", price: 65 }
+      ],
+      "飲料": [
+        { name: "紅茶(中杯)", price: 25 },
+        { name: "紅茶(大杯)", price: 30 },
+        { name: "奶茶(中杯)", price: 25 },
+        { name: "奶茶(大杯)", price: 30 },
+        { name: "鮮奶茶(中)", price: 40 },
+        { name: "鮮奶茶(大)", price: 50 },
+        { name: "咖啡(中杯)", price: 40 },
+        { name: "柳橙汁(中杯)", price: 25 }
+      ]
+    }
+  },
+  {
+    id: "歐巴肉彈吐司",
+    name: "歐巴肉彈吐司",
+    icon: "🥪",
+    tag: "烤吐司・漢堡・鐵板麵",
+    menu: {
+      "烤吐司": [
+        { name: "蛋吐司", price: 35 },
+        { name: "培根蛋吐司", price: 45 },
+        { name: "鯛魚蛋吐司", price: 50 },
+        { name: "燻雞蛋吐司", price: 50 },
+        { name: "肉鬆蛋吐司", price: 55 },
+        { name: "卡拉雞腿排蛋吐司", price: 60 },
+        { name: "韓式泡菜肉彈吐司", price: 70 }
+      ],
+      "美味漢堡": [
+        { name: "培根蛋漢堡", price: 50 },
+        { name: "鯛魚蛋漢堡", price: 55 },
+        { name: "燻雞蛋漢堡", price: 55 },
+        { name: "肉鬆蛋漢堡", price: 55 },
+        { name: "肉彈蛋漢堡(里肌)", price: 60 },
+        { name: "鯛魚玉米漢堡", price: 65 },
+        { name: "卡拉雞腿排漢堡", price: 70 }
+      ],
+      "陰運蛋餅": [
+        { name: "原味蛋餅", price: 35 },
+        { name: "培根蛋餅", price: 45 },
+        { name: "鯛魚蛋餅", price: 45 },
+        { name: "燻雞蛋餅", price: 50 },
+        { name: "肉彈蛋餅(里肌)", price: 50 },
+        { name: "卡拉雞腿排蛋餅", price: 60 }
+      ],
+      "鐵板麵": [
+        { name: "黑胡椒麵", price: 50 },
+        { name: "蘑菇麵", price: 50 },
+        { name: "蕃茄肉醬麵", price: 60 },
+        { name: "奶油培根麵", price: 65 },
+        { name: "青醬麵", price: 65 },
+        { name: "宮保雞丁麵", price: 65 }
+      ],
+      "湯麵": [
+        { name: "雞絲麵(當歸)", price: 65 },
+        { name: "自製麻油雞絲麵", price: 110 },
+        { name: "韓式拉麵", price: 100 }
+      ],
+      "鳴嗶飲料": [
+        { name: "燕香紅茶(冰/溫)", price: 20 },
+        { name: "燕香紅茶(冰/溫大)", price: 25 },
+        { name: "美式咖啡(冰/溫)", price: 40 },
+        { name: "摩鐵咖啡(冰/溫)", price: 60 },
+        { name: "拿鐵(冰/溫)", price: 75 },
+        { name: "義美果汁", price: 20 },
+        { name: "義美保久乳", price: 25 }
+      ]
+    }
+  },
+  {
+    id: "吐司基",
+    name: "吐司基",
+    icon: "🍞",
+    tag: "吐司・漢堡・可頌",
+    menu: {
+      "吐司": [
+        { name: "來點蔬菜", price: 30 },
+        { name: "火腿", price: 35 },
+        { name: "純真肉鬆", price: 35 },
+        { name: "特製鯛魚", price: 35 },
+        { name: "香酥培根", price: 35 },
+        { name: "就是雞肉", price: 35 },
+        { name: "黑胡椒豬排", price: 45 },
+        { name: "原味卡啪雞", price: 50 },
+        { name: "辣味卡啪雞", price: 50 },
+        { name: "紐澳良雞腿", price: 50 },
+        { name: "玉米蔬菜", price: 50 },
+        { name: "歡迎蔥蛋", price: 50 },
+        { name: "顆粒花生牛肉", price: 55 }
+      ],
+      "蛋餅": [
+        { name: "原味蛋餅", price: 30 },
+        { name: "火腿蛋餅", price: 40 },
+        { name: "起司蛋餅", price: 40 },
+        { name: "純真肉鬆蛋餅", price: 40 },
+        { name: "特製鯛魚蛋餅", price: 40 },
+        { name: "金黃玉米蛋餅", price: 40 },
+        { name: "香酥培根蛋餅", price: 40 },
+        { name: "薯餅蛋餅", price: 45 },
+        { name: "豬排蛋餅", price: 50 }
+      ],
+      "鹹鹹甜甜(果醬)": [
+        { name: "草莓", price: 20 },
+        { name: "花生", price: 20 },
+        { name: "巧克力", price: 20 },
+        { name: "香蒜", price: 20 },
+        { name: "葡萄奶酥/奶酥", price: 20 }
+      ],
+      "再吃一點點": [
+        { name: "荷包蛋", price: 15 },
+        { name: "熱狗(3條)", price: 30 },
+        { name: "雞塊(5塊)", price: 40 },
+        { name: "薯餅", price: 35 },
+        { name: "蘿蔔糕", price: 35 },
+        { name: "小鬆餅(6顆)", price: 40 },
+        { name: "炸飯(6顆)", price: 40 },
+        { name: "薯條", price: 45 },
+        { name: "泡菜炸飯", price: 50 },
+        { name: "日式炸飯", price: 50 }
+      ],
+      "飲料": [
+        { name: "紅茶(冰)", price: 20 },
+        { name: "紅茶(熱)", price: 20 },
+        { name: "紅茶(中杯)", price: 20 },
+        { name: "紅茶(大杯)", price: 25 },
+        { name: "豆漿(冰/熱)", price: 20 },
+        { name: "無糖豆漿", price: 20 },
+        { name: "奶茶(中杯)", price: 25 },
+        { name: "奶茶(大杯)", price: 30 },
+        { name: "鮮奶茶(中)", price: 35 },
+        { name: "鮮奶茶(大)", price: 40 },
+        { name: "可可(中杯)", price: 40 }
+      ]
+    }
+  },
+  {
+    id: "蝦餃湯包",
+    name: "蝦餃湯包",
+    icon: "🥟",
+    tag: "湯包・蒸餃・香煎",
+    menu: {
+      "湯包(8顆)": [
+        { name: "鮮肉湯包", price: 80 },
+        { name: "牛肉湯包", price: 110 },
+        { name: "鮮蝦湯包", price: 135 },
+        { name: "港式湯包", price: 110 },
+        { name: "上海湯包", price: 105 },
+        { name: "叻沙湯包", price: 90 },
+        { name: "麻辣湯包", price: 90 },
+        { name: "虱目魚湯包", price: 90 },
+        { name: "瓜仔雞湯包", price: 100 },
+        { name: "干貝絲湯包", price: 120 },
+        { name: "塔香菇素湯包", price: 105 }
+      ],
+      "蒸餃(8顆)": [
+        { name: "牛肉蒸餃", price: 100 },
+        { name: "蝦肉蒸餃", price: 95 },
+        { name: "蔥肉蒸餃", price: 80 },
+        { name: "韭菜蒸餃", price: 80 },
+        { name: "高麗菜蒸餃", price: 80 }
+      ],
+      "香煎": [
+        { name: "青蔥鍋貼", price: 75 },
+        { name: "韭菜鍋貼", price: 75 },
+        { name: "生煎包", price: 75 },
+        { name: "黃金抓餅", price: 35 },
+        { name: "抓餅+蛋", price: 45 },
+        { name: "脆皮蛋", price: 35 },
+        { name: "雙起司脆皮蛋", price: 55 }
+      ],
+      "湯品": [
+        { name: "玉米濃湯", price: 50 },
+        { name: "酸辣湯", price: 50 },
+        { name: "蛋花湯", price: 46 }
       ],
       "小菜": [
-        { name: "滷蛋", price: 10 },
-        { name: "豆腐乳", price: 10 },
-        { name: "肉鬆", price: 15 },
-        { name: "花生", price: 10 },
+        { name: "燻燒豬耳朵", price: 45 },
+        { name: "涼拌木耳", price: 45 },
+        { name: "黃金泡菜", price: 50 }
+      ],
+      "飲料": [
+        { name: "紅茶(大)", price: 15 },
+        { name: "紅茶(小)", price: 15 },
+        { name: "奶茶(大)", price: 20 },
+        { name: "奶茶(小)", price: 20 },
+        { name: "豆漿(大)", price: 20 },
+        { name: "豆漿(小)", price: 20 }
       ]
     }
   },
   {
-    id: "豆漿店",
-    name: "豆漿店",
-    icon: "🥛",
-    tag: "燒餅・油條",
+    id: "無名小吃",
+    name: "無名小吃",
+    icon: "🍚",
+    tag: "滷肉飯・炒麵・湯品",
     menu: {
       "主食": [
-        { name: "燒餅油條", price: 35 },
-        { name: "燒餅夾蛋", price: 35 },
-        { name: "飯糰", price: 40 },
-        { name: "蘿蔔糕", price: 25 },
+        { name: "滷肉飯(小)", price: 50 },
+        { name: "滷肉飯(大)", price: 60 },
+        { name: "腿庫飯(小)", price: 75 },
+        { name: "腿庫飯(大)", price: 85 },
+        { name: "豬腳飯", price: 90 },
+        { name: "炒麵(小)", price: 40 },
+        { name: "炒麵(大)", price: 50 },
+        { name: "炒米粉(小)", price: 40 },
+        { name: "炒米粉(大)", price: 50 },
+        { name: "綜合(米粉+麵)(小)", price: 40 },
+        { name: "綜合(米粉+麵)(大)", price: 50 }
       ],
-      "飲料": [
-        { name: "鹹豆漿", price: 25 },
-        { name: "甜豆漿", price: 20 },
-        { name: "米漿", price: 20 },
+      "湯品": [
+        { name: "豬血湯", price: 25 },
+        { name: "貢丸湯", price: 30 },
+        { name: "味噌豆腐湯", price: 30 },
+        { name: "司目魚丸湯", price: 30 }
+      ],
+      "小菜": [
+        { name: "荷包蛋", price: 15 },
+        { name: "筍干", price: 30 },
+        { name: "油豆腐", price: 30 }
+      ]
+    }
+  },
+  {
+    id: "Good Morning More Burger",
+    name: "Good Morning",
+    icon: "🫓",
+    tag: "漢堡・吐司・餐點",
+    menu: {
+      "吐司/漢堡": [
+        { name: "火腿吐司", price: 30 },
+        { name: "土 吐司", price: 30 },
+        { name: "肉 吐司", price: 30 },
+        { name: "魚 吐司", price: 35 },
+        { name: "芋 吐司", price: 35 },
+        { name: "管 吐司", price: 45 },
+        { name: "超厚牛肉吐司", price: 70 }
+      ],
+      "15麵系列": [
+        { name: "荷苞保全堡", price: 55 },
+        { name: "脆皮嫩雞堡", price: 60 },
+        { name: "厚切嫩雞堡", price: 80 },
+        { name: "彩虹大利麵", price: 85 },
+        { name: "青醬大利麵", price: 95 },
+        { name: "海陸霸排麵", price: 105 }
+      ],
+      "中式餐點": [
+        { name: "大蝦捲餅", price: 50 },
+        { name: "古法薄餅", price: 55 },
+        { name: "台式蔥餅堡", price: 65 },
+        { name: "厚片豬排堡", price: 70 },
+        { name: "蔥燒牛肉堡", price: 70 }
+      ],
+      "點心系列": [
+        { name: "鬆餅", price: 15 },
+        { name: "小熱狗", price: 20 },
+        { name: "薯條", price: 30 },
+        { name: "雞塊(5顆)", price: 40 },
+        { name: "日式炸蝦", price: 55 }
+      ],
+      "果醬系列": [
+        { name: "奶茶(冷)", price: 20 },
+        { name: "紅茶(冷)", price: 20 },
+        { name: "豆漿(熱)", price: 20 },
+        { name: "雙色果凍", price: 35 },
+        { name: "花生鬆糕", price: 25 }
       ]
     }
   }
 ];
-// ─────────────────────────────────────────────
 
 let selectedShop = null;
-let cart = {}; // { itemName: { qty, price } }
+let cart = {};
 
-// Init shops
 function initShops() {
   const grid = document.getElementById("shopGrid");
   SHOPS.forEach(shop => {
     const btn = document.createElement("button");
     btn.className = "shop-btn";
     btn.dataset.shopId = shop.id;
-    btn.innerHTML = `
-      <span class="shop-icon">${shop.icon}</span>
-      <div class="shop-name">${shop.name}</div>
-      <div class="shop-tag">${shop.tag}</div>
-    `;
+    btn.innerHTML = `<span class="shop-icon">${shop.icon}</span><div class="shop-name">${shop.name}</div><div class="shop-tag">${shop.tag}</div>`;
     btn.onclick = () => selectShop(shop.id);
     grid.appendChild(btn);
   });
@@ -466,19 +624,13 @@ function initShops() {
 function selectShop(shopId) {
   selectedShop = SHOPS.find(s => s.id === shopId);
   cart = {};
-
   document.querySelectorAll(".shop-btn").forEach(b => b.classList.remove("selected"));
   document.querySelector(`[data-shop-id="${shopId}"]`).classList.add("selected");
-
   renderMenu();
   document.getElementById("menuCard").classList.remove("hidden");
   document.getElementById("noteCard").classList.remove("hidden");
-  document.getElementById("step3").classList.add("active");
-
   updateCart();
-  setTimeout(() => {
-    document.getElementById("menuCard").scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 100);
+  setTimeout(() => document.getElementById("menuCard").scrollIntoView({ behavior: "smooth", block: "start" }), 100);
 }
 
 function renderMenu() {
@@ -489,7 +641,8 @@ function renderMenu() {
     section.className = "menu-section";
     section.innerHTML = `<div class="menu-section-title">${category}</div>`;
     items.forEach(item => {
-      const key = `${selectedShop.id}__${item.name}`;
+      const key = selectedShop.id + "__" + item.name;
+      const safeId = "qty-" + key.replace(/[^a-zA-Z0-9]/g, '-');
       const row = document.createElement("div");
       row.className = "menu-item";
       row.innerHTML = `
@@ -498,11 +651,10 @@ function renderMenu() {
           <div class="item-price">$${item.price}</div>
         </div>
         <div class="qty-control">
-          <button class="qty-btn" onclick="changeQty('${key}', ${item.price}, -1)">−</button>
-          <div class="qty-num" id="qty-${key.replace(/[^a-zA-Z0-9]/g,'-')}">0</div>
-          <button class="qty-btn" onclick="changeQty('${key}', ${item.price}, 1)">+</button>
-        </div>
-      `;
+          <button class="qty-btn" onclick="changeQty('${key}',${item.price},-1)">−</button>
+          <div class="qty-num" id="${safeId}">0</div>
+          <button class="qty-btn" onclick="changeQty('${key}',${item.price},1)">+</button>
+        </div>`;
       section.appendChild(row);
     });
     container.appendChild(section);
@@ -513,11 +665,9 @@ function changeQty(key, price, delta) {
   if (!cart[key]) cart[key] = { qty: 0, price, name: key.split("__")[1] };
   cart[key].qty = Math.max(0, cart[key].qty + delta);
   if (cart[key].qty === 0) delete cart[key];
-
-  const elemId = "qty-" + key.replace(/[^a-zA-Z0-9]/g,'-');
-  const el = document.getElementById(elemId);
-  if (el) el.textContent = cart[key]?.qty ?? 0;
-
+  const safeId = "qty-" + key.replace(/[^a-zA-Z0-9]/g, '-');
+  const el = document.getElementById(safeId);
+  if (el) el.textContent = cart[key] ? cart[key].qty : 0;
   updateCart();
 }
 
@@ -525,17 +675,10 @@ function updateCart() {
   const items = Object.values(cart);
   const totalQty = items.reduce((s, i) => s + i.qty, 0);
   const totalPrice = items.reduce((s, i) => s + i.qty * i.price, 0);
-
   const countEl = document.getElementById("cartCount");
   const totalEl = document.getElementById("cartTotal");
-
-  if (totalQty === 0) {
-    countEl.textContent = "尚未選擇品項";
-    totalEl.textContent = "";
-  } else {
-    countEl.textContent = `已選 ${totalQty} 項`;
-    totalEl.textContent = `合計 $${totalPrice}`;
-  }
+  if (totalQty === 0) { countEl.textContent = "尚未選擇品項"; totalEl.textContent = ""; }
+  else { countEl.textContent = `已選 ${totalQty} 項`; totalEl.textContent = `合計 $${totalPrice}`; }
 }
 
 function showAlert(msg) {
@@ -548,34 +691,20 @@ function showAlert(msg) {
 async function submitOrder() {
   const name = document.getElementById("userName").value.trim();
   const note = document.getElementById("orderNote").value.trim();
-
   if (!name) { showAlert("⚠️ 請輸入你的名字"); return; }
   if (!selectedShop) { showAlert("⚠️ 請選擇早餐店"); return; }
   if (Object.keys(cart).length === 0) { showAlert("⚠️ 請至少選擇一個品項"); return; }
-
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
   btn.textContent = "送出中...";
-
   const items = Object.values(cart).map(i => ({ name: i.name, qty: i.qty, price: i.price }));
   const totalPrice = items.reduce((s, i) => s + i.qty * i.price, 0);
-
   const payload = {
-    name,
-    shop: selectedShop.name,
-    items,
-    totalPrice,
-    note,
+    name, shop: selectedShop.name, items, totalPrice, note,
     timestamp: new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
   };
-
   try {
-    await fetch(GAS_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    await fetch(GAS_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     showSuccess(payload);
   } catch (e) {
     alert("送出失敗，請截圖傳給 Pan 😢");
@@ -589,8 +718,6 @@ function showSuccess(payload) {
   document.getElementById("cartBar").style.display = "none";
   const screen = document.getElementById("successScreen");
   screen.style.display = "block";
-
-  const itemLines = payload.items.map(i => `${i.name} × ${i.qty}　$${i.price * i.qty}`).join("\n");
   document.getElementById("orderReceipt").innerHTML = `
     <b>📋 點餐明細</b><br>
     姓名：${payload.name}<br>
@@ -599,8 +726,7 @@ function showSuccess(payload) {
     ${payload.items.map(i => `${i.name} × ${i.qty}　<b>$${i.price * i.qty}</b>`).join("<br>")}<br>
     ──────────────<br>
     合計：<b>$${payload.totalPrice}</b>
-    ${payload.note ? `<br>備註：${payload.note}` : ""}
-  `;
+    ${payload.note ? `<br>備註：${payload.note}` : ""}`;
 }
 
 initShops();
