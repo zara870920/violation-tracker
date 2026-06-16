@@ -7,17 +7,9 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
   :root {
-    --bg: #FFF8F0;
-    --card: #FFFFFF;
-    --primary: #FF6B35;
-    --primary-light: #FFE8DF;
-    --primary-dark: #E55A26;
-    --text: #1A1A1A;
-    --muted: #888;
-    --border: #EEE;
-    --success: #2ECC71;
-    --radius: 14px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    --bg: #FFF8F0; --card: #FFFFFF; --primary: #FF6B35; --primary-light: #FFE8DF;
+    --primary-dark: #E55A26; --text: #1A1A1A; --muted: #888; --border: #EEE;
+    --success: #2ECC71; --radius: 14px; --shadow: 0 2px 12px rgba(0,0,0,0.07);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); font-family: 'Noto Sans TC', sans-serif; color: var(--text); min-height: 100vh; }
@@ -39,12 +31,14 @@
   .shop-btn .shop-name { font-size: 0.9rem; font-weight: 700; }
   .shop-btn .shop-tag { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
   .menu-section { margin-bottom: 16px; }
-  .menu-section-title { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .menu-section-title { font-size: 0.78rem; font-weight: 700; color: var(--muted); letter-spacing: .06em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .menu-section-title.combo { color: #E67E22; background: #FEF9E7; border-radius: 6px; padding: 6px 10px; border: 1px solid #F0D080; }
   .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F5F5F5; }
   .menu-item:last-child { border-bottom: none; }
   .item-info { flex: 1; }
   .item-name { font-size: 0.95rem; font-weight: 500; }
   .item-price { font-size: 0.8rem; color: var(--primary); margin-top: 2px; }
+  .item-desc { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
   .qty-control { display: flex; align-items: center; gap: 10px; }
   .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--primary-light); color: var(--primary); font-size: 1.1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
   .qty-btn:hover { background: var(--primary); color: white; }
@@ -65,6 +59,7 @@
   .order-receipt { background: var(--primary-light); border-radius: var(--radius); padding: 16px; margin-top: 20px; text-align: left; font-size: 0.88rem; line-height: 1.9; }
   .alert { background: #FFF3CD; border: 1px solid #FFD580; border-radius: 10px; padding: 10px 14px; font-size: 0.83rem; color: #7A5C00; margin-bottom: 12px; display: none; }
   .hidden { display: none; }
+  .combo-badge { display: inline-block; background: #E67E22; color: white; font-size: 0.65rem; font-weight: 700; border-radius: 4px; padding: 1px 5px; margin-left: 5px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -128,7 +123,8 @@ const SHOPS = [
         { name: "鮮嫩鯛魚", price: 90 },
         { name: "菲力雞排", price: 90 },
         { name: "泰式檸檬雞", price: 60 },
-        { name: "主廚燒肉", price: 90 }
+        { name: "主廚燒肉", price: 90 },
+        { name: "麥香雞", price: 45 }
       ],
       "吐司/丹麥": [
         { name: "巧克力吐司", price: 25 },
@@ -146,6 +142,11 @@ const SHOPS = [
         { name: "鯛魚玉米蛋餅", price: 55 },
         { name: "城市豬排蛋餅", price: 70 },
         { name: "起司薯餅瑪芬堡", price: 75 }
+      ],
+      "⭐ 超值套餐升級 +55元（選A/B/C其一）": [
+        { name: "套餐A：麥克雞塊5塊＋中杯紅茶", price: 55, desc: "主餐升級套餐" },
+        { name: "套餐B：酥脆薯條＋中杯紅茶", price: 55, desc: "主餐升級套餐" },
+        { name: "套餐C：三角薯餅4顆＋中杯紅茶", price: 55, desc: "主餐升級套餐" }
       ],
       "單品加點": [
         { name: "薯條", price: 45 },
@@ -168,67 +169,6 @@ const SHOPS = [
     }
   },
   {
-    id: "想早餐",
-    name: "想早餐",
-    icon: "🥐",
-    tag: "吐司・漢堡・蛋餅",
-    menu: {
-      "想吐司": [
-        { name: "奶油", price: 25 },
-        { name: "花生", price: 25 },
-        { name: "巧克力", price: 30 },
-        { name: "草莓", price: 30 },
-        { name: "起司", price: 30 },
-        { name: "鮪魚", price: 35 },
-        { name: "鮪魚起司", price: 40 },
-        { name: "鮪魚玉米", price: 40 },
-        { name: "蛋", price: 35 },
-        { name: "火腿蛋", price: 40 },
-        { name: "肉鬆蛋", price: 40 },
-        { name: "培根蛋", price: 40 }
-      ],
-      "想漢堡": [
-        { name: "特製招牌", price: 45 },
-        { name: "香雞", price: 45 },
-        { name: "鮪魚", price: 45 },
-        { name: "香雞鮪魚", price: 50 },
-        { name: "鮮嫩雞排", price: 55 },
-        { name: "黃金鯛魚", price: 55 },
-        { name: "香濃燒肉", price: 60 },
-        { name: "海陸霸排", price: 65 }
-      ],
-      "超酥乳酪餅": [
-        { name: "草莓", price: 45 },
-        { name: "巧克力", price: 45 },
-        { name: "花生", price: 45 },
-        { name: "起士", price: 45 },
-        { name: "火腿", price: 45 }
-      ],
-      "滿福堡": [
-        { name: "歡樂蛋", price: 40 },
-        { name: "火腿", price: 45 },
-        { name: "香雞", price: 55 }
-      ],
-      "蔥抓餅": [
-        { name: "原味", price: 20 },
-        { name: "加蛋", price: 30 },
-        { name: "加肉", price: 30 },
-        { name: "火腿", price: 30 },
-        { name: "花生", price: 30 },
-        { name: "燻雞", price: 30 }
-      ],
-      "冷熱飲": [
-        { name: "原味紅茶", price: 20 },
-        { name: "蜜香紅茶", price: 25 },
-        { name: "翠玉綠茶", price: 25 },
-        { name: "碳焙烏龍茶(無糖)", price: 30 },
-        { name: "研磨香草咖啡", price: 45 },
-        { name: "拿鐵咖啡", price: 60 },
-        { name: "研磨橙橙茶", price: 50 }
-      ]
-    }
-  },
-  {
     id: "晨間廚房",
     name: "晨間廚房",
     icon: "🥗",
@@ -241,7 +181,9 @@ const SHOPS = [
         { name: "夏威夷麥香雞堡", price: 45 },
         { name: "美式牛肉堡", price: 60 },
         { name: "黃金豬排堡", price: 70 },
-        { name: "鮮酥魚柳堡", price: 70 }
+        { name: "鮮酥魚柳堡", price: 70 },
+        { name: "嫩煎雞柳堡", price: 60 },
+        { name: "和風雞腿堡", price: 60 }
       ],
       "台式蛋餅": [
         { name: "玉米蛋餅", price: 45 },
@@ -251,7 +193,10 @@ const SHOPS = [
         { name: "里肌燒肉蛋餅", price: 60 },
         { name: "原味蛋餅", price: 30 },
         { name: "蔬菜蛋餅", price: 50 },
-        { name: "火腿蛋餅", price: 45 }
+        { name: "火腿蛋餅", price: 45 },
+        { name: "培根蛋餅", price: 50 },
+        { name: "美式香腸蛋餅", price: 60 },
+        { name: "韓式辣雞腿蛋餅", price: 65 }
       ],
       "吐司/丹麥": [
         { name: "巧克力", price: 25 },
@@ -262,6 +207,12 @@ const SHOPS = [
         { name: "美式香腸", price: 35 },
         { name: "火腿", price: 35 },
         { name: "培根", price: 40 }
+      ],
+      "⭐ 飲料升級套餐": [
+        { name: "套餐A：晨間薯餅＋中杯紅茶 +45元", price: 45, desc: "升級套餐A" },
+        { name: "套餐B：薯條＋中杯紅茶 +50元", price: 50, desc: "升級套餐B" },
+        { name: "套餐C：麥克雞塊＋中杯紅茶 +55元", price: 55, desc: "升級套餐C" },
+        { name: "套餐D：生菜沙拉＋中杯紅茶 +50元", price: 50, desc: "升級套餐D" }
       ],
       "鍋燒麵": [
         { name: "鍋燒烏龍", price: 85 },
@@ -275,7 +226,9 @@ const SHOPS = [
         { name: "燒肉", price: 30 },
         { name: "小熱狗", price: 30 },
         { name: "薯條", price: 45 },
-        { name: "蘿蔔糕(2片)", price: 40 }
+        { name: "蘿蔔糕(2片)", price: 40 },
+        { name: "雞米花", price: 55 },
+        { name: "晨間薯餅", price: 30 }
       ],
       "特調飲品": [
         { name: "古早紅茶(中)", price: 20 },
@@ -286,8 +239,80 @@ const SHOPS = [
         { name: "鮮奶茶(中)", price: 40 },
         { name: "特調咖啡(中)", price: 25 },
         { name: "鮮奶咖啡(中)", price: 40 },
+        { name: "研磨黑咖啡(中)", price: 45 },
+        { name: "拿鐵咖啡(中)", price: 55 },
         { name: "豆漿(中)", price: 30 },
-        { name: "豆漿(大)", price: 45 }
+        { name: "豆漿(大)", price: 45 },
+        { name: "森林莓果茶(中)", price: 30 },
+        { name: "水果茶(中)", price: 30 },
+        { name: "無糖桂花青(中)", price: 25 }
+      ]
+    }
+  },
+  {
+    id: "想早餐",
+    name: "想早餐",
+    icon: "🥐",
+    tag: "吐司・漢堡・蛋餅",
+    menu: {
+      "想吐司": [
+        { name: "奶油吐司", price: 25 },
+        { name: "花生吐司", price: 25 },
+        { name: "巧克力吐司", price: 30 },
+        { name: "草莓吐司", price: 30 },
+        { name: "起司吐司", price: 30 },
+        { name: "鮪魚吐司", price: 35 },
+        { name: "鮪魚起司吐司", price: 40 },
+        { name: "鮪魚玉米吐司", price: 40 },
+        { name: "蛋吐司", price: 35 },
+        { name: "火腿蛋吐司", price: 40 },
+        { name: "肉鬆蛋吐司", price: 40 },
+        { name: "培根蛋吐司", price: 40 }
+      ],
+      "想漢堡": [
+        { name: "特製招牌漢堡", price: 45 },
+        { name: "香雞漢堡", price: 45 },
+        { name: "鮪魚漢堡", price: 45 },
+        { name: "香雞鮪魚漢堡", price: 50 },
+        { name: "鮮嫩雞排漢堡", price: 55 },
+        { name: "黃金鯛魚漢堡", price: 55 },
+        { name: "香濃燒肉漢堡", price: 60 },
+        { name: "海陸霸排漢堡", price: 65 }
+      ],
+      "超酥乳酪餅": [
+        { name: "草莓乳酪餅", price: 45 },
+        { name: "巧克力乳酪餅", price: 45 },
+        { name: "花生乳酪餅", price: 45 },
+        { name: "起士乳酪餅", price: 45 },
+        { name: "火腿乳酪餅", price: 45 }
+      ],
+      "滿福堡": [
+        { name: "歡樂蛋滿福堡", price: 40 },
+        { name: "火腿滿福堡", price: 45 },
+        { name: "香雞滿福堡", price: 55 }
+      ],
+      "蔥抓餅": [
+        { name: "原味蔥抓餅", price: 20 },
+        { name: "蔥抓餅加蛋", price: 30 },
+        { name: "蔥抓餅加肉", price: 30 },
+        { name: "蔥抓餅加火腿", price: 30 },
+        { name: "蔥抓餅加花生", price: 30 },
+        { name: "蔥抓餅加燻雞", price: 30 }
+      ],
+      "點心小品": [
+        { name: "薯餅", price: 20 },
+        { name: "熱狗", price: 20 },
+        { name: "荷包蛋", price: 15 }
+      ],
+      "冷熱飲": [
+        { name: "原味紅茶", price: 20 },
+        { name: "蜜香紅茶", price: 25 },
+        { name: "翠玉綠茶", price: 25 },
+        { name: "碳焙烏龍茶(無糖)", price: 30 },
+        { name: "研磨香草咖啡", price: 45 },
+        { name: "拿鐵咖啡", price: 60 },
+        { name: "研磨橙橙茶", price: 50 },
+        { name: "玉米濃湯(冬季限定)", price: 30 }
       ]
     }
   },
@@ -311,16 +336,17 @@ const SHOPS = [
         { name: "德式香腸蛋餅", price: 60 },
         { name: "菲力嫩豬排蛋餅", price: 60 },
         { name: "黑胡椒豬排蛋餅", price: 60 },
-        { name: "咔啦雞腿蛋餅(原味/辣味)", price: 85 }
+        { name: "咔啦雞腿蛋餅(原味)", price: 85 },
+        { name: "咔啦雞腿蛋餅(辣味)", price: 85 }
       ],
       "鐵板麵": [
-        { name: "蘑菇麵", price: 50 },
-        { name: "黑胡椒麵", price: 50 },
-        { name: "蕃茄肉醬麵", price: 55 },
-        { name: "奶油培根麵", price: 55 },
-        { name: "青醬麵", price: 55 },
-        { name: "宮保雞丁麵", price: 65 },
-        { name: "打拋豬肉麵", price: 65 }
+        { name: "蘑菇鐵板麵", price: 50 },
+        { name: "黑胡椒鐵板麵", price: 50 },
+        { name: "蕃茄肉醬鐵板麵", price: 55 },
+        { name: "奶油培根鐵板麵", price: 55 },
+        { name: "青醬鐵板麵", price: 55 },
+        { name: "宮保雞丁鐵板麵", price: 65 },
+        { name: "打拋豬肉鐵板麵", price: 65 }
       ],
       "乳酪餅": [
         { name: "起司乳酪餅", price: 50 },
@@ -355,7 +381,7 @@ const SHOPS = [
     icon: "🥪",
     tag: "烤吐司・漢堡・鐵板麵",
     menu: {
-      "烤吐司": [
+      "烤吐司(皆含雞蛋)": [
         { name: "蛋吐司", price: 35 },
         { name: "培根蛋吐司", price: 45 },
         { name: "鯛魚蛋吐司", price: 50 },
@@ -364,14 +390,15 @@ const SHOPS = [
         { name: "卡拉雞腿排蛋吐司", price: 60 },
         { name: "韓式泡菜肉彈吐司", price: 70 }
       ],
-      "美味漢堡": [
+      "美味漢堡(皆含雞蛋)": [
         { name: "培根蛋漢堡", price: 50 },
         { name: "鯛魚蛋漢堡", price: 55 },
         { name: "燻雞蛋漢堡", price: 55 },
         { name: "肉鬆蛋漢堡", price: 55 },
         { name: "肉彈蛋漢堡(里肌)", price: 60 },
         { name: "鯛魚玉米漢堡", price: 65 },
-        { name: "卡拉雞腿排漢堡", price: 70 }
+        { name: "卡拉雞腿排漢堡", price: 70 },
+        { name: "韓式泡菜肉彈漢堡", price: 75 }
       ],
       "陰運蛋餅": [
         { name: "原味蛋餅", price: 35 },
@@ -382,17 +409,20 @@ const SHOPS = [
         { name: "卡拉雞腿排蛋餅", price: 60 }
       ],
       "鐵板麵": [
-        { name: "黑胡椒麵", price: 50 },
-        { name: "蘑菇麵", price: 50 },
-        { name: "蕃茄肉醬麵", price: 60 },
-        { name: "奶油培根麵", price: 65 },
-        { name: "青醬麵", price: 65 },
-        { name: "宮保雞丁麵", price: 65 }
+        { name: "黑胡椒鐵板麵", price: 50 },
+        { name: "蘑菇鐵板麵", price: 50 },
+        { name: "蕃茄肉醬鐵板麵", price: 60 },
+        { name: "奶油培根鐵板麵", price: 65 },
+        { name: "青醬鐵板麵", price: 65 },
+        { name: "宮保雞丁鐵板麵", price: 65 },
+        { name: "青醬培根鐵板麵", price: 70 }
       ],
       "湯麵": [
         { name: "雞絲麵(當歸)", price: 65 },
         { name: "自製麻油雞絲麵", price: 110 },
-        { name: "韓式拉麵", price: 100 }
+        { name: "韓式拉麵", price: 100 },
+        { name: "韓式拉麵+起司", price: 110 },
+        { name: "韓式拉麵+里肌肉排", price: 135 }
       ],
       "鳴嗶飲料": [
         { name: "燕香紅茶(冰/溫)", price: 20 },
@@ -412,19 +442,21 @@ const SHOPS = [
     tag: "吐司・漢堡・可頌",
     menu: {
       "吐司": [
-        { name: "來點蔬菜", price: 30 },
-        { name: "火腿", price: 35 },
-        { name: "純真肉鬆", price: 35 },
-        { name: "特製鯛魚", price: 35 },
-        { name: "香酥培根", price: 35 },
-        { name: "就是雞肉", price: 35 },
-        { name: "黑胡椒豬排", price: 45 },
-        { name: "原味卡啪雞", price: 50 },
-        { name: "辣味卡啪雞", price: 50 },
-        { name: "紐澳良雞腿", price: 50 },
-        { name: "玉米蔬菜", price: 50 },
-        { name: "歡迎蔥蛋", price: 50 },
-        { name: "顆粒花生牛肉", price: 55 }
+        { name: "來點蔬菜吐司", price: 30 },
+        { name: "火腿吐司", price: 35 },
+        { name: "純真肉鬆吐司", price: 35 },
+        { name: "特製鯛魚吐司", price: 35 },
+        { name: "香酥培根吐司", price: 35 },
+        { name: "就是雞肉吐司", price: 35 },
+        { name: "黑胡椒豬排吐司", price: 45 },
+        { name: "原味卡啪雞吐司", price: 50 },
+        { name: "辣味卡啪雞吐司", price: 50 },
+        { name: "紐澳良雞腿吐司", price: 50 },
+        { name: "玉米蔬菜吐司", price: 50 },
+        { name: "歡迎蔥蛋吐司", price: 50 },
+        { name: "顆粒花生牛肉吐司", price: 55 },
+        { name: "招牌總匯(蛋)吐司", price: 65 },
+        { name: "特製可頌", price: 85 }
       ],
       "蛋餅": [
         { name: "原味蛋餅", price: 30 },
@@ -438,11 +470,12 @@ const SHOPS = [
         { name: "豬排蛋餅", price: 50 }
       ],
       "鹹鹹甜甜(果醬)": [
-        { name: "草莓", price: 20 },
-        { name: "花生", price: 20 },
-        { name: "巧克力", price: 20 },
-        { name: "香蒜", price: 20 },
-        { name: "葡萄奶酥/奶酥", price: 20 }
+        { name: "草莓果醬吐司", price: 20 },
+        { name: "花生果醬吐司", price: 20 },
+        { name: "巧克力果醬吐司", price: 20 },
+        { name: "香蒜果醬吐司", price: 20 },
+        { name: "葡萄奶酥吐司", price: 20 },
+        { name: "奶酥吐司", price: 20 }
       ],
       "再吃一點點": [
         { name: "荷包蛋", price: 15 },
@@ -451,16 +484,15 @@ const SHOPS = [
         { name: "薯餅", price: 35 },
         { name: "蘿蔔糕", price: 35 },
         { name: "小鬆餅(6顆)", price: 40 },
-        { name: "炸飯(6顆)", price: 40 },
+        { name: "炸飯糰(6顆)", price: 40 },
         { name: "薯條", price: 45 },
-        { name: "泡菜炸飯", price: 50 },
-        { name: "日式炸飯", price: 50 }
+        { name: "泡菜炸飯糰", price: 50 },
+        { name: "日式炸飯糰", price: 50 }
       ],
       "飲料": [
-        { name: "紅茶(冰)", price: 20 },
-        { name: "紅茶(熱)", price: 20 },
-        { name: "紅茶(中杯)", price: 20 },
-        { name: "紅茶(大杯)", price: 25 },
+        { name: "紅茶(冰小杯)", price: 20 },
+        { name: "紅茶(冰大杯)", price: 25 },
+        { name: "紅茶(熱中杯)", price: 20 },
         { name: "豆漿(冰/熱)", price: 20 },
         { name: "無糖豆漿", price: 20 },
         { name: "奶茶(中杯)", price: 25 },
@@ -559,24 +591,26 @@ const SHOPS = [
     }
   },
   {
-    id: "Good Morning More Burger",
+    id: "Good Morning",
     name: "Good Morning",
     icon: "🫓",
     tag: "漢堡・吐司・餐點",
     menu: {
       "吐司/漢堡": [
         { name: "火腿吐司", price: 30 },
-        { name: "土 吐司", price: 30 },
-        { name: "肉 吐司", price: 30 },
-        { name: "魚 吐司", price: 35 },
-        { name: "芋 吐司", price: 35 },
-        { name: "管 吐司", price: 45 },
-        { name: "超厚牛肉吐司", price: 70 }
+        { name: "土司(原味)", price: 30 },
+        { name: "肉鬆吐司", price: 30 },
+        { name: "魚排吐司", price: 35 },
+        { name: "芋泥吐司", price: 35 },
+        { name: "管狀起司吐司", price: 45 },
+        { name: "超厚牛肉起司吐司", price: 70 }
       ],
       "15麵系列": [
         { name: "荷苞保全堡", price: 55 },
         { name: "脆皮嫩雞堡", price: 60 },
+        { name: "彩虹打蔬醬", price: 65 },
         { name: "厚切嫩雞堡", price: 80 },
+        { name: "厚切蘑菇麵", price: 80 },
         { name: "彩虹大利麵", price: 85 },
         { name: "青醬大利麵", price: 95 },
         { name: "海陸霸排麵", price: 105 }
@@ -595,10 +629,11 @@ const SHOPS = [
         { name: "雞塊(5顆)", price: 40 },
         { name: "日式炸蝦", price: 55 }
       ],
-      "果醬系列": [
+      "飲料": [
         { name: "奶茶(冷)", price: 20 },
         { name: "紅茶(冷)", price: 20 },
         { name: "豆漿(熱)", price: 20 },
+        { name: "紅 茶(熱)", price: 20 },
         { name: "雙色果凍", price: 35 },
         { name: "花生鬆糕", price: 25 }
       ]
@@ -639,7 +674,8 @@ function renderMenu() {
   Object.entries(selectedShop.menu).forEach(([category, items]) => {
     const section = document.createElement("div");
     section.className = "menu-section";
-    section.innerHTML = `<div class="menu-section-title">${category}</div>`;
+    const isCombo = category.includes("套餐") || category.includes("超值");
+    section.innerHTML = `<div class="menu-section-title ${isCombo ? 'combo' : ''}">${isCombo ? '⭐ ' : ''}${category}</div>`;
     items.forEach(item => {
       const key = selectedShop.id + "__" + item.name;
       const safeId = "qty-" + key.replace(/[^a-zA-Z0-9]/g, '-');
@@ -647,8 +683,9 @@ function renderMenu() {
       row.className = "menu-item";
       row.innerHTML = `
         <div class="item-info">
-          <div class="item-name">${item.name}</div>
+          <div class="item-name">${item.name}${isCombo ? '<span class="combo-badge">套餐</span>' : ''}</div>
           <div class="item-price">$${item.price}</div>
+          ${item.desc ? `<div class="item-desc">${item.desc}</div>` : ''}
         </div>
         <div class="qty-control">
           <button class="qty-btn" onclick="changeQty('${key}',${item.price},-1)">−</button>
