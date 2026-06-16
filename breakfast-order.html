@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>早餐點餐系統</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #FFF8F0;
+    --card: #FFFFFF;
+    --primary: #FF6B35;
+    --primary-light: #FFE8DF;
+    --primary-dark: #E55A26;
+    --text: #1A1A1A;
+    --muted: #888;
+    --border: #EEE;
+    --success: #2ECC71;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Noto Sans TC', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 20px 20px 28px;
+    text-align: center;
+    position: relative;
+  }
+  .header-emoji { font-size: 2.4rem; display: block; margin-bottom: 6px; }
+  .header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: .03em; }
+  .header p { font-size: 0.85rem; opacity: .85; margin-top: 4px; }
+  .deadline-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    margin-top: 10px;
+  }
+
+  /* Main */
+  main { max-width: 480px; margin: 0 auto; padding: 20px 16px 120px; }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 22px;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .step-circle {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    transition: all .3s;
+  }
+  .step.active .step-circle { background: var(--primary); color: white; }
+  .step.done .step-circle { background: var(--success); color: white; }
+  .step-label { font-size: 0.7rem; color: var(--muted); }
+  .step.active .step-label { color: var(--primary); font-weight: 700; }
+  .step-line { width: 40px; height: 2px; background: var(--border); margin: 0 4px; margin-bottom: 18px; }
+  .step-line.done { background: var(--success); }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Name input */
+  .input-field {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    background: #FAFAFA;
+    transition: border-color .2s;
+    outline: none;
+  }
+  .input-field:focus { border-color: var(--primary); background: white; }
+
+  /* Shop selector */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .shop-btn {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    background: white;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+  }
+  .shop-btn:hover { border-color: var(--primary-light); transform: translateY(-1px); }
+  .shop-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .shop-btn .shop-icon { font-size: 1.8rem; display: block; margin-bottom: 5px; }
+  .shop-btn .shop-name { font-size: 0.9rem; font-weight: 700; }
+  .shop-btn .shop-tag { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+  /* Menu */
+  .menu-section { margin-bottom: 16px; }
+  .menu-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #F5F5F5;
+  }
+  .menu-item:last-child { border-bottom: none; }
+  .item-info { flex: 1; }
+  .item-name { font-size: 0.95rem; font-weight: 500; }
+  .item-price { font-size: 0.8rem; color: var(--primary); margin-top: 2px; }
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .qty-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .qty-btn:hover { background: var(--primary); color: white; }
+  .qty-num {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  /* Note */
+  .note-field {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    color: var(--text);
+    background: #FAFAFA;
+    transition: border-color .2s;
+  }
+  .note-field:focus { border-color: var(--primary); background: white; }
+
+  /* Cart summary */
+  .cart-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    padding: 14px 20px;
+    z-index: 100;
+  }
+  .cart-bar-inner { max-width: 480px; margin: 0 auto; }
+  .cart-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .cart-total { font-weight: 700; color: var(--primary); font-size: 1rem; }
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    letter-spacing: .02em;
+  }
+  .submit-btn:active { transform: scale(.98); }
+  .submit-btn:hover { background: var(--primary-dark); }
+  .submit-btn:disabled { background: #CCC; cursor: not-allowed; }
+
+  /* Success screen */
+  .success-screen {
+    text-align: center;
+    padding: 60px 20px;
+    display: none;
+  }
+  .success-screen .success-icon { font-size: 5rem; margin-bottom: 16px; }
+  .success-screen h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+  .success-screen p { color: var(--muted); line-height: 1.7; }
+  .order-receipt {
+    background: var(--primary-light);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 20px;
+    text-align: left;
+    font-size: 0.88rem;
+    line-height: 1.9;
+  }
+
+  /* Alert */
+  .alert {
+    background: #FFF3CD;
+    border: 1px solid #FFD580;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.83rem;
+    color: #7A5C00;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-emoji">🍳</span>
+  <h1>早餐點餐系統</h1>
+  <p>Pan 幫你帶早餐</p>
+  <div class="deadline-badge" id="deadlineBadge">截止時間：每日 08:30</div>
+</div>
+
+<main>
+
+  <!-- Success screen -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🎉</div>
+    <h2>點餐成功！</h2>
+    <p>你的點餐已送出<br>Pan 會幫你帶過來 😄</p>
+    <div class="order-receipt" id="orderReceipt"></div>
+  </div>
+
+  <!-- Order form -->
+  <div id="orderForm">
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active" id="step1">
+        <div class="step-circle">1</div>
+        <div class="step-label">你是誰</div>
+      </div>
+      <div class="step-line" id="line1"></div>
+      <div class="step active" id="step2">
+        <div class="step-circle">2</div>
+        <div class="step-label">選店家</div>
+      </div>
+      <div class="step-line" id="line2"></div>
+      <div class="step" id="step3">
+        <div class="step-circle">3</div>
+        <div class="step-label">點餐</div>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert" id="alertBox"></div>
+
+    <!-- Step 1: Name -->
+    <div class="card">
+      <div class="card-label">你叫什麼名字？</div>
+      <input class="input-field" id="userName" type="text" placeholder="輸入你的名字" maxlength="20" />
+    </div>
+
+    <!-- Step 2: Shop -->
+    <div class="card">
+      <div class="card-label">選擇早餐店</div>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+
+    <!-- Step 3: Menu -->
+    <div class="card hidden" id="menuCard">
+      <div class="card-label">選擇品項</div>
+      <div id="menuContainer"></div>
+    </div>
+
+    <!-- Note -->
+    <div class="card hidden" id="noteCard">
+      <div class="card-label">備註（可略）</div>
+      <textarea class="note-field" id="orderNote" rows="2" placeholder="例：少甜、去冰、不要辣..."></textarea>
+    </div>
+
+  </div>
+</main>
+
+<!-- Cart bar -->
+<div class="cart-bar" id="cartBar">
+  <div class="cart-bar-inner">
+    <div class="cart-summary">
+      <span id="cartCount">尚未選擇品項</span>
+      <span class="cart-total" id="cartTotal"></span>
+    </div>
+    <button class="submit-btn" id="submitBtn" onclick="submitOrder()">確認送出點餐</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// ★ 設定區 ─ 修改這裡來自訂店家和菜單
+// ─────────────────────────────────────────────
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz46i85xGUOT5J6a1v8CTpp63DS0o4Y507idLDYxfWnRUIev4faFh1Bu-p2tejHxR5h6Q/exec"; // ← 換成你的 GAS URL
+
+const SHOPS = [
+  {
+    id: "美而美",
+    name: "美而美",
+    icon: "🥪",
+    tag: "三明治・蛋餅",
+    menu: {
+      "主食": [
+        { name: "蛋餅", price: 30 },
+        { name: "培根蛋餅", price: 40 },
+        { name: "起司蛋餅", price: 40 },
+        { name: "總匯三明治", price: 55 },
+        { name: "火腿蛋三明治", price: 45 },
+        { name: "漢堡", price: 45 },
+      ],
+      "飲料": [
+        { name: "紅茶（冷）", price: 20 },
+        { name: "奶茶（冷）", price: 25 },
+        { name: "豆漿（熱）", price: 20 },
+        { name: "米漿", price: 20 },
+      ]
+    }
+  },
+  {
+    id: "麥當勞",
+    name: "麥當勞",
+    icon: "🍔",
+    tag: "早餐套餐",
+    menu: {
+      "早餐": [
+        { name: "豬肉滿福堡", price: 49 },
+        { name: "豬肉滿福堡加蛋", price: 59 },
+        { name: "麥香魚", price: 44 },
+        { name: "薯餅", price: 25 },
+        { name: "鬆餅（2片）", price: 39 },
+      ],
+      "飲料": [
+        { name: "大杯咖啡", price: 45 },
+        { name: "中杯咖啡", price: 35 },
+        { name: "熱可可", price: 35 },
+        { name: "柳橙汁", price: 35 },
+      ]
+    }
+  },
+  {
+    id: "清粥小菜",
+    name: "清粥小菜",
+    icon: "🍚",
+    tag: "粥品・小菜",
+    menu: {
+      "粥品": [
+        { name: "白粥", price: 25 },
+        { name: "皮蛋瘦肉粥", price: 45 },
+        { name: "地瓜粥", price: 25 },
+      ],
+      "小菜": [
+        { name: "滷蛋", price: 10 },
+        { name: "豆腐乳", price: 10 },
+        { name: "肉鬆", price: 15 },
+        { name: "花生", price: 10 },
+      ]
+    }
+  },
+  {
+    id: "豆漿店",
+    name: "豆漿店",
+    icon: "🥛",
+    tag: "燒餅・油條",
+    menu: {
+      "主食": [
+        { name: "燒餅油條", price: 35 },
+        { name: "燒餅夾蛋", price: 35 },
+        { name: "飯糰", price: 40 },
+        { name: "蘿蔔糕", price: 25 },
+      ],
+      "飲料": [
+        { name: "鹹豆漿", price: 25 },
+        { name: "甜豆漿", price: 20 },
+        { name: "米漿", price: 20 },
+      ]
+    }
+  }
+];
+// ─────────────────────────────────────────────
+
+let selectedShop = null;
+let cart = {}; // { itemName: { qty, price } }
+
+// Init shops
+function initShops() {
+  const grid = document.getElementById("shopGrid");
+  SHOPS.forEach(shop => {
+    const btn = document.createElement("button");
+    btn.className = "shop-btn";
+    btn.dataset.shopId = shop.id;
+    btn.innerHTML = `
+      <span class="shop-icon">${shop.icon}</span>
+      <div class="shop-name">${shop.name}</div>
+      <div class="shop-tag">${shop.tag}</div>
+    `;
+    btn.onclick = () => selectShop(shop.id);
+    grid.appendChild(btn);
+  });
+}
+
+function selectShop(shopId) {
+  selectedShop = SHOPS.find(s => s.id === shopId);
+  cart = {};
+
+  document.querySelectorAll(".shop-btn").forEach(b => b.classList.remove("selected"));
+  document.querySelector(`[data-shop-id="${shopId}"]`).classList.add("selected");
+
+  renderMenu();
+  document.getElementById("menuCard").classList.remove("hidden");
+  document.getElementById("noteCard").classList.remove("hidden");
+  document.getElementById("step3").classList.add("active");
+
+  updateCart();
+  setTimeout(() => {
+    document.getElementById("menuCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 100);
+}
+
+function renderMenu() {
+  const container = document.getElementById("menuContainer");
+  container.innerHTML = "";
+  Object.entries(selectedShop.menu).forEach(([category, items]) => {
+    const section = document.createElement("div");
+    section.className = "menu-section";
+    section.innerHTML = `<div class="menu-section-title">${category}</div>`;
+    items.forEach(item => {
+      const key = `${selectedShop.id}__${item.name}`;
+      const row = document.createElement("div");
+      row.className = "menu-item";
+      row.innerHTML = `
+        <div class="item-info">
+          <div class="item-name">${item.name}</div>
+          <div class="item-price">$${item.price}</div>
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty('${key}', ${item.price}, -1)">−</button>
+          <div class="qty-num" id="qty-${key.replace(/[^a-zA-Z0-9]/g,'-')}">0</div>
+          <button class="qty-btn" onclick="changeQty('${key}', ${item.price}, 1)">+</button>
+        </div>
+      `;
+      section.appendChild(row);
+    });
+    container.appendChild(section);
+  });
+}
+
+function changeQty(key, price, delta) {
+  if (!cart[key]) cart[key] = { qty: 0, price, name: key.split("__")[1] };
+  cart[key].qty = Math.max(0, cart[key].qty + delta);
+  if (cart[key].qty === 0) delete cart[key];
+
+  const elemId = "qty-" + key.replace(/[^a-zA-Z0-9]/g,'-');
+  const el = document.getElementById(elemId);
+  if (el) el.textContent = cart[key]?.qty ?? 0;
+
+  updateCart();
+}
+
+function updateCart() {
+  const items = Object.values(cart);
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+  const totalPrice = items.reduce((s, i) => s + i.qty * i.price, 0);
+
+  const countEl = document.getElementById("cartCount");
+  const totalEl = document.getElementById("cartTotal");
+
+  if (totalQty === 0) {
+    countEl.textContent = "尚未選擇品項";
+    totalEl.textContent = "";
+  } else {
+    countEl.textContent = `已選 ${totalQty} 項`;
+    totalEl.textContent = `合計 $${totalPrice}`;
+  }
+}
+
+function showAlert(msg) {
+  const el = document.getElementById("alertBox");
+  el.textContent = msg;
+  el.style.display = "block";
+  setTimeout(() => el.style.display = "none", 3000);
+}
+
+async function submitOrder() {
+  const name = document.getElementById("userName").value.trim();
+  const note = document.getElementById("orderNote").value.trim();
+
+  if (!name) { showAlert("⚠️ 請輸入你的名字"); return; }
+  if (!selectedShop) { showAlert("⚠️ 請選擇早餐店"); return; }
+  if (Object.keys(cart).length === 0) { showAlert("⚠️ 請至少選擇一個品項"); return; }
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "送出中...";
+
+  const items = Object.values(cart).map(i => ({ name: i.name, qty: i.qty, price: i.price }));
+  const totalPrice = items.reduce((s, i) => s + i.qty * i.price, 0);
+
+  const payload = {
+    name,
+    shop: selectedShop.name,
+    items,
+    totalPrice,
+    note,
+    timestamp: new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
+  };
+
+  try {
+    await fetch(GAS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    showSuccess(payload);
+  } catch (e) {
+    alert("送出失敗，請截圖傳給 Pan 😢");
+    btn.disabled = false;
+    btn.textContent = "確認送出點餐";
+  }
+}
+
+function showSuccess(payload) {
+  document.getElementById("orderForm").style.display = "none";
+  document.getElementById("cartBar").style.display = "none";
+  const screen = document.getElementById("successScreen");
+  screen.style.display = "block";
+
+  const itemLines = payload.items.map(i => `${i.name} × ${i.qty}　$${i.price * i.qty}`).join("\n");
+  document.getElementById("orderReceipt").innerHTML = `
+    <b>📋 點餐明細</b><br>
+    姓名：${payload.name}<br>
+    店家：${payload.shop}<br>
+    ──────────────<br>
+    ${payload.items.map(i => `${i.name} × ${i.qty}　<b>$${i.price * i.qty}</b>`).join("<br>")}<br>
+    ──────────────<br>
+    合計：<b>$${payload.totalPrice}</b>
+    ${payload.note ? `<br>備註：${payload.note}` : ""}
+  `;
+}
+
+initShops();
+</script>
+</body>
+</html>
