@@ -189,15 +189,23 @@ const SHOPS = [
   ],
   categories:{
     "漢堡":[
-      {name:"招牌厚牛漢堡",price:100,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"卡啪脆雞漢堡",price:85,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"勁辣脆雞漢堡",price:85,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"城市豬排漢堡",price:75,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"鮮嫩鯛魚漢堡",price:90,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"菲力雞排漢堡",price:90,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"泰式檸檬雞漢堡",price:60,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"主廚燒肉漢堡",price:90,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"麥香雞漢堡",price:45,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
+      {
+        name:"漢堡",
+        price:0,
+        variants:[
+          {name:"招牌厚牛",price:100},
+          {name:"卡啪脆雞",price:85},
+          {name:"勁辣脆雞",price:85},
+          {name:"城市豬排",price:75},
+          {name:"鮮嫩鯛魚",price:90},
+          {name:"菲力雞排",price:90},
+          {name:"泰式檸檬雞",price:60},
+          {name:"主廚燒肉",price:90},
+          {name:"麥香雞",price:45}
+        ],
+        addons:[{label:"加起司",key:"cheese",price:10}],
+        spicy:true
+      },
     ],
     "吐司/丹麥":[
       {name:"巧克力吐司",price:25},{name:"草莓吐司",price:25},{name:"奶酥吐司",price:30},
@@ -609,10 +617,27 @@ function openModal(item){
   currentItem = item;
   currentSelections = {};
   document.getElementById("modalTitle").textContent = item.name;
-  document.getElementById("modalBasePrice").textContent = `基本價格：$${item.price}`;
+  document.getElementById("modalBasePrice").textContent = item.variants ? "請先選擇種類" : `基本價格：$${item.price}`;
 
   const content = document.getElementById("modalContent");
   content.innerHTML = "";
+
+  // 種類選擇（variants）
+  if(item.variants && item.variants.length){
+    const sec = makeSec("選擇種類", true);
+    const grid = document.createElement("div"); grid.className = "option-grid";
+    item.variants.forEach(v=>{
+      const btn = makeOptionBtn(v.name, "variant", "variant_"+v.name, true, v.price);
+      btn.onclick = ()=>{
+        selectSingleOption("variant","variant_"+v.name, v.name, v.price);
+        document.getElementById("modalBasePrice").textContent = `${v.name}：$${v.price}`;
+        updateTotal();
+      };
+      grid.appendChild(btn);
+    });
+    sec.appendChild(grid);
+    content.appendChild(sec);
+  }
 
   // 加料
   if(item.addons && item.addons.length){
@@ -738,13 +763,13 @@ function selectSingleOption(group, groupKey, value, price){
   document.querySelectorAll(`[data-group^="${group}_"]`).forEach(b=>b.classList.remove("selected"));
   const btn = document.querySelector(`[data-group="${groupKey}"]`);
   if(btn) btn.classList.add("selected");
-  const labels = {spicy:"辣度", ice:"冰塊", sweet:"甜度", combo:"套餐"};
+  const labels = {spicy:"辣度", ice:"冰塊", sweet:"甜度", combo:"套餐", variant:"種類"};
   currentSelections[group] = {label:labels[group]||group, value, price};
 }
 
 function updateTotal(){
-  let total = currentItem.price;
-  Object.values(currentSelections).forEach(s=>{ total += s.price||0; });
+  let total = currentItem.variants ? 0 : currentItem.price;
+  Object.entries(currentSelections).forEach(([key,s])=>{ total += s.price||0; });
   document.getElementById("modalConfirmBtn").textContent = `加入點餐  $${total}`;
 }
 
@@ -753,16 +778,24 @@ function closeModal(){
 }
 
 function confirmItem(){
-  let total = currentItem.price;
+  if(currentItem.variants && !currentSelections["variant"]){
+    showAlert("⚠️ 請先選擇種類");
+    return;
+  }
+  let total = currentItem.variants ? 0 : currentItem.price;
   Object.values(currentSelections).forEach(s=>{ total += s.price||0; });
 
-  const optLines = Object.values(currentSelections)
-    .filter(s=>s.value && s.value!=="不升級")
-    .map(s=>s.label+"："+s.value+(s.price?` (+$${s.price})`:""))
+  const displayName = currentSelections["variant"]
+    ? currentItem.name + "（" + currentSelections["variant"].value + "）"
+    : currentItem.name;
+
+  const optLines = Object.entries(currentSelections)
+    .filter(([key,s])=>key!=="variant" && s.value && s.value!=="不升級")
+    .map(([key,s])=>s.label+"："+s.value+(s.price?` (+$${s.price})`:""))
     .join("、");
 
   cartList.push({
-    name: currentItem.name,
+    name: displayName,
     options: optLines,
     price: total,
     rawSelections: {...currentSelections}
