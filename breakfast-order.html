@@ -744,8 +744,8 @@ function openModal(item){
     renderIceOptions(null); // 尚未選飲料款式時，預設顯示全部
   }
 
-  // 升級套餐
-  if(selectedShop.combo){
+  // 升級套餐（飲料本身不顯示套餐升級）
+  if(selectedShop.combo && !item.drink){
     const sec = makeSec("⭐ 升級套餐（選一）", false);
     sec.querySelector(".modal-section-title").classList.add("highlight");
     const grid = document.createElement("div"); grid.className = "option-grid";
