@@ -193,13 +193,11 @@ const SHOPS = [
         name:"飽足功夫堡",
         price:0,
         variants:[
-          {name:"招牌厚牛",price:100},
           {name:"卡啦脆雞",price:85},
           {name:"勁辣脆雞",price:85},
           {name:"城市豬排",price:75},
           {name:"鮮嫩鯛魚",price:90},
           {name:"主廚燒肉",price:90},
-          {name:"花生牛肉",price:90},
           {name:"菲力雞排",price:90},
           {name:"厚豬霸",price:105},
           {name:"麥香雞",price:55}
@@ -214,9 +212,52 @@ const SHOPS = [
         name:"雙層大滿足",
         price:0,
         variants:[
-          {name:"雙層哪拉脆雞功夫堡",price:125},
-          {name:"薯魚你雙拼功夫堡",price:100},
-          {name:"雙層厚牛功夫堡",price:145}
+          {name:"雙層卡拉脆雞功夫堡",price:125},
+          {name:"薯魚你雙拼功夫堡",price:100}
+	],
+        addons:[
+  {label:"加起司",key:"cheese",price:10},
+  {label:"加蛋",key:"egg",price:15}
+],
+        spicy:true
+      },
+{
+        name:"經典美式堡",
+        price:0,
+        variants:[
+          {name:"泰式檸檬雞",price:60},
+          {name:"卡啦脆雞",price:70},
+		  {name:"勁辣脆雞",price:70},
+		  {name:"城市豬排",price:65},
+		  {name:"鮮嫩鱈魚",price:75},
+		  {name:"菲力雞排",price:80},
+		  {name:"主廚燒肉",price:75},
+		  {name:"厚豬霸",price:90},
+		  {name:"起司薯餅",price:55},
+		  {name:"麥香雞",price:45},
+		  {name:"珍豬煎蛋",price:55}
+	],
+        addons:[
+  {label:"加起司",key:"cheese",price:10},
+  {label:"加蛋",key:"egg",price:15}
+],
+        spicy:true
+      },
+{
+        name:"獨家紫Q堡",
+        price:0,
+        variants:[
+          {name:"泰式檸檬雞",price:60},
+          {name:"卡啦脆雞",price:70},
+		  {name:"勁辣脆雞",price:70},
+		  {name:"城市豬排",price:65},
+		  {name:"鮮嫩鱈魚",price:75},
+		  {name:"菲力雞排",price:80},
+		  {name:"主廚燒肉",price:75},
+		  {name:"厚豬霸",price:90},
+		  {name:"起司薯餅",price:55},
+		  {name:"麥香雞",price:45},
+		  {name:"珍豬煎蛋",price:55}
 	],
         addons:[
   {label:"加起司",key:"cheese",price:10},
@@ -225,12 +266,31 @@ const SHOPS = [
         spicy:true
       },
     ],
-    "吐司/丹麥":[
-      {name:"巧克力吐司",price:25},{name:"草莓吐司",price:25},{name:"奶酥吐司",price:30},
-      {name:"鯛魚玉米吐司",price:45,addons:[{label:"加起司",key:"cheese",price:10}]},
-      {name:"里肌燒肉吐司",price:55,addons:[{label:"加起司",key:"cheese",price:10}],spicy:true},
-      {name:"美式香腸吐司",price:35,spicy:true},{name:"青花椒豬丹麥",price:55,spicy:true},
-      {name:"花生吐司",price:25},
+	"米漢堡":[
+	      {name:"泰式檸檬雞",price:65},
+          {name:"城市豬排",price:80},
+		  {name:"菲力雞排",price:85},
+		  {name:"主廚燒肉",price:80},
+   ],
+		addons:[
+  {label:"加起司",key:"cheese",price:10},
+  {label:"加蛋",key:"egg",price:15}
+],
+        spicy:true
+      },
+    ],
+    "果醬吐司":[
+      {
+        name:"吐司",
+        price:0,
+        variants:[
+          {name:"起司香蒜",price:25},
+          {name:"巧克力",price:20},
+          {name:"奶酥",price:20},
+          {name:"花生",price:20},
+          {name:"草莓",price:20},
+          {name:"巧克脆片",price:25}
+        ],
     ],
     "酥脆蛋餅":[
       {name:"原味蛋餅",price:35,addons:[{label:"加起司",key:"cheese",price:10}]},
