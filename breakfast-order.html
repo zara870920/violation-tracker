@@ -194,7 +194,7 @@ const SHOPS = [
         price:0,
         variants:[
           {name:"招牌厚牛",price:100},
-          {name:"卡啪脆雞",price:85},
+          {name:"卡啦脆雞",price:85},
           {name:"勁辣脆雞",price:85},
           {name:"城市豬排",price:75},
           {name:"鮮嫩鯛魚",price:90},
@@ -204,6 +204,20 @@ const SHOPS = [
           {name:"厚豬霸",price:105},
           {name:"麥香雞",price:55}
         ],
+        addons:[
+  {label:"加起司",key:"cheese",price:10},
+  {label:"加蛋",key:"egg",price:15}
+],
+        spicy:true
+      },
+{
+        name:"雙層大滿足",
+        price:0,
+        variants:[
+          {name:"雙層哪拉脆雞功夫堡",price:125},
+          {name:"薯魚你雙拼功夫堡",price:100},
+          {name:"雙層厚牛功夫堡",price:145}
+	],
         addons:[
   {label:"加起司",key:"cheese",price:10},
   {label:"加蛋",key:"egg",price:15}
@@ -235,9 +249,17 @@ const SHOPS = [
         price:0,
         drinkVariants:[
           {name:"紅茶", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}]},
+	  {name:"綠茶", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}], iceOnly:true},
           {name:"奶茶", sizes:[{label:"中杯",price:25},{label:"大杯",price:30}]},
-          {name:"豆漿", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}]},
-          {name:"鮮奶茶", sizes:[{label:"中杯",price:40},{label:"大杯",price:55}]}
+	  {name:"豆漿(無糖)", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}]},
+          {name:"豆漿(有糖)", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}]},
+	  {name:"豆漿紅茶", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}]},
+	  {name:"柳橙汁", sizes:[{label:"中杯",price:25},{label:"大杯",price:35}], iceOnly:true},
+	  {name:"水果茶", sizes:[{label:"中杯",price:30},{label:"大杯",price:40}], iceOnly:true},
+	  {name:"可爾必思", sizes:[{label:"中杯",price:30},{label:"大杯",price:40}], iceOnly:true},
+	  {name:"可可亞", sizes:[{label:"中杯",price:40},{label:"大杯",price:50}]},
+          {name:"鮮奶茶", sizes:[{label:"中杯",price:45},{label:"大杯",price:55}]},
+	  {name:"抹茶牛奶", sizes:[{label:"中杯",price:45},{label:"大杯",price:55}
         ],
         drink:true
       },
@@ -663,6 +685,7 @@ function openModal(item){
         // 清掉舊的杯型選擇，重新畫杯型選項
         delete currentSelections["size"];
         renderSizeOptions(dv);
+        renderIceOptions(dv);
         updateTotal();
       };
       grid.appendChild(btn);
@@ -711,23 +734,14 @@ function openModal(item){
     },0);
   }
 
-  // 飲料冰塊（含熱）
+  // 飲料冰塊（含熱，可依品項限制只有冰）
   if(item.drink){
     const secI = makeSec("冰塊", true);
-    const gridI = document.createElement("div"); gridI.className = "option-grid";
-    ICE.options.forEach(opt=>{
-      const btn = makeOptionBtn(opt.name,"ice","ice_"+opt.name,true,0);
-      btn.onclick = ()=>{ selectSingleOption("ice","ice_"+opt.name,opt.name,0); updateTotal(); };
-      gridI.appendChild(btn);
-    });
+    secI.id = "iceSection";
+    const gridI = document.createElement("div"); gridI.className = "option-grid"; gridI.id = "iceGrid";
     secI.appendChild(gridI);
     content.appendChild(secI);
-    currentSelections["ice"] = {label:"冰塊", value:"冰", price:0};
-
-    setTimeout(()=>{
-      const fi = content.querySelector("[data-group='ice_冰']");
-      if(fi) fi.classList.add("selected");
-    },0);
+    renderIceOptions(null); // 尚未選飲料款式時，預設顯示全部
   }
 
   // 升級套餐
@@ -783,6 +797,32 @@ function makeSec(title, required){
   t.textContent = title + (required?" *":"");
   sec.appendChild(t);
   return sec;
+}
+
+function renderIceOptions(drinkVariant){
+  const gridI = document.getElementById("iceGrid");
+  if(!gridI) return;
+  gridI.innerHTML = "";
+  delete currentSelections["ice"];
+
+  const iceOnly = drinkVariant && drinkVariant.iceOnly;
+  const opts = iceOnly ? ICE.options.filter(o=>o.name==="冰") : ICE.options;
+
+  opts.forEach(opt=>{
+    const btn = makeOptionBtn(opt.name,"ice","ice_"+opt.name,true,0);
+    btn.onclick = ()=>{ selectSingleOption("ice","ice_"+opt.name,opt.name,0); updateTotal(); };
+    gridI.appendChild(btn);
+  });
+
+  // 預設選第一個
+  const defaultOpt = opts[0];
+  if(defaultOpt){
+    currentSelections["ice"] = {label:"冰塊", value:defaultOpt.name, price:0};
+    setTimeout(()=>{
+      const fi = document.querySelector(`[data-group='ice_${defaultOpt.name}']`);
+      if(fi) fi.classList.add("selected");
+    },0);
+  }
 }
 
 function renderSizeOptions(drinkVariant){
