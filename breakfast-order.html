@@ -172,7 +172,7 @@ const SPICY = { label:"辣度", key:"spicy", type:"single", required:true, optio
   {name:"不辣",price:0},{name:"小辣",price:0},{name:"中辣",price:0},{name:"大辣",price:0}
 ]};
 const ICE = { label:"冰塊", key:"ice", type:"single", required:true, options:[
-  {name:"正常冰",price:0},{name:"少冰",price:0},{name:"微冰",price:0},{name:"去冰",price:0},{name:"熱",price:0}
+  {name:"冰",price:0},{name:"熱",price:0}
 ]};
 const SWEET = { label:"甜度", key:"sweet", type:"single", required:true, options:[
   {name:"全糖",price:0},{name:"七分糖",price:0},{name:"半糖",price:0},{name:"三分糖",price:0},{name:"無糖",price:0}
@@ -711,7 +711,7 @@ function openModal(item){
     },0);
   }
 
-  // 飲料冰塊甜度
+  // 飲料冰塊（含熱）
   if(item.drink){
     const secI = makeSec("冰塊", true);
     const gridI = document.createElement("div"); gridI.className = "option-grid";
@@ -722,24 +722,11 @@ function openModal(item){
     });
     secI.appendChild(gridI);
     content.appendChild(secI);
-    currentSelections["ice"] = {label:"冰塊", value:"正常冰", price:0};
-
-    const secS = makeSec("甜度", true);
-    const gridS = document.createElement("div"); gridS.className = "option-grid";
-    SWEET.options.forEach(opt=>{
-      const btn = makeOptionBtn(opt.name,"sweet","sweet_"+opt.name,true,0);
-      btn.onclick = ()=>{ selectSingleOption("sweet","sweet_"+opt.name,opt.name,0); updateTotal(); };
-      gridS.appendChild(btn);
-    });
-    secS.appendChild(gridS);
-    content.appendChild(secS);
-    currentSelections["sweet"] = {label:"甜度", value:"全糖", price:0};
+    currentSelections["ice"] = {label:"冰塊", value:"冰", price:0};
 
     setTimeout(()=>{
-      const fi = content.querySelector("[data-group='ice_正常冰']");
-      const fs = content.querySelector("[data-group='sweet_全糖']");
+      const fi = content.querySelector("[data-group='ice_冰']");
       if(fi) fi.classList.add("selected");
-      if(fs) fs.classList.add("selected");
     },0);
   }
 
