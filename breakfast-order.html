@@ -267,15 +267,19 @@ const SHOPS = [
       },
     ],
 	"米漢堡":[
-	      {name:"泰式檸檬雞",price:65},
+      {
+        name:"米漢堡",
+        price:0,
+        variants:[
+          {name:"泰式檸檬雞",price:65},
           {name:"城市豬排",price:80},
-		  {name:"菲力雞排",price:85},
-		  {name:"主廚燒肉",price:80},
-   ],
-		addons:[
-  {label:"加起司",key:"cheese",price:10},
-  {label:"加蛋",key:"egg",price:15}
-],
+          {name:"菲力雞排",price:85},
+          {name:"主廚燒肉",price:80}
+        ],
+        addons:[
+          {label:"加起司",key:"cheese",price:10},
+          {label:"加蛋",key:"egg",price:15}
+        ],
         spicy:true
       },
     ],
@@ -290,7 +294,8 @@ const SHOPS = [
           {name:"花生",price:20},
           {name:"草莓",price:20},
           {name:"巧克脆片",price:25}
-        ],
+        ]
+      },
     ],
     "酥脆蛋餅":[
       {name:"原味蛋餅",price:35,addons:[{label:"加起司",key:"cheese",price:10}]},
