@@ -198,7 +198,7 @@ const SHOPS = [
           {name:"勁辣脆雞",price:85},
           {name:"城市豬排",price:75},
           {name:"鮮嫩鯛魚",price:90},
-          {name:"主廚燒肉",pricw:90},
+          {name:"主廚燒肉",price:90},
           {name:"花生牛肉",price:90},
           {name:"菲力雞排",price:90},
           {name:"厚豬霸",price:105},
@@ -230,10 +230,17 @@ const SHOPS = [
       {name:"熱狗(2條)",price:40},{name:"蔥抓餅",price:45},{name:"麥克雞塊(5塊)",price:45},
     ],
     "飲料":[
-      {name:"紅茶(中杯)",price:20,drink:true},{name:"紅茶(大杯)",price:25,drink:true},
-      {name:"奶茶(中杯)",price:25,drink:true},{name:"奶茶(大杯)",price:30,drink:true},
-      {name:"豆漿(中杯)",price:20,drink:true},{name:"豆漿(大杯)",price:25,drink:true},
-      {name:"鮮奶茶(中)",price:40,drink:true},{name:"鮮奶茶(大)",price:55,drink:true},
+      {
+        name:"飲料",
+        price:0,
+        drinkVariants:[
+          {name:"紅茶", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}]},
+          {name:"奶茶", sizes:[{label:"中杯",price:25},{label:"大杯",price:30}]},
+          {name:"豆漿", sizes:[{label:"中杯",price:20},{label:"大杯",price:25}]},
+          {name:"鮮奶茶", sizes:[{label:"中杯",price:40},{label:"大杯",price:55}]}
+        ],
+        drink:true
+      },
     ]
   }
 },
@@ -643,6 +650,35 @@ function openModal(item){
     content.appendChild(sec);
   }
 
+  // 飲料品項選擇（drinkVariants：先選品項，再選杯型）
+  if(item.drinkVariants && item.drinkVariants.length){
+    const sec = makeSec("選擇飲料", true);
+    const grid = document.createElement("div"); grid.className = "option-grid";
+    item.drinkVariants.forEach(dv=>{
+      const btn = makeOptionBtn(dv.name, "drinkitem", "drinkitem_"+dv.name, true, 0);
+      btn.onclick = ()=>{
+        document.querySelectorAll(`[data-group^="drinkitem_"]`).forEach(b=>b.classList.remove("selected"));
+        btn.classList.add("selected");
+        currentSelections["drinkitem"] = {label:"飲料", value:dv.name, price:0, _isDrinkName:true};
+        // 清掉舊的杯型選擇，重新畫杯型選項
+        delete currentSelections["size"];
+        renderSizeOptions(dv);
+        updateTotal();
+      };
+      grid.appendChild(btn);
+    });
+    sec.appendChild(grid);
+    content.appendChild(sec);
+
+    // 杯型容器（先建立空容器，選了品項後才填入）
+    const sizeSec = makeSec("選擇杯型", true);
+    sizeSec.id = "sizeSection";
+    const sizeGrid = document.createElement("div"); sizeGrid.className = "option-grid"; sizeGrid.id = "sizeGrid";
+    sizeSec.appendChild(sizeGrid);
+    sizeSec.style.display = "none";
+    content.appendChild(sizeSec);
+  }
+
   // 加料
   if(item.addons && item.addons.length){
     const sec = makeSec("加料選擇", false);
@@ -715,13 +751,23 @@ function openModal(item){
     selectedShop.combo.forEach(combo=>{
       const btn = makeOptionBtn(combo.name,"combo","combo_"+combo.name,true,combo.price);
       btn.style.gridColumn = "1/-1";
-      btn.onclick = ()=>{ selectSingleOption("combo","combo_"+combo.name,combo.name,combo.price); updateTotal(); };
+      btn.onclick = ()=>{
+        selectSingleOption("combo","combo_"+combo.name,combo.name,combo.price);
+        delete currentSelections["comboSwap"];
+        renderComboSwapOptions(true);
+        updateTotal();
+      };
       grid.appendChild(btn);
     });
     // 不升級選項
     const noBtn = makeOptionBtn("不升級套餐","combo","combo_none",true,0);
     noBtn.style.gridColumn = "1/-1";
-    noBtn.onclick = ()=>{ selectSingleOption("combo","combo_none","不升級",0); updateTotal(); };
+    noBtn.onclick = ()=>{
+      selectSingleOption("combo","combo_none","不升級",0);
+      delete currentSelections["comboSwap"];
+      renderComboSwapOptions(false);
+      updateTotal();
+    };
     grid.appendChild(noBtn);
     sec.appendChild(grid);
     content.appendChild(sec);
@@ -730,6 +776,14 @@ function openModal(item){
       const none = content.querySelector("[data-group='combo_none']");
       if(none) none.classList.add("selected");
     },0);
+
+    // 套餐換飲料補差價（容器）
+    const swapSec = makeSec("套餐飲料更換（補差價，可略）", false);
+    swapSec.id = "comboSwapSection";
+    const swapGrid = document.createElement("div"); swapGrid.className = "option-grid"; swapGrid.id = "comboSwapGrid";
+    swapSec.appendChild(swapGrid);
+    swapSec.style.display = "none";
+    content.appendChild(swapSec);
   }
 
   updateTotal();
@@ -742,6 +796,75 @@ function makeSec(title, required){
   t.textContent = title + (required?" *":"");
   sec.appendChild(t);
   return sec;
+}
+
+function renderSizeOptions(drinkVariant){
+  const sizeSection = document.getElementById("sizeSection");
+  const sizeGrid = document.getElementById("sizeGrid");
+  sizeGrid.innerHTML = "";
+  sizeSection.style.display = "block";
+  drinkVariant.sizes.forEach(sz=>{
+    const btn = makeOptionBtn(sz.label, "size", "size_"+sz.label, true, sz.price);
+    btn.onclick = ()=>{
+      document.querySelectorAll(`[data-group^="size_"]`).forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+      currentSelections["size"] = {label:"杯型", value:sz.label, price:sz.price, _isDrinkSize:true};
+      document.getElementById("modalBasePrice").textContent = `${drinkVariant.name} ${sz.label}：$${sz.price}`;
+      updateTotal();
+    };
+    sizeGrid.appendChild(btn);
+  });
+}
+
+function renderComboSwapOptions(show){
+  const sec = document.getElementById("comboSwapSection");
+  const grid = document.getElementById("comboSwapGrid");
+  if(!sec) return;
+  grid.innerHTML = "";
+  if(!show){ sec.style.display = "none"; return; }
+  sec.style.display = "block";
+
+  const baseDrinkPrice = findBaseComboDrinkPrice();
+
+  const keepBtn = makeOptionBtn("維持原飲料(中杯紅茶)","comboSwap","comboSwap_keep",true,0);
+  keepBtn.style.gridColumn = "1/-1";
+  keepBtn.onclick = ()=>{
+    document.querySelectorAll(`[data-group^="comboSwap_"]`).forEach(b=>b.classList.remove("selected"));
+    keepBtn.classList.add("selected");
+    delete currentSelections["comboSwap"];
+    updateTotal();
+  };
+  grid.appendChild(keepBtn);
+  keepBtn.classList.add("selected");
+
+  const drinkCategory = Object.values(selectedShop.categories).flat().find(i=>i.drinkVariants);
+  if(drinkCategory){
+    drinkCategory.drinkVariants.forEach(dv=>{
+      dv.sizes.forEach(sz=>{
+        const diff = sz.price - baseDrinkPrice;
+        if(diff===0 && dv.name==="紅茶" && sz.label==="中杯") return;
+        const label = `${dv.name}(${sz.label})` + (diff>0?` 補差價+$${diff}`:diff<0?` 退差$${Math.abs(diff)}`:` 同價`);
+        const btn = makeOptionBtn(label,"comboSwap","comboSwap_"+dv.name+sz.label,true,diff);
+        btn.style.gridColumn = "1/-1";
+        btn.onclick = ()=>{
+          document.querySelectorAll(`[data-group^="comboSwap_"]`).forEach(b=>b.classList.remove("selected"));
+          btn.classList.add("selected");
+          currentSelections["comboSwap"] = {label:"套餐換飲料", value:`${dv.name}(${sz.label})`, price:diff};
+          updateTotal();
+        };
+        grid.appendChild(btn);
+      });
+    });
+  }
+}
+
+function findBaseComboDrinkPrice(){
+  const drinkCategory = Object.values(selectedShop.categories).flat().find(i=>i.drinkVariants);
+  if(!drinkCategory) return 20;
+  const teaVariant = drinkCategory.drinkVariants.find(dv=>dv.name==="紅茶");
+  if(!teaVariant) return 20;
+  const midSize = teaVariant.sizes.find(sz=>sz.label==="中杯");
+  return midSize ? midSize.price : 20;
 }
 
 function makeOptionBtn(label, group, groupKey, single, price){
@@ -772,7 +895,7 @@ function selectSingleOption(group, groupKey, value, price){
 }
 
 function updateTotal(){
-  let total = currentItem.variants ? 0 : currentItem.price;
+  let total = (currentItem.variants || currentItem.drinkVariants) ? 0 : currentItem.price;
   Object.entries(currentSelections).forEach(([key,s])=>{ total += s.price||0; });
   document.getElementById("modalConfirmBtn").textContent = `加入點餐  $${total}`;
 }
@@ -786,15 +909,23 @@ function confirmItem(){
     showAlert("⚠️ 請先選擇種類");
     return;
   }
-  let total = currentItem.variants ? 0 : currentItem.price;
+  if(currentItem.drinkVariants && (!currentSelections["drinkitem"] || !currentSelections["size"])){
+    showAlert("⚠️ 請選擇飲料品項與杯型");
+    return;
+  }
+  let total = (currentItem.variants || currentItem.drinkVariants) ? 0 : currentItem.price;
   Object.values(currentSelections).forEach(s=>{ total += s.price||0; });
 
-  const displayName = currentSelections["variant"]
-    ? currentItem.name + "（" + currentSelections["variant"].value + "）"
-    : currentItem.name;
+  let displayName = currentItem.name;
+  if(currentSelections["variant"]){
+    displayName = currentItem.name + "（" + currentSelections["variant"].value + "）";
+  }
+  if(currentSelections["drinkitem"] && currentSelections["size"]){
+    displayName = currentSelections["drinkitem"].value + "(" + currentSelections["size"].value + ")";
+  }
 
   const optLines = Object.entries(currentSelections)
-    .filter(([key,s])=>key!=="variant" && s.value && s.value!=="不升級")
+    .filter(([key,s])=>key!=="variant" && key!=="drinkitem" && key!=="size" && s.value && s.value!=="不升級")
     .map(([key,s])=>s.label+"："+s.value+(s.price?` (+$${s.price})`:""))
     .join("、");
 
