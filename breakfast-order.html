@@ -104,21 +104,21 @@ main{max-width:480px;margin:0 auto;padding:20px 16px 140px;}
 <body>
 <div class="header">
   <span class="header-emoji">🍳</span>
-  <h1>早餐點餐系統</h1>
-  <p>Pan 幫你帶早餐</p>
-  <div class="deadline-badge">截止時間：每日 08:30</div>
+  <h1>今天想吃啥</h1>
+  <p>PandaPan 外送平台</p>
+  <div class="deadline-badge">截止時間：每日 09:00</div>
 </div>
 <main>
   <div class="success-screen" id="successScreen">
     <div class="success-icon">🎉</div>
     <h2>點餐成功！</h2>
-    <p>你的點餐已送出<br>Pan 會幫你帶過來 😄</p>
+    <p>您的餐點已送出<br>PandaPan 已接受訂單 😄</p>
     <div class="order-receipt" id="orderReceipt"></div>
   </div>
   <div id="orderForm">
     <div class="alert" id="alertBox"></div>
     <div class="card">
-      <div class="card-label">你叫什麼名字？</div>
+      <div class="card-label">Who Are You？</div>
       <input class="input-field" id="userName" type="text" placeholder="輸入你的名字" maxlength="20"/>
     </div>
     <div class="card">
@@ -202,6 +202,12 @@ const SHOPS = [
 	{name:"卡拉脆雞湯種總匯(卡拉雞總匯+薯條）", price:135, isFixedCombo:true},
 	{name:"古巴花生讚(花生古巴堡+奶油培根義大利麵+雞塊）", price:170, isFixedCombo:true},
 ],
+	"炸物拼盤":[
+    {name:"薯餅雞柳拚(炸餃8顆+三角薯餅2塊+檸檬雞柳2條）", price:80, isFixedCombo:true},
+    {name:"肉食派對(麥克雞塊3塊+檸檬雞柳2條+卡啦脆雞1塊)", price:100, isFixedCombo:true},
+    {name:"快樂兒童餐(麥克雞塊2塊+薯條+熱狗1條)", price:85, isFixedCombo:true},
+    {name:"城市續氛樂(雙色芋球4顆+玉米布丁酥2顆+胖胖狗2顆", price:85, isFixedCombo:true},
+],  
     "漢堡":[
       {
         name:"飽足功夫堡",
@@ -403,10 +409,20 @@ const SHOPS = [
 	  {name:"大早餐",price:70},{name:"乳酪起司鬆餅",price:80},{name:"起司香蒜鬆餅",price:60},
 	  {name:"奶酥鬆餅",price:55},{name:"草莓",price:55},{name:"巧克力",price:55},
 	  {name:"花生",price:55}
-		],
-    "單品加點":[
-      {name:"薯條",price:45},{name:"炸飯糰(8顆)",price:40},{name:"蘿蔔糕(2塊)",price:40},
-      {name:"熱狗(2條)",price:40},{name:"蔥抓餅",price:45},{name:"麥克雞塊(5塊)",price:45},
+	],
+	  "什錦鍋燒麵":[
+	  {name:"鍋燒烏龍",price:85},{name:"鍋燒意麵",price:85},{name:"鍋燒雞絲麵",price:85},
+	],
+	  "粥品、湯品":[
+	  {name:"芋頭瘦肉粥",price:60},{name:"雞蓉玉米粥",price:60}
+	],
+	  "單品加點":[
+      {name:"麥克雞塊(5塊)",price:45},{name:"炸餃(8顆)",price:40},{name:"薯條",price:45},
+	  {name:"蘿蔔糕(2塊)",price:40},{name:"蘿蔔糕加蛋",price:55},{name:"蔥抓餅",price:35},
+      {name:"蔥抓餅加蛋",price:50},{name:"豬肉餡餅(5塊)",price:45},{name:"三角薯餅(4塊)",price:45},
+	  {name:"雙色芋球(6塊)",price:35},{name:"熱狗(2條)",price:40},{name:"薯餅起司塔",price:50},
+	  {name:"無骨允指雞",price:80},{name:"蔥雞香酥餅",price:40},{name:"蔥雞香酥餅加蛋",price:55},
+	  {name:"胖胖狗(3顆)",price:45},{name:"檸檬雞柳(2條)",price:30},{name:"玉米布丁酥(3塊)",price:35},
     ],
     "飲料":[
       {
