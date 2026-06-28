@@ -7,13 +7,35 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
 :root {
-  --bg:#F6F5FF;--card:#fff;--primary:#7C83FD;--primary-light:#E8E7FF;
-  --primary-dark:#5C63E6;--text:#2E2A45;--muted:#9D98B5;--border:#ECE9FF;
-  --radius:22px;--shadow:0 4px 18px rgba(124,131,253,.14);
+  --bg:#0B0B0D;--card:#1A1A1E;--primary:#D4AF37;--primary-light:#3A3326;
+  --primary-dark:#B8932E;--text:#F5EFD8;--muted:#8A8475;--border:#2E2B22;
+  --radius:22px;--shadow:0 4px 18px rgba(212,175,55,.18);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:var(--text);min-height:100vh;}
-.header{background:linear-gradient(135deg,#8FA0FF 0%,#7C83FD 55%,#B07CFD 100%);color:#fff;padding:20px 20px 28px;text-align:center;}
+
+/* ── 入場動畫（永遠黑金，不受店家色調影響）── */
+.splash-screen{
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(circle at 50% 40%,#1A1812 0%,#0B0B0D 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .5s ease;
+}
+.splash-screen.fade-out{opacity:0;pointer-events:none;}
+.splash-logo{font-size:3.6rem;margin-bottom:18px;animation:splashPulse 1.6s ease-in-out infinite;}
+.splash-text{
+  font-family:'Noto Sans TC',sans-serif;font-size:1.4rem;font-weight:700;
+  color:#D4AF37;letter-spacing:.08em;
+  opacity:0;animation:splashFadeIn 1s ease forwards .2s;
+}
+@keyframes splashPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+@keyframes splashFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+#appShell{opacity:0;transition:opacity .4s ease;}
+#appShell.shell-visible{opacity:1;}
+.header{background:linear-gradient(135deg,#2A2418 0%,#1A1814 55%,#0B0B0D 100%);color:#D4AF37;padding:20px 20px 28px;text-align:center;border-bottom:1px solid #3A3326;}
+.header h1{color:#F5EFD8;}
+.header p{color:#B8932E;}
 .header-emoji{font-size:2.4rem;display:block;margin-bottom:6px;}
 .header h1{font-size:1.4rem;font-weight:700;}
 .header p{font-size:.85rem;opacity:.85;margin-top:4px;}
@@ -92,9 +114,9 @@ main{max-width:480px;margin:0 auto;padding:20px 16px 140px;}
 /* 成功畫面 */
 .success-screen{text-align:center;padding:60px 20px;display:none;}
 .success-screen .success-icon{font-size:5rem;margin-bottom:16px;}
-.success-screen h2{font-size:1.5rem;font-weight:700;margin-bottom:8px;}
-.success-screen p{color:var(--muted);line-height:1.7;}
-.order-receipt{background:var(--primary-light);border-radius:var(--radius);padding:16px;margin-top:20px;text-align:left;font-size:.88rem;line-height:1.9;}
+.success-screen h2{font-size:1.5rem;font-weight:700;margin-bottom:8px;color:#F5EFD8;}
+.success-screen p{color:#B8932E;line-height:1.7;}
+.order-receipt{background:#1A1A1E;border:1px solid #3A3326;border-radius:22px;padding:16px;margin-top:20px;text-align:left;font-size:.88rem;line-height:1.9;color:#F5EFD8;}
 
 .alert{background:#FFF3CD;border:1px solid #FFD580;border-radius:10px;padding:10px 14px;font-size:.83rem;color:#7A5C00;margin-bottom:12px;display:none;}
 .hidden{display:none;}
@@ -103,6 +125,14 @@ main{max-width:480px;margin:0 auto;padding:20px 16px 140px;}
 </style>
 </head>
 <body>
+
+<!-- 入場動畫（黑金固定，不受店家色調影響）-->
+<div class="splash-screen" id="splashScreen">
+  <div class="splash-logo">🍽️</div>
+  <div class="splash-text">FoodAPan歡迎您</div>
+</div>
+
+<div id="appShell" class="hidden">
 <div class="header">
   <span class="header-emoji">🍳</span>
   <h1>今天想吃啥</h1>
@@ -122,8 +152,18 @@ main{max-width:480px;margin:0 auto;padding:20px 16px 140px;}
       <div class="card-label">Who Are You？</div>
       <input class="input-field" id="userName" type="text" placeholder="輸入你的名字" maxlength="20"/>
     </div>
-    <div class="card">
-      <div class="card-label">選擇早餐店</div>
+    <div class="card hidden" id="loadingCard">
+      <div class="card-label">今日早餐店</div>
+      <div style="text-align:center;padding:10px 0;color:var(--muted);">載入中...</div>
+    </div>
+    <div class="card hidden" id="noShopCard">
+      <div class="card-label">今日早餐店</div>
+      <div style="text-align:center;padding:20px 0;color:var(--muted);">
+        😴 Pan 還沒決定今天吃哪家<br>請稍後再試
+      </div>
+    </div>
+    <div class="card hidden" id="todayShopCard">
+      <div class="card-label">今日早餐店</div>
       <div class="shop-grid" id="shopGrid"></div>
     </div>
     <div class="card hidden" id="menuCard">
@@ -164,9 +204,38 @@ main{max-width:480px;margin:0 auto;padding:20px 16px 140px;}
     <button class="submit-btn" id="submitBtn" onclick="submitOrder()">確認送出點餐</button>
   </div>
 </div>
+</div><!-- /appShell -->
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz46i85xGUOT5J6a1v8CTpp63DS0o4Y507idLDYxfWnRUIev4faFh1Bu-p2tejHxR5h6Q/exec";
+
+// ── 每家店的專屬色調（朋友打開頁面時，依今天店家自動套用，不影響外殼黑金）──
+const SHOP_THEMES = {
+  "城市漢堡":  { bg:"#FFF8F0", card:"#fff", primary:"#FF6B35", primaryLight:"#FFE8DF", primaryDark:"#E55A26", text:"#1A1A1A", muted:"#888", border:"#EEE" },
+  "晨間廚房":  { bg:"#F2FBF4", card:"#fff", primary:"#3FAE5A", primaryLight:"#E1F5E6", primaryDark:"#2F8F47", text:"#1B2E22", muted:"#8AA28F", border:"#E2F0E5" },
+  "想早餐":    { bg:"#FFF6F8", card:"#fff", primary:"#FF7FA3", primaryLight:"#FFE3EB", primaryDark:"#E85C85", text:"#3A2330", muted:"#B294A0", border:"#FBE5EC" },
+  "盈好早餐":  { bg:"#FFF9EC", card:"#fff", primary:"#F2A93C", primaryLight:"#FCEBC9", primaryDark:"#D98D1F", text:"#3A2E18", muted:"#A8957A", border:"#F5E6C8" },
+  "歐巴肉彈吐司": { bg:"#F5F4FF", card:"#fff", primary:"#8C6FE0", primaryLight:"#E7E2FF", primaryDark:"#6F50C8", text:"#2A2440", muted:"#9D95B8", border:"#E7E2F8" },
+  "吐司基":    { bg:"#FFF3EC", card:"#fff", primary:"#FF9457", primaryLight:"#FFE2D2", primaryDark:"#E6783A", text:"#3A2A1C", muted:"#B19584", border:"#F7DFD0" },
+  "蝦餃湯包":  { bg:"#FFF9E8", card:"#fff", primary:"#E0B83B", primaryLight:"#FBEFC4", primaryDark:"#C49A22", text:"#3A3320", muted:"#A89B78", border:"#F2E6BD" },
+  "無名小吃":  { bg:"#F4F8F0", card:"#fff", primary:"#7BA85B", primaryLight:"#E3EFD9", primaryDark:"#5F8C42", text:"#26301F", muted:"#94A887", border:"#E0EAD7" },
+  "Good Morning": { bg:"#F0F8FF", card:"#fff", primary:"#4E9FE0", primaryLight:"#DCEEFB", primaryDark:"#3580C2", text:"#1C2A38", muted:"#8DA7BC", border:"#DEEBF6" },
+};
+const DEFAULT_THEME = SHOP_THEMES["城市漢堡"];
+
+function applyShopTheme(shopName){
+  const theme = SHOP_THEMES[shopName] || DEFAULT_THEME;
+  const root = document.documentElement.style;
+  root.setProperty("--bg", theme.bg);
+  root.setProperty("--card", theme.card);
+  root.setProperty("--primary", theme.primary);
+  root.setProperty("--primary-light", theme.primaryLight);
+  root.setProperty("--primary-dark", theme.primaryDark);
+  root.setProperty("--text", theme.text);
+  root.setProperty("--muted", theme.muted);
+  root.setProperty("--border", theme.border);
+}
+
 
 // ── 共用選項 ──
 const SPICY = { label:"辣度", key:"spicy", type:"single", required:true, options:[
@@ -793,16 +862,56 @@ let currentItem = null;
 let currentSelections = {};
 
 // ── 初始化店家 ──
-function initShops(){
+async function initShops(){
+  // 入場動畫：固定顯示2秒後淡出，並開始載入appShell
+  const splash = document.getElementById("splashScreen");
+  const shell = document.getElementById("appShell");
+
+  document.getElementById("loadingCard").classList.remove("hidden");
+
+  let todayShopName = "";
+  try{
+    const res = await fetch(GAS_URL + "?action=getTodayShop");
+    const data = await res.json();
+    todayShopName = data.shop || "";
+  }catch(e){
+    todayShopName = "";
+  }
+
+  // 確保動畫至少顯示2秒
+  await new Promise(resolve=>setTimeout(resolve, 2000));
+  splash.classList.add("fade-out");
+  setTimeout(()=>{ splash.style.display = "none"; }, 500);
+  shell.classList.remove("hidden");
+  setTimeout(()=>shell.classList.add("shell-visible"), 20);
+
+  document.getElementById("loadingCard").classList.add("hidden");
+
+  if(!todayShopName){
+    document.getElementById("noShopCard").classList.remove("hidden");
+    return;
+  }
+
+  const shop = SHOPS.find(s=>s.id===todayShopName || s.name===todayShopName);
+  if(!shop){
+    document.getElementById("noShopCard").classList.remove("hidden");
+    return;
+  }
+
+  // 套用該店家專屬色調
+  applyShopTheme(shop.id);
+
+  // 只顯示今天這一家，並自動選定
   const grid = document.getElementById("shopGrid");
-  SHOPS.forEach(shop=>{
-    const btn = document.createElement("button");
-    btn.className = "shop-btn";
-    btn.dataset.shopId = shop.id;
-    btn.innerHTML = `<span class="shop-icon">${shop.icon}</span><div class="shop-name">${shop.name}</div><div class="shop-tag">${shop.tag}</div>`;
-    btn.onclick = ()=>selectShop(shop.id);
-    grid.appendChild(btn);
-  });
+  grid.innerHTML = "";
+  const btn = document.createElement("button");
+  btn.className = "shop-btn selected";
+  btn.dataset.shopId = shop.id;
+  btn.innerHTML = `<span class="shop-icon">${shop.icon}</span><div class="shop-name">${shop.name}</div><div class="shop-tag">${shop.tag}</div>`;
+  grid.appendChild(btn);
+
+  document.getElementById("todayShopCard").classList.remove("hidden");
+  selectShop(shop.id);
 }
 
 function selectShop(shopId){

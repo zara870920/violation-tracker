@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>早餐店家設定（老板後台）</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+:root{
+  --bg:#0B0B0D;--card:#1A1A1E;--primary:#D4AF37;--primary-light:#3A3326;
+  --primary-dark:#B8932E;--text:#F5EFD8;--muted:#8A8475;--border:#2E2B22;
+  --radius:22px;--shadow:0 4px 18px rgba(212,175,55,.18);--success:#4CC97A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:var(--text);min-height:100vh;}
+.header{background:linear-gradient(135deg,#2A2418 0%,#1A1814 55%,#0B0B0D 100%);color:var(--primary);padding:20px 20px 28px;text-align:center;border-bottom:1px solid var(--border);}
+.header-emoji{font-size:2.2rem;display:block;margin-bottom:6px;}
+.header h1{font-size:1.3rem;font-weight:700;color:#F5EFD8;}
+.header p{font-size:.82rem;opacity:.85;margin-top:4px;color:var(--primary-dark);}
+main{max-width:480px;margin:0 auto;padding:20px 16px 60px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:14px;}
+.card-label{font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--primary);text-transform:uppercase;margin-bottom:10px;}
+.current-status{background:var(--primary-light);border-radius:14px;padding:14px;margin-bottom:16px;text-align:center;}
+.current-status .label{font-size:.75rem;color:var(--muted);margin-bottom:4px;}
+.current-status .shop-name{font-size:1.2rem;font-weight:700;color:var(--primary);}
+.current-status .empty{font-size:.95rem;color:var(--muted);}
+.shop-list{display:flex;flex-direction:column;gap:10px;}
+.shop-btn{display:flex;align-items:center;gap:12px;padding:14px;border:2px solid var(--border);border-radius:16px;background:var(--bg);cursor:pointer;transition:all .2s;font-family:inherit;text-align:left;color:var(--text);}
+.shop-btn:hover{border-color:var(--primary-dark);}
+.shop-btn.selected{border-color:var(--primary);background:var(--primary-light);}
+.shop-btn .icon{font-size:1.6rem;}
+.shop-btn .name{font-size:1rem;font-weight:600;flex:1;}
+.shop-btn .tag{font-size:.72rem;color:var(--muted);}
+.shop-btn .check{font-size:1.2rem;color:var(--primary);opacity:0;}
+.shop-btn.selected .check{opacity:1;}
+.confirm-btn{width:100%;padding:14px;background:linear-gradient(135deg,#E8C766,#D4AF37);color:#1A1814;border:none;border-radius:16px;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;margin-top:16px;transition:opacity .2s;}
+.confirm-btn:hover{opacity:.9;}
+.confirm-btn:disabled{background:#3A3326;color:#6B6555;cursor:not-allowed;}
+.clear-btn{width:100%;padding:12px;background:transparent;color:#E0654A;border:1.5px solid #E0654A;border-radius:16px;font-size:.9rem;font-weight:600;font-family:inherit;cursor:pointer;margin-top:10px;transition:all .2s;}
+.clear-btn:hover{background:rgba(224,101,74,.1);}
+.alert{background:#3A2A1C;border:1px solid #B8932E;border-radius:12px;padding:10px 14px;font-size:.83rem;color:#E8C766;margin-bottom:12px;display:none;text-align:center;}
+.success-alert{background:#1A3A26;border:1px solid var(--success);border-radius:12px;padding:10px 14px;font-size:.85rem;color:#7AE0A0;margin-bottom:12px;display:none;text-align:center;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="header-emoji">⚙️</span>
+  <h1>早餐店家設定</h1>
+  <p>老板專用後台 · 選擇今天開放哪家店</p>
+</div>
+<main>
+  <div class="card">
+    <div class="card-label">目前設定</div>
+    <div class="current-status" id="currentStatus">
+      <div class="label">載入中...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">選擇今天要開放的店家</div>
+    <div class="alert" id="alertBox"></div>
+    <div class="success-alert" id="successBox"></div>
+    <div class="shop-list" id="shopList"></div>
+    <button class="confirm-btn" id="confirmBtn" onclick="confirmSelection()" disabled>確認設定今天的店家</button>
+    <button class="clear-btn" onclick="clearSelection()">清除設定（今天暫停點餐）</button>
+  </div>
+</main>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz46i85xGUOT5J6a1v8CTpp63DS0o4Y507idLDYxfWnRUIev4faFh1Bu-p2tejHxR5h6Q/exec";
+
+// ── 店家清單（跟 breakfast-order.html 的 SHOPS 對應，新增店家記得這裡也加一筆）──
+const SHOP_LIST = [
+  {id:"城市漢堡", icon:"🍔", tag:"漢堡・吐司・蛋餅"},
+  {id:"晨間廚房", icon:"🥗", tag:"漢堡・蛋餅・麵類"},
+  {id:"想早餐", icon:"🥐", tag:"吐司・漢堡・蛋餅"},
+  {id:"盈好早餐", icon:"🍳", tag:"蛋餅・鐵板麵・乳酪餅"},
+  {id:"歐巴肉彈吐司", icon:"🥪", tag:"烤吐司・漢堡・鐵板麵"},
+  {id:"吐司基", icon:"🍞", tag:"吐司・漢堡・可頌"},
+  {id:"蝦餃湯包", icon:"🥟", tag:"湯包・蒸餃・香煎"},
+  {id:"無名小吃", icon:"🍚", tag:"滷肉飯・炒麵・湯品"},
+  {id:"Good Morning", icon:"🫓", tag:"漢堡・吐司・餐點"}
+];
+
+let selectedShopId = null;
+
+function initShopList(){
+  const list = document.getElementById("shopList");
+  list.innerHTML = "";
+  SHOP_LIST.forEach(shop=>{
+    const btn = document.createElement("button");
+    btn.className = "shop-btn";
+    btn.dataset.shopId = shop.id;
+    btn.innerHTML = `<span class="icon">${shop.icon}</span><div style="flex:1;"><div class="name">${shop.id}</div><div class="tag">${shop.tag}</div></div><span class="check">✓</span>`;
+    btn.onclick = ()=>selectShop(shop.id);
+    list.appendChild(btn);
+  });
+}
+
+function selectShop(shopId){
+  selectedShopId = shopId;
+  document.querySelectorAll(".shop-btn").forEach(b=>b.classList.remove("selected"));
+  document.querySelector(`[data-shop-id="${shopId}"]`).classList.add("selected");
+  document.getElementById("confirmBtn").disabled = false;
+}
+
+async function loadCurrentStatus(){
+  const statusEl = document.getElementById("currentStatus");
+  try{
+    const res = await fetch(GAS_URL + "?action=getTodayShop");
+    const data = await res.json();
+    if(data.shop){
+      statusEl.innerHTML = `<div class="label">今天開放</div><div class="shop-name">${data.shop}</div>`;
+    } else {
+      statusEl.innerHTML = `<div class="empty">尚未設定今天的店家</div>`;
+    }
+  }catch(e){
+    statusEl.innerHTML = `<div class="empty">尚未設定今天的店家</div>`;
+  }
+}
+
+async function confirmSelection(){
+  if(!selectedShopId) return;
+  const btn = document.getElementById("confirmBtn");
+  btn.disabled = true;
+  btn.textContent = "設定中...";
+
+  try{
+    await fetch(GAS_URL, {
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ action:"setTodayShop", shop:selectedShopId })
+    });
+    showSuccess(`已設定今天開放：${selectedShopId}`);
+    loadCurrentStatus();
+  }catch(e){
+    showAlert("設定失敗，請再試一次");
+  }
+  btn.disabled = false;
+  btn.textContent = "確認設定今天的店家";
+}
+
+async function clearSelection(){
+  try{
+    await fetch(GAS_URL, {
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ action:"setTodayShop", shop:"" })
+    });
+    showSuccess("已清除設定，今天暫停點餐");
+    selectedShopId = null;
+    document.querySelectorAll(".shop-btn").forEach(b=>b.classList.remove("selected"));
+    document.getElementById("confirmBtn").disabled = true;
+    loadCurrentStatus();
+  }catch(e){
+    showAlert("清除失敗，請再試一次");
+  }
+}
+
+function showAlert(msg){
+  const el = document.getElementById("alertBox");
+  el.textContent = msg;
+  el.style.display = "block";
+  setTimeout(()=>el.style.display="none", 4000);
+}
+function showSuccess(msg){
+  const el = document.getElementById("successBox");
+  el.textContent = msg;
+  el.style.display = "block";
+  setTimeout(()=>el.style.display="none", 4000);
+}
+
+initShopList();
+loadCurrentStatus();
+</script>
+</body>
+</html>
