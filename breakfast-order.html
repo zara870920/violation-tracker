@@ -820,6 +820,19 @@ function openModal(item){
   const content = document.getElementById("modalContent");
   content.innerHTML = "";
 
+  // 固定套餐品項：只顯示「換飲料補差價」，不顯示種類/加料/辣度/升級套餐
+  if(item.isFixedCombo){
+    const swapSec = makeSec("套餐飲料更換（補差價，可略）", false);
+    swapSec.id = "comboSwapSection";
+    const swapGrid = document.createElement("div"); swapGrid.className = "option-grid"; swapGrid.id = "comboSwapGrid";
+    swapSec.appendChild(swapGrid);
+    content.appendChild(swapSec);
+    renderComboSwapOptions(true);
+    updateTotal();
+    document.getElementById("modalOverlay").classList.add("open");
+    return;
+  }
+
   // 種類選擇（variants）
   if(item.variants && item.variants.length){
     const sec = makeSec("選擇種類", true);
