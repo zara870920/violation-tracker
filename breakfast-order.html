@@ -549,55 +549,49 @@ const SHOPS = [
   ],
   categories:{
     "漢堡":[
-      {name:"脆皮雞腿堡",price:75,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"豬肉堡",price:40,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"里肌燒肉堡",price:60,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"夏威夷麥香雞堡",price:45,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"美式牛肉堡",price:60,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"黃金豬排堡",price:70,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"鮮酥魚柳堡",price:70,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"嫩煎雞柳堡",price:60,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"和風雞腿堡",price:60,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
+      {
+        name:"漢堡",
+        price:0,
+        variants:[
+          {name:"脆皮雞腿堡",price:75},
+          {name:"豬肉堡",price:40},
+          {name:"里肌燒肉堡",price:60},
+          {name:"夏威夷麥香雞堡",price:45},
+          {name:"美式牛肉堡",price:60},
+          {name:"黃金豬排堡",price:70},
+          {name:"鮮酥魚柳堡",price:70},
+          {name:"嫩煎雞柳堡",price:60},
+          {name:"和風雞腿堡",price:60}
+        ],
+        addons:[
+          {label:"加蛋",key:"egg",price:15},
+          {label:"加起司",key:"cheese",price:15}
+        ],
+        spicy:true
+      },
     ],
     "台式蛋餅":[
-      {name:"玉米蛋餅",price:45,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"雙香古早味蛋餅",price:50,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"薯餅蛋餅",price:60,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"鯛魚玉米蛋餅",price:55,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"里肌燒肉蛋餅",price:60,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"原味蛋餅",price:30,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"蔬菜蛋餅",price:50,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"火腿蛋餅",price:45,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"培根蛋餅",price:50,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"美式香腸蛋餅",price:60,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
-      {name:"韓式辣雞腿蛋餅",price:65,addons:[{label:"加起司",key:"cheese",price:15}],spicy:true},
+      {
+        name:"台式蛋餅",
+        price:0,
+        variants:[
+          {name:"玉米蛋餅",price:45},
+          {name:"雙香古早味蛋餅",price:50},
+          {name:"薯餅蛋餅",price:60},
+          {name:"鯛魚玉米蛋餅",price:55},
+          {name:"里肌燒肉蛋餅",price:60},
+          {name:"原味蛋餅",price:30},
+          {name:"蔬菜蛋餅",price:50},
+          {name:"火腿蛋餅",price:45},
+          {name:"培根蛋餅",price:50},
+          {name:"美式香腸蛋餅",price:60},
+          {name:"韓式辣雞腿蛋餅",price:65}
+        ],
+        addons:[
+          {label:"加起司",key:"cheese",price:15}
+        ],
+        spicy:true
+      },
     ],
     "吐司/丹麥":[
       {name:"巧克力吐司",price:25},{name:"草莓吐司",price:25},{name:"奶酥吐司",price:30},
@@ -614,10 +608,20 @@ const SHOPS = [
       {name:"培根吐司",price:40,addons:[{label:"加蛋",key:"egg",price:15}]},
     ],
     "鍋燒麵":[
-      {name:"鍋燒烏龍",price:85,addons:[{label:"加蛋",key:"egg",price:15}],spicy:true},
-      {name:"鍋燒意麵",price:85,addons:[{label:"加蛋",key:"egg",price:15}],spicy:true},
-      {name:"鍋燒雞絲麵",price:85,addons:[{label:"加蛋",key:"egg",price:15}],spicy:true},
-      {name:"經典鍋燒泡麵",price:90,addons:[{label:"加蛋",key:"egg",price:15}],spicy:true},
+      {
+        name:"鍋燒麵",
+        price:0,
+        variants:[
+          {name:"鍋燒烏龍",price:85},
+          {name:"鍋燒意麵",price:85},
+          {name:"鍋燒雞絲麵",price:85},
+          {name:"經典鍋燒泡麵",price:90}
+        ],
+        addons:[
+          {label:"加蛋",key:"egg",price:15}
+        ],
+        spicy:true
+      },
     ],
     "加購點心":[
       {name:"荷包蛋",price:15},{name:"大火腿片",price:15},{name:"燒肉",price:30},
