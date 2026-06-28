@@ -185,6 +185,14 @@ const CATEGORY_ADDONS = {
   }
 };
 
+// ── mealUpgrade 品項共用設定：A/B 主菜選擇 + 加蛋 + 搭配套餐(+55,可換飲料) ──
+const MEAL_UPGRADE_MEAT = [
+  {name:"A：菲力雞排", price:0},
+  {name:"B：城市豬排", price:0}
+];
+const MEAL_UPGRADE_EGG_PRICE = 15;
+const MEAL_UPGRADE_COMBO_PRICE = 55;
+
 const SHOPS = [
 {
   id:"城市漢堡", name:"城市漢堡", icon:"🍔", tag:"漢堡・吐司・蛋餅",
@@ -415,6 +423,16 @@ const SHOPS = [
 	],
 	  "粥品、湯品":[
 	  {name:"芋頭瘦肉粥",price:60},{name:"雞蓉玉米粥",price:60}
+	],
+	  "義大利麵":[
+	  {name:"奶油白醬義大利麵",price:85,mealUpgrade:true},
+	  {name:"羅勒青醬義大利麵",price:80,mealUpgrade:true},
+	  {name:"茄汁紅醬義大利麵",price:80,mealUpgrade:true},
+	],
+	  "鐵板麵":[
+	  {name:"宮保雞丁鐵板烏龍麵",price:60,mealUpgrade:true},
+	  {name:"黑胡椒鐵板烏龍麵",price:50,mealUpgrade:true},
+	  {name:"蘑菇鐵板烏龍麵",price:50,mealUpgrade:true},
 	],
 	  "單品加點":[
       {name:"麥克雞塊(5塊)",price:45},{name:"炸餃(8顆)",price:40},{name:"薯條",price:45},
@@ -849,6 +867,62 @@ function openModal(item){
     return;
   }
 
+  // 義大利麵/鐵板麵類：選A/B主菜 + 是否加蛋 + 是否搭配套餐(+55,可換飲料)
+  if(item.mealUpgrade){
+    // 是否加蛋（永遠顯示）
+    const eggSec = makeSec("加蛋", false);
+    const eggGrid = document.createElement("div"); eggGrid.className = "option-grid";
+    const eggBtn = makeOptionBtn(`加蛋 (+$${MEAL_UPGRADE_EGG_PRICE})`, "egg", "egg_yes", false, MEAL_UPGRADE_EGG_PRICE);
+    eggBtn.onclick = ()=>{ toggleCheckOption("egg_yes", "egg", MEAL_UPGRADE_EGG_PRICE, eggBtn); updateTotal(); };
+    eggGrid.appendChild(eggBtn);
+    eggSec.appendChild(eggGrid);
+    content.appendChild(eggSec);
+
+    // 是否搭配套餐（永遠顯示，+55）
+    const comboSec = makeSec(`⭐ 搭配套餐 (+$${MEAL_UPGRADE_COMBO_PRICE}，附中杯紅茶)`, false);
+    comboSec.querySelector(".modal-section-title").classList.add("highlight");
+    const comboGrid = document.createElement("div"); comboGrid.className = "option-grid";
+    const comboBtn = makeOptionBtn(`搭配套餐 (+$${MEAL_UPGRADE_COMBO_PRICE})`, "mealCombo", "mealCombo_yes", false, MEAL_UPGRADE_COMBO_PRICE);
+    comboBtn.style.gridColumn = "1/-1";
+    comboBtn.onclick = ()=>{
+      toggleCheckOption("mealCombo_yes", "mealCombo", MEAL_UPGRADE_COMBO_PRICE, comboBtn);
+      const isSelected = !!currentSelections["mealCombo"];
+      document.getElementById("mealMeatSection").style.display = isSelected ? "block" : "none";
+      renderComboSwapOptions(isSelected);
+      if(!isSelected){ delete currentSelections["meat"]; }
+      updateTotal();
+    };
+    comboGrid.appendChild(comboBtn);
+    comboSec.appendChild(comboGrid);
+    content.appendChild(comboSec);
+
+    // A/B 主菜選擇（容器，預設隱藏，勾選套餐才顯示）
+    const meatSec = makeSec("選擇主菜", true);
+    meatSec.id = "mealMeatSection";
+    meatSec.style.display = "none";
+    const meatGrid = document.createElement("div"); meatGrid.className = "option-grid";
+    MEAL_UPGRADE_MEAT.forEach(meat=>{
+      const btn = makeOptionBtn(meat.name, "meat", "meat_"+meat.name, true, meat.price);
+      btn.style.gridColumn = "1/-1";
+      btn.onclick = ()=>{ selectSingleOption("meat","meat_"+meat.name, meat.name, meat.price); updateTotal(); };
+      meatGrid.appendChild(btn);
+    });
+    meatSec.appendChild(meatGrid);
+    content.appendChild(meatSec);
+
+    // 套餐換飲料補差價（容器，預設隱藏，勾選套餐才顯示）
+    const swapSec = makeSec("套餐飲料更換（補差價，可略）", false);
+    swapSec.id = "comboSwapSection";
+    const swapGrid = document.createElement("div"); swapGrid.className = "option-grid"; swapGrid.id = "comboSwapGrid";
+    swapSec.appendChild(swapGrid);
+    swapSec.style.display = "none";
+    content.appendChild(swapSec);
+
+    updateTotal();
+    document.getElementById("modalOverlay").classList.add("open");
+    return;
+  }
+
   // 種類選擇（variants）
   if(item.variants && item.variants.length){
     const sec = makeSec("選擇種類", true);
@@ -1115,7 +1189,7 @@ function selectSingleOption(group, groupKey, value, price){
   document.querySelectorAll(`[data-group^="${group}_"]`).forEach(b=>b.classList.remove("selected"));
   const btn = document.querySelector(`[data-group="${groupKey}"]`);
   if(btn) btn.classList.add("selected");
-  const labels = {spicy:"辣度", ice:"冰塊", sweet:"甜度", combo:"套餐", variant:"種類"};
+  const labels = {spicy:"辣度", ice:"冰塊", sweet:"甜度", combo:"套餐", variant:"種類", meat:"主菜"};
   currentSelections[group] = {label:labels[group]||group, value, price};
 }
 
@@ -1136,6 +1210,10 @@ function confirmItem(){
   }
   if(currentItem.drinkVariants && (!currentSelections["drinkitem"] || !currentSelections["size"])){
     showAlert("⚠️ 請選擇飲料品項與杯型");
+    return;
+  }
+  if(currentItem.mealUpgrade && currentSelections["mealCombo"] && !currentSelections["meat"]){
+    showAlert("⚠️ 搭配套餐請選擇主菜");
     return;
   }
   let total = (currentItem.variants || currentItem.drinkVariants) ? 0 : currentItem.price;
