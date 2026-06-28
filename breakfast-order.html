@@ -174,10 +174,6 @@ const SPICY = { label:"辣度", key:"spicy", type:"single", required:true, optio
 const ICE = { label:"冰塊", key:"ice", type:"single", required:true, options:[
   {name:"冰",price:0},{name:"熱",price:0}
 ]};
-const SWEET = { label:"甜度", key:"sweet", type:"single", required:true, options:[
-  {name:"全糖",price:0},{name:"七分糖",price:0},{name:"半糖",price:0},{name:"三分糖",price:0},{name:"無糖",price:0}
-]};
-
 // ── 店家資料 ──
 // ── 分類共用加料設定（不用每個品項各自寫，整個分類底下品項都會套用）──
 // 格式：{ 店家id: { 分類名稱: [加料陣列] } }
@@ -198,6 +194,14 @@ const SHOPS = [
     {name:"套餐C：三角薯餅4顆＋中杯紅茶", price:55}
   ],
   categories:{
+	"美式盤餐":[
+    {name:"經典組合(荷包蛋+火腿片夾起司+培根2片+薯餅3塊+麥克雞塊5塊+城市豬排）", price:160, isFixedCombo:true},
+    {name:"海陸空三拼特餐(鮮嫩鱈魚排+泰式檸檬雞+厚豬霸+生菜沙拉+湯種吐司）", price:185, isFixedCombo:true},
+    {name:"菲力雞排特餐(菲力雞排+熱狗+嫩蛋+生菜沙拉）", price:140, isFixedCombo:true},
+    {name:"中式大集合(蘿蔔糕+嫩蛋+炸餃4顆+原味蛋餅）", price:100, isFixedCombo:true},
+	{name:"卡拉脆雞湯種總匯(卡拉雞總匯+薯條）", price:135, isFixedCombo:true},
+	{name:"古巴花生讚(花生古巴堡+奶油培根義大利麵+雞塊）", price:170, isFixedCombo:true},
+],
     "漢堡":[
       {
         name:"飽足功夫堡",
