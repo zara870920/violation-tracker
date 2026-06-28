@@ -540,7 +540,7 @@ const SHOPS = [
   }
 },
 {
-  id:"晨間廚房", name:"晨間廚房", icon:"🥗", tag:"漢堡・蛋餅・麵類",
+  id:"晨間廚房", name:"晨間廚房", icon:"🧇",
   combo:[
     {name:"套餐A：晨間薯餅＋中杯紅茶", price:45},
     {name:"套餐B：薯條＋中杯紅茶", price:50},
@@ -557,15 +557,65 @@ const SHOPS = [
           {name:"豬肉堡",price:40},
           {name:"里肌燒肉堡",price:60},
           {name:"夏威夷麥香雞堡",price:45},
-          {name:"美式牛肉堡",price:60},
+		  {name:"嫩煎雞柳堡",price:60},
+		  {name:"和風雞腿堡",price:60},
+		  {name:"青花椒豬堡",price:60},
           {name:"黃金豬排堡",price:70},
-          {name:"鮮酥魚柳堡",price:70},
-          {name:"嫩煎雞柳堡",price:60},
-          {name:"和風雞腿堡",price:60}
+		  {name:"卡滋蝦堡",price:70},
+          {name:"鮮酥魚柳堡",price:70},      
         ],
         addons:[
           {label:"加蛋",key:"egg",price:15},
           {label:"加起司",key:"cheese",price:15}
+        ],
+        spicy:true
+      },
+    ],
+	"吐司/丹麥":[
+      {
+        name:"吐司",
+        price:0,
+        variants:[
+          {name:"巧克力",price:25,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"草莓",price:25,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"奶油",price:25,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"花生",price:25,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"奶酥",price:30,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"芝麻",price:30,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"抹茶奶酥",price:35,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"煎蛋",price:35,addons:[{label:"加起司",key:"cheese",price:10}]},
+		  {name:"火腿",price:35,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"蔬菜",price:35,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"肉鬆",price:40,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"培根吐司",price:45,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"薯餅吐司",price:45,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+	      {name:"鮪魚玉米",price:45,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"青花椒豬",price:55,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"板烤雞肉",price:60,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"哈姆燻雞",price:65,addons:[{label:"加起司",key:"cheese",price:10}]}
+        ]
+      },
+	 {
+        name:"丹麥",
+        price:0,
+        variants:[
+          {name:"巧克力",price:45,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"草莓",price:45,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"奶油",price:45,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"花生",price:45,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"奶酥",price:50,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"芝麻",price:50,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"抹茶奶酥",price:55,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"煎蛋",price:55,addons:[{label:"加起司",key:"cheese",price:10}]},
+		  {name:"火腿",price:55,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"蔬菜",price:55,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"肉鬆",price:60,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"培根吐司",price:65,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"薯餅吐司",price:65,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+	      {name:"鮪魚玉米",price:65,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"青花椒豬",price:75,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+          {name:"板烤雞肉",price:80,addons:[{label:"加起司",key:"cheese",price:10},{label:"加蛋",key:"egg",price:15}]},
+		  {name:"哈姆燻雞",price:85,addons:[{label:"加起司",key:"cheese",price:10}]}
         ],
         spicy:true
       },
@@ -593,20 +643,7 @@ const SHOPS = [
         spicy:true
       },
     ],
-    "吐司/丹麥":[
-      {name:"巧克力吐司",price:25},{name:"草莓吐司",price:25},{name:"奶酥吐司",price:30},
-      {name:"鯛魚玉米吐司",price:45,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-]},
-      {name:"里肌燒肉吐司",price:55,addons:[
-  {label:"加蛋",key:"egg",price:15},
-  {label:"加起司",key:"cheese",price:15}
-],spicy:true},
-      {name:"美式香腸吐司",price:35,addons:[{label:"加蛋",key:"egg",price:15}],spicy:true},
-      {name:"火腿吐司",price:35,addons:[{label:"加蛋",key:"egg",price:15}]},
-      {name:"培根吐司",price:40,addons:[{label:"加蛋",key:"egg",price:15}]},
-    ],
+    
     "鍋燒麵":[
       {
         name:"鍋燒麵",
