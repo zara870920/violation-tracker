@@ -698,7 +698,8 @@ async function handleSchFile(input) {
           if(rowVals.some(v=>v==='公休'||v==='課／盤'||v==='課/盤')){if(!skipDays.includes(day))skipDays.push(day);}
           names.forEach((name,ci)=>{
             const val=String(row[ci+1]||'').trim();
-            if(['休','課','課/盤','課／盤','公休'].includes(val))leaves[name].push(day);
+            // 只要該人當天欄位有任何文字（休、課、公休、代訓...等任何中文字），一律視為當天不可排值日生
+            if(val)leaves[name].push(day);
           });
         }
         allSheets[sn]={names,leaves,skipDays};
@@ -757,8 +758,8 @@ function runSchedule() {
     allDays.push({d,weekday,isSkip:skipDays.includes(d)});
   }
 
-  // 每天需要的值日生人數：週六(6)、週日(0) 需要2位，其他天1位
-  function slotsNeeded(weekday){ return (weekday===0||weekday===6)?2:1; }
+  // 每天需要的值日生人數：週一~週四 1 位，週五~週日 2 位
+  function slotsNeeded(weekday){ return (weekday===5||weekday===6||weekday===0)?2:1; }
 
   // 建立每天的名額槽：{day, slot(0或1), weekday}
   const slots=[];
@@ -812,11 +813,20 @@ function runSchedule() {
   const totalNeeded=schViolators.reduce((s,v)=>s+v.count,0);
   const summary=Object.entries(countMap).sort((a,b)=>b[1]-a[1]).map(([n,c])=>n+' '+c+'天').join('　');
   const ok=assignments.length>=totalNeeded;
+  // 統計排不滿、需遞延到下個月的人員與次數
+  const deferred=schViolators
+    .map(v=>({name:v.name,count:v.count-(countMap[v.name]||0)}))
+    .filter(d=>d.count>0);
   // 統計週末雙人天數
-  const weekendDouble=allDays.filter(x=>!x.isSkip&&(x.weekday===0||x.weekday===6)).length;
-  document.getElementById('schSummary').textContent=
+  const weekendDouble=allDays.filter(x=>!x.isSkip&&(x.weekday===0||x.weekday===5||x.weekday===6)).length;
+  let summaryHtml=
     '共安排 '+assignments.length+' 次 / 需要 '+totalNeeded+' 次 '+(ok?'✓ 全數完畢':'⚠ 部分未排到')+
-    ' ｜ 週末雙人天數：'+weekendDouble+' 天 ｜ '+summary;
+    ' ｜ 週五～週日雙人天數：'+weekendDouble+' 天 ｜ '+summary;
+  if(deferred.length){
+    summaryHtml+='<br><span style="color:#e74c3c;">⚠ 本月排不滿，請備註並遞延至下個月：'+
+      deferred.map(d=>d.name+' x'+d.count+'天').join('、')+'</span>';
+  }
+  document.getElementById('schSummary').innerHTML=summaryHtml;
   document.getElementById('schResult').style.display='block';
   document.getElementById('schResult').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
