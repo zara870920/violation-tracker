@@ -903,10 +903,16 @@ function runSchedule() {
   function slotsNeeded(weekday){ return (weekday===5||weekday===6||weekday===0)?2:1; }
 
   // 建立每天的名額槽：{day, slot(0或1), weekday}
+  // 週五~週日排在前面，確保優先被填滿
+  const isWeekend=wd=>(wd===5||wd===6||wd===0);
   const slots=[];
-  allDays.filter(x=>!x.isSkip).forEach(x=>{
-    const n=slotsNeeded(x.weekday);
-    for(let s=0;s<n;s++) slots.push({day:x.d,slot:s,weekday:x.weekday,person:null});
+  // 先加週五~週日的槽
+  allDays.filter(x=>!x.isSkip&&isWeekend(x.weekday)).forEach(x=>{
+    for(let s=0;s<2;s++) slots.push({day:x.d,slot:s,weekday:x.weekday,person:null,mustFill:true});
+  });
+  // 再加週一~週四的槽
+  allDays.filter(x=>!x.isSkip&&!isWeekend(x.weekday)).forEach(x=>{
+    slots.push({day:x.d,slot:0,weekday:x.weekday,person:null,mustFill:false});
   });
 
   // 計算每個人這個月「實際可值班的天數」（扣掉休假與整天skip的日子）
@@ -928,7 +934,7 @@ function runSchedule() {
     // 確保休假日都是數字格式比對
     const personLeaves=(leaves[name]||[]).map(d=>parseInt(d));
     for(let i=0;i<v.count;i++){
-      // 找還沒有此人、且此人不在休假的空槽
+      // 找還沒有此人、且此人不在休假的空槽（slots 已按週末優先排序，所以週末槽會先被選到）
       const available=slots.filter(s=>
         s.person===null &&
         !personLeaves.includes(parseInt(s.day)) &&
@@ -936,10 +942,19 @@ function runSchedule() {
         !slots.some(s2=>s2.day===s.day&&s2.person===name)
       );
       if(!available.length) break; // 這個人已經沒有空檔可排，剩下次數遞延到下個月
-      // 隨機選一個空槽
-      const pick=available[Math.floor(Math.random()*available.length)];
+      // 優先選週末槽，沒有週末槽才選平日槽
+      const weekendAvail=available.filter(s=>isWeekend(s.weekday));
+      const pool=weekendAvail.length?weekendAvail:available;
+      const pick=pool[Math.floor(Math.random()*pool.length)];
       pick.person=name;
     }
+  });
+
+  // 檢查週五~週日是否有任何一天只排到 1 人（mustFill 未填滿），在遞延備註中特別標示
+  const weekendUnfilled=[];
+  allDays.filter(x=>!x.isSkip&&isWeekend(x.weekday)).forEach(x=>{
+    const filled=slots.filter(s=>s.day===x.d&&s.person!==null).length;
+    if(filled<2) weekendUnfilled.push(x.d+'號(只排'+filled+'人)');
   });
 
   // 整理結果：只取有人的槽
@@ -977,6 +992,9 @@ function runSchedule() {
   if(deferred.length){
     summaryHtml+='<br><span style="color:#e74c3c;">⚠ 本月排不滿，請備註並遞延至下個月：'+
       deferred.map(d=>d.name+' x'+d.count+'天').join('、')+'</span>';
+  }
+  if(weekendUnfilled.length){
+    summaryHtml+='<br><span style="color:#e74c3c;">⚠ 以下週五~週日未達 2 人（人力不足，請手動補排）：'+weekendUnfilled.join('、')+'</span>';
   }
   document.getElementById('schSummary').innerHTML=summaryHtml;
   document.getElementById('schResult').style.display='block';
