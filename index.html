@@ -270,9 +270,9 @@ body.guest-mode .admin-only{display:none!important;}
         <div class="sch-chips" id="schChips"></div>
       </div>
       <div style="margin-top:18px;">
-        <div class="stitle">STEP 2　上傳下個月休假表（xlsx）</div>
+        <div class="stitle">STEP 2　上傳下個月休假表（xlsx 或 PDF）</div>
         <div class="upload-box">
-          <input type="file" id="schFile" accept=".xlsx,.xls" onchange="handleSchFile(this)">
+          <input type="file" id="schFile" accept=".xlsx,.xls,.pdf" onchange="handleSchFile(this)">
           <div class="ico">📂</div>
           <p id="schUploadText">點擊上傳休假表</p>
         </div>
@@ -668,8 +668,14 @@ function onSchMonthChange() {
 
 async function handleSchFile(input) {
   const file=input.files[0];if(!file)return;
-  document.getElementById('schUploadText').textContent='解析中...';
   window._schOriginalFile=file;
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(ext==='pdf') return handleSchFilePdf(file);
+  return handleSchFileXlsx(file);
+}
+
+async function handleSchFileXlsx(file) {
+  document.getElementById('schUploadText').textContent='解析中...';
   if(!window.XLSX){
     await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
   }
@@ -704,27 +710,162 @@ async function handleSchFile(input) {
         }
         allSheets[sn]={names,leaves,skipDays};
       });
-      schLeaveData=allSheets;
-      const vMonth=document.getElementById('schMonth').value;
-      const vMonthNum=vMonth?parseInt(vMonth.split('-')[1]):null;
-      const nextMonthNum=vMonthNum?(vMonthNum%12)+1:null;
-      let best=null;
-      if(nextMonthNum){best=wb.SheetNames.find(sn=>{const m=sn.match(/(\d+)/);return m&&parseInt(m[1])===nextMonthNum;});}
-      if(!best)best=wb.SheetNames.find(sn=>allSheets[sn]&&allSheets[sn].names.length>0)||wb.SheetNames[0];
-      schTargetMonth=best;
-      window._schTargetMonth=best;
-      const info=allSheets[best];
-      const sheetM=best?best.match(/(\d+)/):null;
-      const schedStr=sheetM?sheetM[1]+'月':best;
-      document.getElementById('schUploadText').textContent='✓ '+file.name;
-      document.getElementById('schFileInfo').textContent='將排 '+schedStr+' 的值日生，人員：'+(info?info.names.join('、'):'');
-      checkBtnGen();
+      finishLeaveDataLoaded(allSheets, wb.SheetNames, file.name);
     } catch(err){
       document.getElementById('schUploadText').textContent='❌ 解析失敗';
       document.getElementById('schFileInfo').textContent=err.message;
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// ---- PDF 休假表解析 ----
+// 原理：PDF 沒有真正的表格結構，只有「文字＋座標」。
+// 做法是用日期標頭列（1~31）的 X 座標當作欄位基準、姓名欄的 X 座標當作列基準，
+// 把每個文字依座標分配回對應的「人 × 日期」格子。
+// ⚠ 這個方式不像 Excel 那麼絕對可靠（合併儲存格、版面跑掉都可能誤判），
+// 所以上傳後務必點「核對解析結果」逐一確認，再產生排班表。
+const WEEKDAY_CHARS=new Set(['一','二','三','四','五','六','日']);
+
+async function loadPdfJs(){
+  if(window.pdfjsLib) return;
+  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+function clusterLines(items, tol){
+  const sorted=[...items].sort((a,b)=>b.y-a.y); // PDF 座標 y 越大越靠上，由上到下排序
+  const lines=[];
+  sorted.forEach(it=>{
+    let line=lines.find(l=>Math.abs(l.y-it.y)<=tol);
+    if(!line){line={y:it.y,items:[]};lines.push(line);}
+    line.items.push(it);
+  });
+  lines.forEach(l=>l.items.sort((a,b)=>a.x-b.x));
+  lines.sort((a,b)=>b.y-a.y);
+  return lines;
+}
+
+async function parsePdfPage(page){
+  const tc=await page.getTextContent();
+  const items=tc.items.filter(it=>it.str&&it.str.trim()!=='').map(it=>({str:it.str.trim(),x:it.transform[4],y:it.transform[5]}));
+  if(!items.length) return null;
+  const lines=clusterLines(items,4);
+
+  // 找日期標頭列：該列大多數項目是 1~31 的純數字
+  let headerIdx=-1;
+  for(let i=0;i<lines.length;i++){
+    const nums=lines[i].items.filter(it=>/^\d{1,2}$/.test(it.str)&&+it.str>=1&&+it.str<=31);
+    if(nums.length>=15){headerIdx=i;break;}
+  }
+  if(headerIdx<0) return null; // 這頁找不到日期標頭，視為非班表頁
+
+  const colCenters=lines[headerIdx].items
+    .filter(it=>/^\d{1,2}$/.test(it.str)&&+it.str>=1&&+it.str<=31)
+    .map(it=>({day:+it.str,x:it.x}));
+
+  let bodyStart=headerIdx+1;
+  if(lines[bodyStart]&&lines[bodyStart].items.every(it=>WEEKDAY_CHARS.has(it.str)||it.str==='姓名')) bodyStart++;
+
+  const names=[];
+  const leaves={};
+  let nameColX=null, prevY=null, avgGap=null;
+  const gaps=[];
+
+  for(let i=bodyStart;i<lines.length;i++){
+    const line=lines[i];
+    const first=line.items[0];
+    if(!first) continue;
+    if(nameColX===null) nameColX=first.x;
+    if(prevY!==null){
+      const gap=prevY-line.y;
+      if(avgGap&&gap>avgGap*2.2) break; // 列距突然變大，視為已超出表格、進入下方備註區
+      gaps.push(gap);
+      avgGap=gaps.reduce((a,b)=>a+b,0)/gaps.length;
+    }
+    prevY=line.y;
+    if(Math.abs(first.x-nameColX)>15) break; // 第一個字不在姓名欄位置，視為表格已結束
+
+    const name=first.str;
+    if(!name||name==='姓名') continue;
+    names.push(name);
+    leaves[name]=leaves[name]||[];
+    line.items.slice(1).forEach(it=>{
+      if(!colCenters.length) return;
+      let nearest=colCenters[0],best=Infinity;
+      colCenters.forEach(c=>{const d=Math.abs(c.x-it.x);if(d<best){best=d;nearest=c;}});
+      if(!leaves[name].includes(nearest.day)) leaves[name].push(nearest.day);
+    });
+  }
+
+  let label=null;
+  for(const l of lines){
+    const m=l.items.map(it=>it.str).join('').match(/(\d{1,2})月/);
+    if(m){label=m[0];break;}
+  }
+  return {label, names, leaves, skipDays:[]};
+}
+
+async function handleSchFilePdf(file) {
+  document.getElementById('schUploadText').textContent='解析中...';
+  try{
+    await loadPdfJs();
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    const allSheets={};
+    const sheetNames=[];
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      const result=await parsePdfPage(page);
+      if(result&&result.names.length){
+        const key=result.label?result.label+'（第'+p+'頁）':('第'+p+'頁');
+        allSheets[key]=result;
+        sheetNames.push(key);
+      }
+    }
+    if(!sheetNames.length) throw new Error('找不到可解析的表格，請確認 PDF 是文字版（不是掃描圖片），且包含 1~31 的日期標頭列');
+    finishLeaveDataLoaded(allSheets, sheetNames, file.name, true);
+  } catch(err){
+    document.getElementById('schUploadText').textContent='❌ 解析失敗';
+    document.getElementById('schFileInfo').textContent=err.message;
+  }
+}
+
+function finishLeaveDataLoaded(allSheets, sheetNames, fileName, isPdf){
+  schLeaveData=allSheets;
+  const vMonth=document.getElementById('schMonth').value;
+  const vMonthNum=vMonth?parseInt(vMonth.split('-')[1]):null;
+  const nextMonthNum=vMonthNum?(vMonthNum%12)+1:null;
+  let best=null;
+  if(nextMonthNum){best=sheetNames.find(sn=>{const m=sn.match(/(\d+)/);return m&&parseInt(m[1])===nextMonthNum;});}
+  if(!best)best=sheetNames.find(sn=>allSheets[sn]&&allSheets[sn].names.length>0)||sheetNames[0];
+  schTargetMonth=best;
+  window._schTargetMonth=best;
+  const info=allSheets[best];
+  const sheetM=best?best.match(/(\d+)/):null;
+  const schedStr=sheetM?sheetM[1]+'月':best;
+  document.getElementById('schUploadText').textContent='✓ '+fileName;
+  let html='將排 '+schedStr+' 的值日生，人員：'+(info?info.names.join('、'):'');
+  if(isPdf){
+    html+='<br><span style="cursor:pointer;color:var(--gold);text-decoration:underline;" onclick="showPdfPreview()">🔍 點此核對 PDF 解析結果（強烈建議產生班表前先核對）</span>'
+      +'<br><span style="color:#e74c3c;font-size:12px;">⚠ PDF 解析是用座標位置反推表格，準確度不如 Excel，請務必核對後再使用</span>';
+  }
+  document.getElementById('schFileInfo').innerHTML=html;
+  checkBtnGen();
+}
+
+function showPdfPreview(){
+  const info=schLeaveData[schTargetMonth];
+  if(!info) return;
+  let html='<div style="max-height:300px;overflow:auto;border:1px solid #444;margin-top:8px;padding:6px;font-size:12px;" id="pdfPreviewBox">';
+  html+='<b>系統判讀到「不可排值日生」的日期（請對照原始 PDF 確認是否正確）：</b><br>';
+  info.names.forEach(n=>{
+    const ds=(info.leaves[n]||[]).slice().sort((a,b)=>a-b);
+    html+='<div style="margin-top:4px;"><b>'+n+'</b>：'+(ds.length?ds.join('、')+' 號':'（無，整月都可排）')+'</div>';
+  });
+  html+='</div>';
+  const old=document.getElementById('pdfPreviewBox');
+  if(old)old.outerHTML=html; else document.getElementById('schFileInfo').insertAdjacentHTML('beforeend',html);
 }
 
 function checkBtnGen() {
@@ -768,26 +909,37 @@ function runSchedule() {
     for(let s=0;s<n;s++) slots.push({day:x.d,slot:s,weekday:x.weekday,person:null});
   });
 
-  // 建立排班隊列：每人依違規次數展開，打亂順序
-  let queue=[];
-  schViolators.forEach(v=>{for(let i=0;i<v.count;i++)queue.push(v.name);});
-  queue=queue.sort(()=>Math.random()-0.5);
+  // 計算每個人這個月「實際可值班的天數」（扣掉休假與整天skip的日子）
+  // 可排天數越少代表這個人越難排，要優先讓他卡位，
+  // 否則整條隊列純隨機排序時，可排天數多的人可能先搶走可排天數少的人僅有的空檔
+  const availableDaysCount={};
+  schViolators.forEach(v=>{
+    const personLeaves=(leaves[v.name]||[]).map(d=>parseInt(d));
+    availableDaysCount[v.name]=allDays.filter(x=>!x.isSkip&&!personLeaves.includes(x.d)).length;
+  });
+  const orderedViolators=[...schViolators].sort((a,b)=>{
+    const diff=availableDaysCount[a.name]-availableDaysCount[b.name];
+    return diff!==0?diff:Math.random()-0.5; // 可排天數相同則隨機，確保公平
+  });
 
-  // 依序為每個人找到可以安排的名額槽
-  queue.forEach(name=>{
+  // 依序（最難排的人優先）為每個人安排他需要的名額槽
+  orderedViolators.forEach(v=>{
+    const name=v.name;
     // 確保休假日都是數字格式比對
     const personLeaves=(leaves[name]||[]).map(d=>parseInt(d));
-    // 找還沒有此人、且此人不在休假的空槽
-    const available=slots.filter(s=>
-      s.person===null &&
-      !personLeaves.includes(parseInt(s.day)) &&
-      // 同一天不能排同一個人兩次
-      !slots.some(s2=>s2.day===s.day&&s2.person===name)
-    );
-    if(!available.length) return; // 找不到可排的天，跳過
-    // 隨機選一個空槽
-    const pick=available[Math.floor(Math.random()*available.length)];
-    pick.person=name;
+    for(let i=0;i<v.count;i++){
+      // 找還沒有此人、且此人不在休假的空槽
+      const available=slots.filter(s=>
+        s.person===null &&
+        !personLeaves.includes(parseInt(s.day)) &&
+        // 同一天不能排同一個人兩次
+        !slots.some(s2=>s2.day===s.day&&s2.person===name)
+      );
+      if(!available.length) break; // 這個人已經沒有空檔可排，剩下次數遞延到下個月
+      // 隨機選一個空槽
+      const pick=available[Math.floor(Math.random()*available.length)];
+      pick.person=name;
+    }
   });
 
   // 整理結果：只取有人的槽
@@ -837,44 +989,23 @@ function copySchedule() {
   navigator.clipboard.writeText(text).then(()=>{const b=document.querySelector('.btn-row .btn-copy');b.textContent='✓ 已複製！';setTimeout(()=>b.textContent='📋 複製排班表',2000);});
 }
 
-function downloadXlsx() {
+async function downloadXlsx() {
   const rows=document.querySelectorAll('#schBody2 tr');
   if(!rows.length){alert('請先產生排班表');return;}
-  if(!window._schOriginalFile){alert('請先上傳休假表 xlsx');return;}
-  const assignments={};
-  [...rows].forEach(r=>{
+  if(!window.XLSX){
+    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  }
+  const aoa=[['日期','值日生']];
+  rows.forEach(r=>{
     const cells=r.querySelectorAll('td');
-    const dateText=cells[0].textContent.trim();
-    const parts=dateText.split('/');
-    if(parts.length>=2){const day=parseInt(parts[parts.length-1]);assignments[day]=cells[1].textContent.trim();}
+    aoa.push([cells[0].textContent.trim(), cells[1].textContent.trim()]);
   });
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try {
-      const wb=XLSX.read(e.target.result,{type:'array'});
-      const targetSheet=window._schTargetMonth||wb.SheetNames[0];
-      const ws=wb.Sheets[targetSheet];
-      if(!ws){alert('找不到對應工作表');return;}
-      const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      let headerIdx=-1;
-      for(let i=0;i<Math.min(data.length,5);i++){if(data[i].filter(c=>typeof c==='string'&&c.trim().length>0).length>3){headerIdx=i;break;}}
-      if(headerIdx<0){alert('找不到標題列');return;}
-      const lastColIdx=data[headerIdx].length;
-      ws[XLSX.utils.encode_cell({r:headerIdx,c:lastColIdx})]={v:'值日生',t:'s'};
-      for(let r=headerIdx+1;r<data.length;r++){
-        const dayMatch=String(data[r][0]||'').trim().match(/^(\d+)/);
-        if(!dayMatch)continue;
-        const day=parseInt(dayMatch[1]);
-        ws[XLSX.utils.encode_cell({r:r,c:lastColIdx})]={v:assignments[day]||'',t:'s'};
-      }
-      const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
-      if(range.e.c<lastColIdx)range.e.c=lastColIdx;
-      ws['!ref']=XLSX.utils.encode_range(range);
-      const sheetM=(targetSheet||'').match(/(\d+)/);
-      XLSX.writeFile(wb,(sheetM?sheetM[1]+'月':'')+'值日生排班表.xlsx');
-    } catch(err){alert('下載失敗：'+err.message);}
-  };
-  reader.readAsArrayBuffer(window._schOriginalFile);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  const wb=XLSX.utils.book_new();
+  const sheetM=(schTargetMonth||'').match(/(\d+)/);
+  const monthStr=sheetM?sheetM[1]+'月':'值日生排班';
+  XLSX.utils.book_append_sheet(wb, ws, monthStr.slice(0,31));
+  XLSX.writeFile(wb, monthStr+'值日生排班表.xlsx');
 }
 
 function exportSignSheet() {
