@@ -786,36 +786,53 @@ function runSchedule() {
     allDays.push({d,weekday,isSkip:skipDays.includes(d)});
   }
 
-  // 每天需要的值日生人數：週六(6)、週日(0) 需要2位，其他天1位
-  function slotsNeeded(weekday){ return (weekday===0||weekday===6)?2:1; }
+  // 週六(6)、週日(0) 一定 2 位；週五(5) 盡量 2 位但排不滿可 1 位；週一~週四 1 位
+  const isSatSun=wd=>(wd===6||wd===0);
+  const isWeekend=wd=>(wd===5||wd===6||wd===0);
+  function slotsNeeded(weekday){ return isWeekend(weekday)?2:1; }
 
-  // 建立每天的名額槽：{day, slot(0或1), weekday}
+  // 建立每天的名額槽，週六/日/五排在前面優先被填滿
+  // 週六/日標記 mustFill=true（一定要填滿2人），週五 mustFill=false（盡力但可只排1人）
   const slots=[];
-  allDays.filter(x=>!x.isSkip).forEach(x=>{
-    const n=slotsNeeded(x.weekday);
-    for(let s=0;s<n;s++) slots.push({day:x.d,slot:s,weekday:x.weekday,person:null});
+  allDays.filter(x=>!x.isSkip&&isSatSun(x.weekday)).forEach(x=>{
+    for(let s=0;s<2;s++) slots.push({day:x.d,slot:s,weekday:x.weekday,person:null,mustFill:true});
+  });
+  allDays.filter(x=>!x.isSkip&&x.weekday===5).forEach(x=>{
+    for(let s=0;s<2;s++) slots.push({day:x.d,slot:s,weekday:x.weekday,person:null,mustFill:false});
+  });
+  allDays.filter(x=>!x.isSkip&&!isWeekend(x.weekday)).forEach(x=>{
+    slots.push({day:x.d,slot:0,weekday:x.weekday,person:null,mustFill:false});
   });
 
-  // 建立排班隊列：每人依違規次數展開，打亂順序
-  let queue=[];
-  schViolators.forEach(v=>{for(let i=0;i<v.count;i++)queue.push(v.name);});
-  queue=queue.sort(()=>Math.random()-0.5);
+  // 計算每個人這個月實際可值班天數（扣掉休假與 skip 日）
+  // 可排天數越少的人優先卡位，避免被可排天數多的人搶走僅有的空檔
+  const availableDaysCount={};
+  schViolators.forEach(v=>{
+    const pl=(leaves[v.name]||[]).map(d=>parseInt(d));
+    availableDaysCount[v.name]=allDays.filter(x=>!x.isSkip&&!pl.includes(x.d)).length;
+  });
+  const orderedViolators=[...schViolators].sort((a,b)=>{
+    const diff=availableDaysCount[a.name]-availableDaysCount[b.name];
+    return diff!==0?diff:Math.random()-0.5;
+  });
 
-  // 依序為每個人找到可以安排的名額槽
-  queue.forEach(name=>{
-    // 確保休假日都是數字格式比對
+  // 依序（可排天數最少的人優先）為每人安排名額槽
+  orderedViolators.forEach(v=>{
+    const name=v.name;
     const personLeaves=(leaves[name]||[]).map(d=>parseInt(d));
-    // 找還沒有此人、且此人不在休假的空槽
-    const available=slots.filter(s=>
-      s.person===null &&
-      !personLeaves.includes(parseInt(s.day)) &&
-      // 同一天不能排同一個人兩次
-      !slots.some(s2=>s2.day===s.day&&s2.person===name)
-    );
-    if(!available.length) return; // 找不到可排的天，跳過
-    // 隨機選一個空槽
-    const pick=available[Math.floor(Math.random()*available.length)];
-    pick.person=name;
+    for(let i=0;i<v.count;i++){
+      const available=slots.filter(s=>
+        s.person===null &&
+        !personLeaves.includes(parseInt(s.day)) &&
+        !slots.some(s2=>s2.day===s.day&&s2.person===name)
+      );
+      if(!available.length) break; // 無空檔，剩下次數遞延
+      // 優先選週末槽
+      const weekendAvail=available.filter(s=>isWeekend(s.weekday));
+      const pool=weekendAvail.length?weekendAvail:available;
+      const pick=pool[Math.floor(Math.random()*pool.length)];
+      pick.person=name;
+    }
   });
 
   // 整理結果：只取有人的槽
@@ -861,9 +878,9 @@ function runSchedule() {
     }
   }
 
-  // 統計週五~週日未排滿的天數
+  // 週六/日未排滿才警告（mustFill），週五排不滿是正常情況不報錯
   const weekendUnfilled=[];
-  allDays.filter(x=>!x.isSkip&&isWeekend(x.weekday)).forEach(x=>{
+  allDays.filter(x=>!x.isSkip&&isSatSun(x.weekday)).forEach(x=>{
     const filled=slots.filter(s=>s.day===x.d&&s.person!==null).length;
     if(filled<2) weekendUnfilled.push(x.d+'號(只排'+filled+'人)');
   });
