@@ -716,24 +716,36 @@ async function handleSchFileXlsx(file) {
       wb.SheetNames.forEach(sn=>{
         const ws=wb.Sheets[sn];
         const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-        let headerRow=null,headerIdx=0;
-        for(let i=0;i<Math.min(data.length,5);i++){
-          if(data[i].filter(c=>typeof c==='string'&&c.trim().length>0).length>3){headerRow=data[i];headerIdx=i;break;}
+
+        // 找日期標頭列：欄位裡有>=15個 1~31 的數字（代表這列是日期列，欄=日期、列=人員）
+        let dateRowIdx=-1, colToDay={};
+        for(let i=0;i<Math.min(data.length,6);i++){
+          const nums=data[i].map((c,ci)=>({v:Number(c),ci})).filter(x=>Number.isInteger(x.v)&&x.v>=1&&x.v<=31);
+          if(nums.length>=15){
+            dateRowIdx=i;
+            nums.forEach(x=>colToDay[x.ci]=x.v);
+            break;
+          }
         }
-        if(!headerRow)return;
-        const names=headerRow.slice(1).map(n=>String(n).trim()).filter(Boolean);
-        const leaves={};const skipDays=[];
-        names.forEach(n=>leaves[n]=[]);
-        for(let r=headerIdx+1;r<data.length;r++){
+        if(dateRowIdx<0)return; // 找不到日期列，跳過這個分頁
+
+        // 跳過日期列後面可能有的星期列（全是一~日）
+        const WDAYS=new Set(['\u4e00','\u4e8c','\u4e09','\u56db','\u4e94','\u516d','\u65e5']);
+        let bodyStart=dateRowIdx+1;
+        if(data[bodyStart]&&data[bodyStart].slice(1).every(c=>WDAYS.has(String(c).trim())||String(c).trim()===''))bodyStart++;
+
+        const names=[];const leaves={};const skipDays=[];
+        for(let r=bodyStart;r<data.length;r++){
           const row=data[r];
-          const dayMatch=String(row[0]||'').trim().match(/^(\d+)/);
-          if(!dayMatch)continue;
-          const day=parseInt(dayMatch[1]);
-          const rowVals=row.slice(1).map(v=>String(v||'').trim());
-          if(rowVals.some(v=>v==='\u516c\u4f11'||v==='\u8ab2\uff0f\u76e4'||v==='\u8ab2/\u76e4')){if(!skipDays.includes(day))skipDays.push(day);}
-          names.forEach((name,ci)=>{
-            const val=String(row[ci+1]||'').trim();
-            if(val)leaves[name].push(day); // \u53ea\u8981\u6709\u4efb\u4f55\u6587\u5b57\u90fd\u8996\u70ba\u4e0d\u53ef\u6392\u5024\u65e5\u751f
+          const name=String(row[0]||'').trim();
+          if(!name||name==='\u59d3\u540d')continue; // 跳過空列或標頭
+          // 如果第一欄不像人名（純數字、太長），停止
+          if(/^\d+$/.test(name)||name.length>10)continue;
+          names.push(name);
+          leaves[name]=leaves[name]||[];
+          Object.entries(colToDay).forEach(([ci,day])=>{
+            const val=String(row[Number(ci)]||'').trim();
+            if(val)leaves[name].push(day); // 只要有任何文字都視為不可排值日生
           });
         }
         allSheets[sn]={names,leaves,skipDays};
