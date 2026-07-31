@@ -272,7 +272,7 @@ body.guest-mode .admin-only{display:none!important;}
       <div style="margin-top:18px;">
         <div class="stitle">STEP 2　上傳下個月休假表（xlsx）</div>
         <div class="upload-box">
-          <input type="file" id="schFile" accept=".xlsx,.xls" onchange="handleSchFile(this)">
+          <input type="file" id="schFile" accept=".xlsx,.xls,.pdf" onchange="handleSchFile(this)">
           <div class="ico">📂</div>
           <p id="schUploadText">點擊上傳休假表</p>
         </div>
@@ -697,8 +697,14 @@ function clearDeferred(key){
 
 async function handleSchFile(input) {
   const file=input.files[0];if(!file)return;
-  document.getElementById('schUploadText').textContent='解析中...';
   window._schOriginalFile=file;
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(ext==='pdf') return handleSchFilePdf(file);
+  return handleSchFileXlsx(file);
+}
+
+async function handleSchFileXlsx(file) {
+  document.getElementById('schUploadText').textContent='解析中...';
   if(!window.XLSX){
     await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
   }
@@ -724,37 +730,119 @@ async function handleSchFile(input) {
           if(!dayMatch)continue;
           const day=parseInt(dayMatch[1]);
           const rowVals=row.slice(1).map(v=>String(v||'').trim());
-          if(rowVals.some(v=>v==='公休'||v==='課／盤'||v==='課/盤')){if(!skipDays.includes(day))skipDays.push(day);}
+          if(rowVals.some(v=>v==='\u516c\u4f11'||v==='\u8ab2\uff0f\u76e4'||v==='\u8ab2/\u76e4')){if(!skipDays.includes(day))skipDays.push(day);}
           names.forEach((name,ci)=>{
             const val=String(row[ci+1]||'').trim();
-            if(['休','課','課/盤','課／盤','公休'].includes(val))leaves[name].push(day);
+            if(val)leaves[name].push(day); // \u53ea\u8981\u6709\u4efb\u4f55\u6587\u5b57\u90fd\u8996\u70ba\u4e0d\u53ef\u6392\u5024\u65e5\u751f
           });
         }
         allSheets[sn]={names,leaves,skipDays};
       });
-      schLeaveData=allSheets;
-      const vMonth=document.getElementById('schMonth').value;
-      const vMonthNum=vMonth?parseInt(vMonth.split('-')[1]):null;
-      const nextMonthNum=vMonthNum?(vMonthNum%12)+1:null;
-      let best=null;
-      if(nextMonthNum){best=wb.SheetNames.find(sn=>{const m=sn.match(/(\d+)/);return m&&parseInt(m[1])===nextMonthNum;});}
-      if(!best)best=wb.SheetNames.find(sn=>allSheets[sn]&&allSheets[sn].names.length>0)||wb.SheetNames[0];
-      schTargetMonth=best;
-      window._schTargetMonth=best;
-      const info=allSheets[best];
-      const sheetM=best?best.match(/(\d+)/):null;
-      const schedStr=sheetM?sheetM[1]+'月':best;
-      document.getElementById('schUploadText').textContent='✓ '+file.name;
-      document.getElementById('schFileInfo').textContent='將排 '+schedStr+' 的值日生，人員：'+(info?info.names.join('、'):'');
-      checkBtnGen();
+      finishLeaveDataLoaded(allSheets,wb.SheetNames,file.name,false);
     } catch(err){
-      document.getElementById('schUploadText').textContent='❌ 解析失敗';
+      document.getElementById('schUploadText').textContent='\u274c \u89e3\u6790\u5931\u6557';
       document.getElementById('schFileInfo').textContent=err.message;
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
+const WEEKDAY_CHARS=new Set(['\u4e00','\u4e8c','\u4e09','\u56db','\u4e94','\u516d','\u65e5']);
+async function loadPdfJs(){
+  if(window.pdfjsLib)return;
+  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+function clusterLines(items,tol){
+  const sorted=[...items].sort((a,b)=>b.y-a.y);const lines=[];
+  sorted.forEach(it=>{let line=lines.find(l=>Math.abs(l.y-it.y)<=tol);if(!line){line={y:it.y,items:[]};lines.push(line);}line.items.push(it);});
+  lines.forEach(l=>l.items.sort((a,b)=>a.x-b.x));lines.sort((a,b)=>b.y-a.y);return lines;
+}
+async function parsePdfPage(page){
+  const tc=await page.getTextContent();
+  const items=tc.items.filter(it=>it.str&&it.str.trim()!=='').map(it=>({str:it.str.trim(),x:it.transform[4],y:it.transform[5]}));
+  if(!items.length)return null;
+  const lines=clusterLines(items,4);
+  let headerIdx=-1;
+  for(let i=0;i<lines.length;i++){const nums=lines[i].items.filter(it=>/^\d{1,2}$/.test(it.str)&&+it.str>=1&&+it.str<=31);if(nums.length>=15){headerIdx=i;break;}}
+  if(headerIdx<0)return null;
+  const colCenters=lines[headerIdx].items.filter(it=>/^\d{1,2}$/.test(it.str)&&+it.str>=1&&+it.str<=31).map(it=>({day:+it.str,x:it.x}));
+  let bodyStart=headerIdx+1;
+  if(lines[bodyStart]&&lines[bodyStart].items.every(it=>WEEKDAY_CHARS.has(it.str)||it.str==='\u59d3\u540d'))bodyStart++;
+  const names=[];const leaves={};let nameColX=null,prevY=null,avgGap=null;const gaps=[];
+  for(let i=bodyStart;i<lines.length;i++){
+    const line=lines[i];const first=line.items[0];if(!first)continue;
+    if(nameColX===null)nameColX=first.x;
+    if(prevY!==null){const gap=prevY-line.y;if(avgGap&&gap>avgGap*2.2)break;gaps.push(gap);avgGap=gaps.reduce((a,b)=>a+b,0)/gaps.length;}
+    prevY=line.y;
+    if(Math.abs(first.x-nameColX)>15)break;
+    const name=first.str;if(!name||name==='\u59d3\u540d')continue;
+    names.push(name);leaves[name]=leaves[name]||[];
+    line.items.slice(1).forEach(it=>{
+      if(!colCenters.length)return;
+      let nearest=colCenters[0],best=Infinity;
+      colCenters.forEach(c=>{const d=Math.abs(c.x-it.x);if(d<best){best=d;nearest=c;}});
+      if(!leaves[name].includes(nearest.day))leaves[name].push(nearest.day);
+    });
+  }
+  let label=null;
+  for(const l of lines){const m=l.items.map(it=>it.str).join('').match(/(\d{1,2})\u6708/);if(m){label=m[0];break;}}
+  return {label,names,leaves,skipDays:[]};
+}
+async function handleSchFilePdf(file){
+  document.getElementById('schUploadText').textContent='\u89e3\u6790\u4e2d...';
+  try{
+    await loadPdfJs();
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    const allSheets={};const sheetNames=[];
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      const result=await parsePdfPage(page);
+      if(result&&result.names.length){const key=result.label?result.label+'\uff08\u7b2c'+p+'\u9801\uff09':('\u7b2c'+p+'\u9801');allSheets[key]=result;sheetNames.push(key);}
+    }
+    if(!sheetNames.length)throw new Error('\u627e\u4e0d\u5230\u53ef\u89e3\u6790\u7684\u8868\u683c\uff0c\u8acb\u78ba\u8a8d PDF \u662f\u6587\u5b57\u7248\uff0c\u4e14\u5305\u542b 1~31 \u7684\u65e5\u671f\u6a19\u982d\u5217');
+    finishLeaveDataLoaded(allSheets,sheetNames,file.name,true);
+  }catch(err){
+    document.getElementById('schUploadText').textContent='\u274c \u89e3\u6790\u5931\u6557';
+    document.getElementById('schFileInfo').textContent=err.message;
+  }
+}
+
+function finishLeaveDataLoaded(allSheets,sheetNames,fileName,isPdf){
+  schLeaveData=allSheets;
+  const vMonth=document.getElementById('schMonth').value;
+  const vMonthNum=vMonth?parseInt(vMonth.split('-')[1]):null;
+  const nextMonthNum=vMonthNum?(vMonthNum%12)+1:null;
+  let best=null;
+  if(nextMonthNum){best=sheetNames.find(sn=>{const m=sn.match(/(\d+)/);return m&&parseInt(m[1])===nextMonthNum;});}
+  if(!best)best=sheetNames.find(sn=>allSheets[sn]&&allSheets[sn].names.length>0)||sheetNames[0];
+  schTargetMonth=best;window._schTargetMonth=best;
+  const info=allSheets[best];
+  const sheetM=best?best.match(/(\d+)/):null;
+  const schedStr=sheetM?sheetM[1]+'\u6708':best;
+  document.getElementById('schUploadText').textContent='\u2713 '+fileName;
+  let html='\u5c07\u6392 '+schedStr+' \u7684\u5024\u65e5\u751f\uff0c\u4eba\u54e1\uff1a'+(info?info.names.join('\u3001'):'');
+  if(isPdf){
+    html+='<br><span style="cursor:pointer;color:var(--gold);text-decoration:underline;" onclick="showPdfPreview()">\ud83d\udd0d \u9ede\u6b64\u6838\u5c0d PDF \u89e3\u6790\u7d50\u679c\uff08\u5f37\u70c8\u5efa\u8b70\u7522\u751f\u73ed\u8868\u524d\u5148\u6838\u5c0d\uff09</span>'
+      +'<br><span style="color:#e74c3c;font-size:12px;">\u26a0 PDF \u89e3\u6790\u662f\u7528\u5ea7\u6a19\u4f4d\u7f6e\u53cd\u63a8\u8868\u683c\uff0c\u6e96\u78ba\u5ea6\u4e0d\u5982 Excel\uff0c\u8acb\u52d9\u5fc5\u6838\u5c0d\u5f8c\u518d\u4f7f\u7528</span>';
+  }
+  document.getElementById('schFileInfo').innerHTML=html;
+  checkBtnGen();
+}
+
+function showPdfPreview(){
+  const info=schLeaveData[schTargetMonth];if(!info)return;
+  let html='<div style="max-height:300px;overflow:auto;border:1px solid #444;margin-top:8px;padding:6px;font-size:12px;" id="pdfPreviewBox">';
+  html+='<b>\u7cfb\u7d71\u5224\u8b80\u5230\u300c\u4e0d\u53ef\u6392\u5024\u65e5\u751f\u300d\u7684\u65e5\u671f\uff08\u8acb\u5c0d\u7167\u539f\u59cb PDF \u78ba\u8a8d\u662f\u5426\u6b63\u78ba\uff09\uff1a</b><br>';
+  info.names.forEach(n=>{
+    const ds=(info.leaves[n]||[]).slice().sort((a,b)=>a-b);
+    html+='<div style="margin-top:4px;"><b>'+n+'</b>\uff1a'+(ds.length?ds.join('\u3001')+' \u865f':'\uff08\u7121\uff0c\u6574\u6708\u90fd\u53ef\u6392\uff09')+'</div>';
+  });
+  html+='</div>';
+  const oldEl=document.getElementById('pdfPreviewBox');
+  if(oldEl)oldEl.outerHTML=html; else document.getElementById('schFileInfo').insertAdjacentHTML('beforeend',html);
+}
 function checkBtnGen() {
   const ready=schViolators.length>0&&schTargetMonth;
   document.getElementById('btnGen').disabled=!ready;
