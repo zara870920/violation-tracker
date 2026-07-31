@@ -1114,8 +1114,21 @@ function exportSignSheet() {
     +'二、Color水槽濾網超過一半要換新、檯面包含後面的大平台都要擦乾淨、不能有水漬，工具物品排列整齊\n'
     +'三、地板「每天」都要掃地和拖地、拖地要加漂白水喔，才不會有蟲蟲\n'
     +'四、廁所鏡子要擦拭乾淨、不能有水痕、洗手台要刷過\n'
-    +'五、沖水區要用泡棉刷洗乾淨、旁邊的洗髮精護髮檯面要收拾乾淨、洗髮精沒有了可以到二樓裝一半使用護髮也是\n'
+    +'五、沖水區要用泡棉刷洗乾淨、旁邊的洗髮精護髮檯面要收拾乾淨\n'
+    +'　　洗髮精沒有了可以到二樓裝一半使用，護髮也是\n'
     +'六、color bar垃圾每天都要收乾淨、未超過一半可以和休息室的垃圾一起收';
+
+  // 讀取本月遞延記錄（本月排不完遞延到下個月）
+  var deferredNote='';
+  try{
+    var dKey='deferred_'+year+'-'+String(monthNum).padStart(2,'0');
+    var dRaw=localStorage.getItem(dKey);
+    if(dRaw){
+      var dObj=JSON.parse(dRaw);
+      var dList=Object.entries(dObj).map(function(e){return e[0]+' x'+e[1]+'天';});
+      if(dList.length) deferredNote='《遞延備註》本月未排完，以下老師遞延至下個月：'+dList.join('、');
+    }
+  }catch(e){}
 
   var html='<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">'
     +'<title>'+year+'年'+monthStr+'值日生簽到表</title>'
@@ -1215,6 +1228,11 @@ function exportSignSheet() {
     +'<div class="rc" contenteditable="false">'+rulesLeft+'</div>'
     +'<div class="rc" contenteditable="false">'+rulesRight+'</div>'
     +'</div>';
+
+  // 遞延備註區塊（有遞延才顯示）
+  if(deferredNote){
+    html+='<div style="margin-top:10px;padding:6px 10px;border:1.5px solid #C0392B;border-radius:4px;font-size:9.5px;color:#C0392B;background:#fff5f5;">'+deferredNote+'</div>';
+  }
 
   html+='<div class="ftr">V I O L A T I O N &nbsp; M A N A G E M E N T &nbsp; S Y S T E M &nbsp;·&nbsp; '+printDate+'</div>'
     +'</body></html>';
